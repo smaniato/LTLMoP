@@ -10,6 +10,10 @@ drop, 1
 play_dead, 1
 sing, 1
 
+CompileOptions:
+convexify: True
+fastslow: False
+
 CurrentConfigName:
 basicsim
 
@@ -29,8 +33,8 @@ fruit, 1
 RegionMapping: # Mapping between region names and their decomposed counterparts
 bridge = p9
 between$bridge$and$apple_tree$ = p10, p55, p56, p57
-bear_colony = p13
 near$bear_colony$40 = p13, p50, p51, p52, p53, p54
+bear_colony = p13
 pear_tree = p4
 apple_tree = p14
 lemon_tree = p7

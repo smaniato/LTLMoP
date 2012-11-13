@@ -80,6 +80,8 @@ else:
                 return Point(self.x-other.x, self.y-other.y)
             else:
                 raise TypeError("Points can only be subtracted from other points")
+        def __hash__(self):
+            return hash((self.x,self.y))
 
     class Size(Point):
         def __init__(self, w, h):
@@ -284,7 +286,18 @@ class RegionFileInterface:
 
         for obj in self.regions:
             for face in obj.getFaces(includeHole=True):                
-                if face not in transitionFaces: transitionFaces[face] = []
+	        inTransFace = False
+	        for transFace in transitionFaces.keys():
+		    if transFace[0].x == face[0].x and transFace[0].y == face[0].y and transFace[1].x == face[1].x and transFace[1].y == face[1].y:
+		        inTransFace = True
+			face = transFace
+			break
+		    if transFace[0].x == face[1].x and transFace[0].y == face[1].y and transFace[1].x == face[0].x and transFace[1].y == face[0].y:
+		        inTransFace = True
+			face = transFace
+			break
+	           
+                if not inTransFace: transitionFaces[face] = []
                 ignore = False
                 for other_obj in transitionFaces[face]:
                     # Prevent detection of adjoining faces when Duplicate 
@@ -704,11 +717,12 @@ class Region:
         too many conditions sometimes
         """
 
+
         lastPt = None
         for pt in self.getPoints():
 
-            thisPt = copy.deepcopy(pt)
-
+            #thisPt = copy.deepcopy(pt)
+	    thisPt = pt
             if lastPt != None:
                 yield tuple(sorted((lastPt, thisPt)))
             else:
@@ -722,7 +736,8 @@ class Region:
             for i,hole in enumerate(self.holeList):
                 lastPt = None
                 for pt in self.getPoints(hole_id=i):
-                    thisPt = copy.deepcopy(pt)
+                    #thisPt = copy.deepcopy(pt)
+		    thisPt = pt
 
                     if lastPt != None:
                         yield tuple(sorted((lastPt, thisPt)))

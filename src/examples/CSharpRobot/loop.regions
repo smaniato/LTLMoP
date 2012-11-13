@@ -1,0 +1,61 @@
+# This is a region definition file for the LTLMoP toolkit.
+# Format details are described at the beginning of each section below.
+# Note that all values are separated by *tabs*.
+
+Background: # Relative path of background image file
+None
+
+CalibrationPoints: # Vertices to use for map calibration: (vertex_region_name, vertex_index)
+r1	0
+r3	3
+r3	4
+
+Obstacles: # Names of regions to treat as obstacles
+
+Regions: # Stored as JSON string
+[
+    {
+        "name": "r2", 
+        "color": [0, 255, 0], 
+        "holeList": [], 
+        "points": [[0, 0], [3, 0], [4, 0], [24, 0], [198, 0], [198, 378], [0, 378]], 
+        "position": [279, 92], 
+        "type": "poly", 
+        "size": [198, 378]
+    }, 
+    {
+        "name": "r1", 
+        "color": [204, 50, 50], 
+        "holeList": [], 
+        "points": [[0, 0], [126, 0], [155, 0], [155, 378], [126, 378], [0, 378]], 
+        "position": [124, 92], 
+        "type": "poly", 
+        "size": [155, 378]
+    }, 
+    {
+        "name": "r3", 
+        "color": [128, 255, 0], 
+        "holeList": [], 
+        "points": [[0, 0], [12, 0], [63, 0], [174, 0], [174, 378], [63, 378], [0, 378]], 
+        "position": [477, 92], 
+        "type": "poly", 
+        "size": [174, 378]
+    }, 
+    {
+        "name": "boundary", 
+        "color": [176, 0, 255], 
+        "holeList": [], 
+        "points": [[527, 378], [416, 378], [353, 378], [155, 378], [126, 378], [0, 378], [0, 0], [126, 0], [155, 0], [158, 0], [159, 0], [179, 0], [353, 0], [365, 0], [416, 0], [527, 0]], 
+        "position": [124, 92], 
+        "type": "poly", 
+        "size": [527, 378]
+    }
+]
+
+Transitions: # Region 1 Name, Region 2 Name, Bidirectional transition faces (face1_x1, face1_y1, face1_x2, face1_y2, face2_x1, ...)
+r2	r1	279	470	279	92
+r2	r3	477	470	477	92
+r2	boundary	303	92	477	92	283	92	303	92	279	470	477	470	279	92	282	92	283	92	282	92
+r1	boundary	124	92	250	92	124	470	250	470	279	470	250	470	279	92	250	92	124	470	124	92
+r3	boundary	651	470	540	470	477	92	489	92	540	92	651	92	477	470	540	470	651	470	651	92	489	92	540	92
+
