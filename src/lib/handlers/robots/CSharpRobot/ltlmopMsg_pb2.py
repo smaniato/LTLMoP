@@ -46,6 +46,35 @@ _PYTHONREQUESTMSG_ACTUATORTYPE = descriptor.EnumDescriptor(
       name='ARM', index=1, number=1,
       options=None,
       type=None),
+    descriptor.EnumValueDescriptor(
+      name='EXPLORE', index=2, number=2,
+      options=None,
+      type=None),
+  ],
+  options=None,
+)
+
+_PYTHONREQUESTMSG_ACTUATORSTATUS = descriptor.EnumDescriptor(
+  name='ActuatorStatus',
+  full_name='LTLMoPCsharpInterface.PythonRequestMsg.ActuatorStatus',
+  filename='ActuatorStatus',
+  values=[
+    descriptor.EnumValueDescriptor(
+      name='RESP_IDLE', index=0, number=0,
+      options=None,
+      type=None),
+    descriptor.EnumValueDescriptor(
+      name='RESP_BUSY', index=1, number=1,
+      options=None,
+      type=None),
+    descriptor.EnumValueDescriptor(
+      name='REQ_UPDATE', index=2, number=2,
+      options=None,
+      type=None),
+    descriptor.EnumValueDescriptor(
+      name='REQ_DO', index=3, number=3,
+      options=None,
+      type=None),
   ],
   options=None,
 )
@@ -107,8 +136,22 @@ _PYTHONREQUESTMSG_ACTUATOR = descriptor.Descriptor(
   containing_type=None,
   fields=[
     descriptor.FieldDescriptor(
-      name='status', full_name='LTLMoPCsharpInterface.PythonRequestMsg.Actuator.status', index=0,
-      number=1, type=1, cpp_type=5, label=1,
+      name='actuatorType', full_name='LTLMoPCsharpInterface.PythonRequestMsg.Actuator.actuatorType', index=0,
+      number=1, type=14, cpp_type=8, label=1,
+      default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    descriptor.FieldDescriptor(
+      name='status', full_name='LTLMoPCsharpInterface.PythonRequestMsg.Actuator.status', index=1,
+      number=2, type=14, cpp_type=8, label=1,
+      default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    descriptor.FieldDescriptor(
+      name='data', full_name='LTLMoPCsharpInterface.PythonRequestMsg.Actuator.data', index=2,
+      number=3, type=1, cpp_type=5, label=1,
       default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -166,6 +209,13 @@ _PYTHONREQUESTMSG_REGION = descriptor.Descriptor(
       name='holes', full_name='LTLMoPCsharpInterface.PythonRequestMsg.Region.holes', index=1,
       number=3, type=11, cpp_type=10, label=3,
       default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    descriptor.FieldDescriptor(
+      name='name', full_name='LTLMoPCsharpInterface.PythonRequestMsg.Region.name', index=2,
+      number=4, type=9, cpp_type=9, label=1,
+      default_value=unicode("", "utf-8"),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
@@ -324,28 +374,21 @@ _PYTHONREQUESTMSG = descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       options=None),
     descriptor.FieldDescriptor(
-      name='actuatorType', full_name='LTLMoPCsharpInterface.PythonRequestMsg.actuatorType', index=5,
-      number=6, type=14, cpp_type=8, label=1,
-      default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
-    descriptor.FieldDescriptor(
-      name='map', full_name='LTLMoPCsharpInterface.PythonRequestMsg.map', index=6,
+      name='map', full_name='LTLMoPCsharpInterface.PythonRequestMsg.map', index=5,
       number=7, type=11, cpp_type=10, label=1,
       default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     descriptor.FieldDescriptor(
-      name='pose', full_name='LTLMoPCsharpInterface.PythonRequestMsg.pose', index=7,
+      name='pose', full_name='LTLMoPCsharpInterface.PythonRequestMsg.pose', index=6,
       number=8, type=11, cpp_type=10, label=1,
       default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     descriptor.FieldDescriptor(
-      name='exfaces', full_name='LTLMoPCsharpInterface.PythonRequestMsg.exfaces', index=8,
+      name='exfaces', full_name='LTLMoPCsharpInterface.PythonRequestMsg.exfaces', index=7,
       number=9, type=11, cpp_type=10, label=1,
       default_value=None,
       message_type=None, enum_type=None, containing_type=None,
@@ -358,11 +401,14 @@ _PYTHONREQUESTMSG = descriptor.Descriptor(
   enum_types=[
     _PYTHONREQUESTMSG_SENSORTYPE,
     _PYTHONREQUESTMSG_ACTUATORTYPE,
+    _PYTHONREQUESTMSG_ACTUATORSTATUS,
     _PYTHONREQUESTMSG_ROBOTTYPE,
   ],
   options=None)
 
 
+_PYTHONREQUESTMSG_ACTUATOR.fields_by_name['actuatorType'].enum_type = _PYTHONREQUESTMSG_ACTUATORTYPE
+_PYTHONREQUESTMSG_ACTUATOR.fields_by_name['status'].enum_type = _PYTHONREQUESTMSG_ACTUATORSTATUS
 _PYTHONREQUESTMSG_REGION.fields_by_name['points'].message_type = _PYTHONREQUESTMSG_POINT
 _PYTHONREQUESTMSG_REGION.fields_by_name['holes'].message_type = _PYTHONREQUESTMSG_POINT
 _PYTHONREQUESTMSG_MAP.fields_by_name['r'].message_type = _PYTHONREQUESTMSG_REGION
@@ -373,7 +419,6 @@ _PYTHONREQUESTMSG.fields_by_name['robot'].enum_type = _PYTHONREQUESTMSG_ROBOTTYP
 _PYTHONREQUESTMSG.fields_by_name['vel'].message_type = _PYTHONREQUESTMSG_VELOCITY
 _PYTHONREQUESTMSG.fields_by_name['actuator'].message_type = _PYTHONREQUESTMSG_ACTUATOR
 _PYTHONREQUESTMSG.fields_by_name['sensor'].enum_type = _PYTHONREQUESTMSG_SENSORTYPE
-_PYTHONREQUESTMSG.fields_by_name['actuatorType'].enum_type = _PYTHONREQUESTMSG_ACTUATORTYPE
 _PYTHONREQUESTMSG.fields_by_name['map'].message_type = _PYTHONREQUESTMSG_MAP
 _PYTHONREQUESTMSG.fields_by_name['pose'].message_type = _PYTHONREQUESTMSG_POSE
 _PYTHONREQUESTMSG.fields_by_name['exfaces'].message_type = _PYTHONREQUESTMSG_EXTERNALFACES

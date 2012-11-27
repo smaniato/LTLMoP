@@ -5,6 +5,8 @@
 ======== SETTINGS ========
 
 Actions: # List of action propositions and their state (enabled = 1, disabled = 0)
+resynthesize, 1
+explore, 1
 
 CompileOptions:
 convexify: True
@@ -23,24 +25,25 @@ LIDAR, 0
 ARTAG64, 0
 ARTAG103, 0
 NEW_DOORWAY, 1
+BUSY_EXPLORING, 1
 
 
 ======== SPECIFICATION ========
 
 RegionMapping: # Mapping between region names and their decomposed counterparts
-r3 = p1
+others = 
 r1 = p3
 r2 = p2
-others = 
+r3 = p1
 
 Spec: # Specification in structured English
 # This examples demonstrates the use of a few locative prepositions
 group region is r1, r2, r3
-#Env starts with false
 Robot starts in any region
 
-visit r1
-visit r3
-#if you are in r2 then visit r1
-#if you are in r1 then visit r2
+if you are not sensing BUSY_EXPLORING and you are not sensing NEW_DOORWAY then visit r1
+if you are not sensing BUSY_EXPLORING and you are not sensing NEW_DOORWAY then visit r3
+if you are sensing NEW_DOORWAY and you are not sensing BUSY_EXPLORING then do explore
+if you are sensing BUSY_EXPLORING then stay
+#if you are not sensing NEW_DOORWAY then do resynthesize
 

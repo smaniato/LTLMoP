@@ -62,6 +62,7 @@ class _CSharpCommunicator:
         # Sensor Status
         self.ARTAG = []
         self.LIDAR = []
+        self.BUSY_EXPLORE = False
         
         
 
@@ -70,6 +71,16 @@ class _CSharpCommunicator:
         """
         Open sockets for communication.
          """
+        import regions
+        #print "#################"
+        #r = regions.Region()
+        #r.name = "r1"
+        #r.pointArray.append(regions.Point(0,0))
+        #r.pointArray.append(regions.Point(1,0))
+        #r.pointArray.append(regions.Point(1,1))
+        #r.pointArray.append(regions.Point(0,1))
+        #r.recalcBoundingBox()
+        #print "==================="
         # test connection to the beagle board/Create, similar to CreateBeagleInit.m
         print 'Connecting to CSharp...'
         self.TCPSock.connect(self.addFrom)
@@ -155,6 +166,11 @@ class _CSharpCommunicator:
             self.ARTAG = msg.s2.data
         else:
             self.ARTAG = []
+
+        if (msg.actuator is not None and msg.actuator.actuatorType!=CSharpAckMsg_pb2.CSharpAckMsg.NOACT):
+            self.BUSY_EXPLORE = msg.actuator.status==CSharpAckMsg_pb2.CSharpAckMsg.RESP_BUSY
+        else:
+            self.BUSY_EXPLORE = False
         #print 'Updating sensors',(self.ARTAG,self.LIDAR)
 
     def getARTAG(self):
@@ -164,6 +180,9 @@ class _CSharpCommunicator:
     def getLIDAR(self):
         result = self.LIDAR
         return self.LIDAR
+    def getExploreBusy(self):
+        result = self.BUSY_EXPLORE
+        return self.BUSY_EXPLORE
         
     
         

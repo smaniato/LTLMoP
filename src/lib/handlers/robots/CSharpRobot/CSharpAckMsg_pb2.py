@@ -8,6 +8,27 @@ from google.protobuf import service_reflection
 from google.protobuf import descriptor_pb2
 
 
+_CSHARPACKMSG_ACTUATORTYPE = descriptor.EnumDescriptor(
+  name='ActuatorType',
+  full_name='LTLMoPCsharpInterface.CSharpAckMsg.ActuatorType',
+  filename='ActuatorType',
+  values=[
+    descriptor.EnumValueDescriptor(
+      name='NOACT', index=0, number=0,
+      options=None,
+      type=None),
+    descriptor.EnumValueDescriptor(
+      name='ARM', index=1, number=1,
+      options=None,
+      type=None),
+    descriptor.EnumValueDescriptor(
+      name='EXPLORE', index=2, number=2,
+      options=None,
+      type=None),
+  ],
+  options=None,
+)
+
 _CSHARPACKMSG_SENSORTYPE = descriptor.EnumDescriptor(
   name='SensorType',
   full_name='LTLMoPCsharpInterface.CSharpAckMsg.SensorType',
@@ -27,6 +48,31 @@ _CSHARPACKMSG_SENSORTYPE = descriptor.EnumDescriptor(
       type=None),
     descriptor.EnumValueDescriptor(
       name='OPENDOOR', index=3, number=3,
+      options=None,
+      type=None),
+  ],
+  options=None,
+)
+
+_CSHARPACKMSG_ACTUATORSTATUS = descriptor.EnumDescriptor(
+  name='ActuatorStatus',
+  full_name='LTLMoPCsharpInterface.CSharpAckMsg.ActuatorStatus',
+  filename='ActuatorStatus',
+  values=[
+    descriptor.EnumValueDescriptor(
+      name='RESP_IDLE', index=0, number=0,
+      options=None,
+      type=None),
+    descriptor.EnumValueDescriptor(
+      name='RESP_BUSY', index=1, number=1,
+      options=None,
+      type=None),
+    descriptor.EnumValueDescriptor(
+      name='REQ_UPDATE', index=2, number=2,
+      options=None,
+      type=None),
+    descriptor.EnumValueDescriptor(
+      name='REQ_DO', index=3, number=3,
       options=None,
       type=None),
   ],
@@ -61,6 +107,41 @@ _CSHARPACKMSG_SENSOR = descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=descriptor._ParseOptions(descriptor_pb2.FieldOptions(), '\020\001')),
+  ],
+  extensions=[
+  ],
+  nested_types=[],  # TODO(robinson): Implement.
+  enum_types=[
+  ],
+  options=None)
+
+_CSHARPACKMSG_ACTUATOR = descriptor.Descriptor(
+  name='Actuator',
+  full_name='LTLMoPCsharpInterface.CSharpAckMsg.Actuator',
+  filename='CSharpAckMsg.proto',
+  containing_type=None,
+  fields=[
+    descriptor.FieldDescriptor(
+      name='actuatorType', full_name='LTLMoPCsharpInterface.CSharpAckMsg.Actuator.actuatorType', index=0,
+      number=1, type=14, cpp_type=8, label=1,
+      default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    descriptor.FieldDescriptor(
+      name='status', full_name='LTLMoPCsharpInterface.CSharpAckMsg.Actuator.status', index=1,
+      number=2, type=14, cpp_type=8, label=1,
+      default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    descriptor.FieldDescriptor(
+      name='data', full_name='LTLMoPCsharpInterface.CSharpAckMsg.Actuator.data', index=2,
+      number=3, type=1, cpp_type=5, label=1,
+      default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
   ],
   extensions=[
   ],
@@ -114,6 +195,13 @@ _CSHARPACKMSG_REGION = descriptor.Descriptor(
       name='holes', full_name='LTLMoPCsharpInterface.CSharpAckMsg.Region.holes', index=1,
       number=3, type=11, cpp_type=10, label=3,
       default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    descriptor.FieldDescriptor(
+      name='name', full_name='LTLMoPCsharpInterface.CSharpAckMsg.Region.name', index=2,
+      number=4, type=9, cpp_type=9, label=1,
+      default_value=unicode("", "utf-8"),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
@@ -258,56 +346,63 @@ _CSHARPACKMSG = descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       options=None),
     descriptor.FieldDescriptor(
-      name='s1', full_name='LTLMoPCsharpInterface.CSharpAckMsg.s1', index=3,
+      name='actuator', full_name='LTLMoPCsharpInterface.CSharpAckMsg.actuator', index=3,
+      number=15, type=11, cpp_type=10, label=1,
+      default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    descriptor.FieldDescriptor(
+      name='s1', full_name='LTLMoPCsharpInterface.CSharpAckMsg.s1', index=4,
       number=16, type=11, cpp_type=10, label=1,
       default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     descriptor.FieldDescriptor(
-      name='s2', full_name='LTLMoPCsharpInterface.CSharpAckMsg.s2', index=4,
+      name='s2', full_name='LTLMoPCsharpInterface.CSharpAckMsg.s2', index=5,
       number=17, type=11, cpp_type=10, label=1,
       default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     descriptor.FieldDescriptor(
-      name='s3', full_name='LTLMoPCsharpInterface.CSharpAckMsg.s3', index=5,
+      name='s3', full_name='LTLMoPCsharpInterface.CSharpAckMsg.s3', index=6,
       number=18, type=11, cpp_type=10, label=1,
       default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     descriptor.FieldDescriptor(
-      name='s4', full_name='LTLMoPCsharpInterface.CSharpAckMsg.s4', index=6,
+      name='s4', full_name='LTLMoPCsharpInterface.CSharpAckMsg.s4', index=7,
       number=19, type=11, cpp_type=10, label=1,
       default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     descriptor.FieldDescriptor(
-      name='s5', full_name='LTLMoPCsharpInterface.CSharpAckMsg.s5', index=7,
+      name='s5', full_name='LTLMoPCsharpInterface.CSharpAckMsg.s5', index=8,
       number=20, type=11, cpp_type=10, label=1,
       default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     descriptor.FieldDescriptor(
-      name='map', full_name='LTLMoPCsharpInterface.CSharpAckMsg.map', index=8,
+      name='map', full_name='LTLMoPCsharpInterface.CSharpAckMsg.map', index=9,
       number=21, type=11, cpp_type=10, label=1,
       default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     descriptor.FieldDescriptor(
-      name='pose', full_name='LTLMoPCsharpInterface.CSharpAckMsg.pose', index=9,
+      name='pose', full_name='LTLMoPCsharpInterface.CSharpAckMsg.pose', index=10,
       number=22, type=11, cpp_type=10, label=1,
       default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     descriptor.FieldDescriptor(
-      name='exfaces', full_name='LTLMoPCsharpInterface.CSharpAckMsg.exfaces', index=10,
+      name='exfaces', full_name='LTLMoPCsharpInterface.CSharpAckMsg.exfaces', index=11,
       number=9, type=11, cpp_type=10, label=1,
       default_value=None,
       message_type=None, enum_type=None, containing_type=None,
@@ -318,18 +413,23 @@ _CSHARPACKMSG = descriptor.Descriptor(
   ],
   nested_types=[],  # TODO(robinson): Implement.
   enum_types=[
+    _CSHARPACKMSG_ACTUATORTYPE,
     _CSHARPACKMSG_SENSORTYPE,
+    _CSHARPACKMSG_ACTUATORSTATUS,
   ],
   options=None)
 
 
 _CSHARPACKMSG_SENSOR.fields_by_name['type'].enum_type = _CSHARPACKMSG_SENSORTYPE
+_CSHARPACKMSG_ACTUATOR.fields_by_name['actuatorType'].enum_type = _CSHARPACKMSG_ACTUATORTYPE
+_CSHARPACKMSG_ACTUATOR.fields_by_name['status'].enum_type = _CSHARPACKMSG_ACTUATORSTATUS
 _CSHARPACKMSG_REGION.fields_by_name['points'].message_type = _CSHARPACKMSG_POINT
 _CSHARPACKMSG_REGION.fields_by_name['holes'].message_type = _CSHARPACKMSG_POINT
 _CSHARPACKMSG_MAP.fields_by_name['r'].message_type = _CSHARPACKMSG_REGION
 _CSHARPACKMSG_FACE.fields_by_name['p1'].message_type = _CSHARPACKMSG_POINT
 _CSHARPACKMSG_FACE.fields_by_name['p2'].message_type = _CSHARPACKMSG_POINT
 _CSHARPACKMSG_EXTERNALFACES.fields_by_name['faces'].message_type = _CSHARPACKMSG_FACE
+_CSHARPACKMSG.fields_by_name['actuator'].message_type = _CSHARPACKMSG_ACTUATOR
 _CSHARPACKMSG.fields_by_name['s1'].message_type = _CSHARPACKMSG_SENSOR
 _CSHARPACKMSG.fields_by_name['s2'].message_type = _CSHARPACKMSG_SENSOR
 _CSHARPACKMSG.fields_by_name['s3'].message_type = _CSHARPACKMSG_SENSOR
@@ -345,6 +445,10 @@ class CSharpAckMsg(message.Message):
   class Sensor(message.Message):
     __metaclass__ = reflection.GeneratedProtocolMessageType
     DESCRIPTOR = _CSHARPACKMSG_SENSOR
+  
+  class Actuator(message.Message):
+    __metaclass__ = reflection.GeneratedProtocolMessageType
+    DESCRIPTOR = _CSHARPACKMSG_ACTUATOR
   
   class Point(message.Message):
     __metaclass__ = reflection.GeneratedProtocolMessageType
