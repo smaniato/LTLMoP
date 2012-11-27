@@ -1213,17 +1213,18 @@ class DrawingFrame(wx.Frame):
     def doMakeBoundary(self, event):
         if self.rfi.indexOfRegionWithName("boundary") != -1:
             wx.MessageBox("Boundary already exists.", "Error", 
-                           style = wx.OK | wx.ICON_ERROR)
+                       style = wx.OK | wx.ICON_ERROR)
             return
+        self.rfi.doMakeBoundary()
+        boundary_idx = self.rfi.indexOfRegionWithName("boundary")
+        old_bound = self.rfi.regions[boundary_idx]
+        new_bound = DrawableRegion(old_bound.type)
+        new_bound.setData(old_bound.getData())
+        self.rfi.regions[boundary_idx] = new_bound
+        del old_bound
+        self.needsAdjacencyRecalc = True
+        self.Refresh()
 
-        bound_poly = Polygon.Polygon()
-        for r in self.rfi.regions:
-            points = [(pt.x,pt.y) for pt in r.getPoints()]
-            bound_poly += Polygon.Polygon(points)
-
-        bound_poly = Polygon.Utils.prunePoints(Polygon.Polygon([(int(pt[0]),int(pt[1])) for pt in bound_poly[0]]))
-        self.createPoly([Point(*pt) for pt in bound_poly[0]])
-        self.selection[0].name = "boundary"
 
     def doEditRegion(self, event=None):
         """ Respond to the "Edit Region" menu command.

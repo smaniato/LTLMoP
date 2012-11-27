@@ -47,6 +47,7 @@ else:
             if isinstance(other, Point):
                 return Point(self.x+other.x, self.y+other.y)
             else:
+                print "type:",type(other)
                 raise TypeError("Points can only be added to other points")
 
         def __mul__(self, other):
@@ -478,6 +479,33 @@ class RegionFileInterface:
         self.filename = filename
 
         return True
+
+    def doMakeBoundary(self):
+        if self.indexOfRegionWithName("boundary") != -1:
+            self.regions.pop(self.indexOfRegionWithName("boundary"))
+
+        bound_poly = Polygon.Polygon()
+        for r in self.regions:
+            points = [(pt.x,pt.y) for pt in r.getPoints()]
+            bound_poly += Polygon.Polygon(points)
+
+        # create new region object
+        bound_region = Region()
+        count = 0
+        bound_region.pointArray = [Point(*p) for p in bound_poly[0]]
+        bound_region.name = "boundary"
+        bound_region.recalcBoundingBox()
+        self.regions.append(bound_region)
+        self.checkSubfaces(bound_region)
+        self.recalcAdjacency()
+        
+    def checkSubfaces(self, obj):
+        for other_obj in self.regions:
+            if other_obj is obj:
+                continue
+
+            self.splitSubfaces(obj, other_obj)
+            self.splitSubfaces(other_obj, obj)
    
 ############################################################
  
