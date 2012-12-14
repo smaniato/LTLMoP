@@ -11,18 +11,19 @@ from createJTLVinput import createLTLfile, createSMVfile
 from parseEnglishToLTL import writeSpec
 
 class SpecCompiler(object):
-    def __init__(self, spec_filename):
-        self.proj = project.Project()
-        self.proj.loadProject(spec_filename)
+    def __init__(self, spec_filename=None):
+        if spec_filename is not None:
+            self.proj = project.Project()
+            self.proj.loadProject(spec_filename)
 
-        # Check to make sure this project is complete
-        if self.proj.rfi is None:
-            print "ERROR: Please define regions before compiling."
-            return
-    
-        if self.proj.specText.strip() == "":
-            print "ERROR: Please write a specification before compiling."
-            return
+            # Check to make sure this project is complete
+            if self.proj.rfi is None:
+                print "ERROR: Please define regions before compiling."
+                return
+        
+            if self.proj.specText.strip() == "":
+                print "ERROR: Please write a specification before compiling."
+                return
 
         self.decomposedSpecText = None
 
@@ -73,7 +74,7 @@ class SpecCompiler(object):
     def _writeSMVFile(self):
         numRegions = len(self.parser.proj.rfi.regions)
         sensorList = self.proj.enabled_sensors
-        robotPropList = self.proj.enabled_actuators + self.proj.all_customs
+        robotPropList = self.proj.enabled_actuators + self.proj.all_customs + self.proj.internal_props
 
         createSMVfile(self.proj.getFilenamePrefix(), numRegions, sensorList, robotPropList)
 
@@ -88,7 +89,7 @@ class SpecCompiler(object):
         else:
             text = self.proj.specText
 
-        spec, traceback, failed = writeSpec(text, sensorList, regionList, robotPropList)
+        spec, traceback, failed, self.proj.internal_props = writeSpec(text, sensorList, regionList, robotPropList, self.parser.proj.regionMapping)
 
         # Abort compilation if there were any errors
         if failed:
@@ -96,7 +97,7 @@ class SpecCompiler(object):
 
         adjData = self.parser.proj.rfi.transitions
 
-        createLTLfile(self.proj.getFilenamePrefix(), sensorList, robotPropList, adjData, spec)
+        createLTLfile(self.proj.getFilenamePrefix(), sensorList, robotPropList + self.proj.internal_props, adjData, spec)
 
         return traceback
         
@@ -267,11 +268,8 @@ class SpecCompiler(object):
         return (realizable, realizableFS, output)
 
     def compile(self, with_safety_aut=False):
-        print "--> Decomposing..."
         self._decompose()
-        print "--> Writing LTL file..."
         tb = self._writeLTLFile()
-        print "--> Writing SMV file..."
         self._writeSMVFile()
 
         if tb is None:
@@ -279,6 +277,5 @@ class SpecCompiler(object):
             return 
 
         #self._checkForEmptyGaits()
-        print "--> Synthesizing..."
         return self._synthesize(with_safety_aut)
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 =================================================
-CSharpRobotInit.py - iRobotCreate Initialization Handler
+CSharpRobotInit.py - CSharpRobot Initialization Handler
 =================================================
 """
 
@@ -12,7 +12,9 @@ from threading import Thread, Lock, Event
 import threading, subprocess, os
 from numpy import matrix
 import ltlmopMsg_pb2
-import CSharpAckMsg_pb2
+import sys
+from google.protobuf.message import DecodeError
+
 
 
 class initHandler:
@@ -22,7 +24,7 @@ class initHandler:
         robotType (int): robot type to be used PIONEER = 1, SEGWAY = 2 (default=1)
         IPAddress (string): ip of the robot (default=10.0.0.86)
         commPort (int): port on the robot for communcation between CSharp and LTLMoP (default=7400)
-        buffer (int): size of the port buffer (default=1024)
+        buffer (int): size of the port buffer for receiving TCP messages from C# (default=1048576)
         """
         try:
             # Create proxies to access modules
@@ -42,7 +44,7 @@ class initHandler:
 class _CSharpCommunicator:
 
     # Constructor
-    def __init__(self,proj,robotType,IPAddress,commPort,buffer):
+    def __init__(self,proj,robotType,IPAddress,commPort,mybuffer):
         """
         Open sockets for communication.
         """
@@ -50,7 +52,7 @@ class _CSharpCommunicator:
         # Communication parameters
         self.IPAddress = IPAddress
         self.commPort = commPort
-        self.buffer = buffer
+        self.buffer = mybuffer
     
         self.proj = proj
         # Communication parameters
@@ -64,24 +66,12 @@ class _CSharpCommunicator:
         self.LIDAR = []
         self.BUSY_EXPLORE = False
         
-        
-
-        
     def start(self):
         """
         Open sockets for communication.
          """
         import regions
-        #print "#################"
-        #r = regions.Region()
-        #r.name = "r1"
-        #r.pointArray.append(regions.Point(0,0))
-        #r.pointArray.append(regions.Point(1,0))
-        #r.pointArray.append(regions.Point(1,1))
-        #r.pointArray.append(regions.Point(0,1))
-        #r.recalcBoundingBox()
-        #print "==================="
-        # test connection to the beagle board/Create, similar to CreateBeagleInit.m
+        # establishes connection between LTLMoP and C#
         print 'Connecting to CSharp...'
         self.TCPSock.connect(self.addFrom)
         print 'Done.'
@@ -90,11 +80,9 @@ class _CSharpCommunicator:
         ltlmop_msg.robot = self.RobotType
         self.responseStr = self.sendMessage(ltlmop_msg)
         time.sleep(1)
+        # if we get a parsable acknowledgement, we are good to go!
         print "CSharp Ack: ",self.responseStr.id
         self.responseStr = ""
-        
-
-
 
     def stop(self):
         """
@@ -131,13 +119,25 @@ class _CSharpCommunicator:
 
         message (ltlmopMsg_pb2.PythonRequestMsg object): protobuff object to be sent
         """
-        temp_serialized = message.SerializeToString()
-        sent_str = pack('!I',len(temp_serialized))+temp_serialized
-        self.TCPSock.send(sent_str)
-        data_length = self.TCPSock.recv(self.buffer)
-        response = self.TCPSock.recv(self.buffer)
-        
-        return self.parseResponse(response)
+        success = False
+        message.ResendRequest = False
+        result = ""
+        numOfAttempts = 0
+        while ((not success) and (numOfAttempts<20)):
+            numOfAttempts = numOfAttempts +1
+            try:
+                temp_serialized = message.SerializeToString()
+                sent_str = pack('!I',len(temp_serialized))+temp_serialized
+                self.TCPSock.send(sent_str)
+                data_length = self.TCPSock.recv(self.buffer)
+                response = self.TCPSock.recv(self.buffer)
+                result = self.parseResponse(response)
+                success = True
+            except:
+                message.ResendRequest = True
+                print 'GOT ERROR DOING IT AGAIN!!!!',message.id
+        return result
+            
     
     def parseResponse(self,encryptedMsg):
         """
@@ -146,33 +146,24 @@ class _CSharpCommunicator:
 
         encryptedMsg: serialized message to be parsed
         """
-        csharp_response = CSharpAckMsg_pb2.CSharpAckMsg()
+        csharp_response = ltlmopMsg_pb2.PythonRequestMsg()
         
         if len(encryptedMsg)>0:
             return csharp_response.FromString(encryptedMsg)
         else:
             return csharp_response
     def updateSensorStatus(self,msg):
-        
-        if (msg.s1 is not None and len(msg.s1.data)>0):
-            # we have lidar update
-            self.LIDAR = msg.s1.data
-        else:
-            self.LIDAR = []
-            
-
-        if (msg.s2 is not None and len(msg.s2.data)>0):
-            # we have ARTAG
-            self.ARTAG = msg.s2.data
-        else:
-            self.ARTAG = []
-
-        if (msg.actuator is not None and msg.actuator.actuatorType!=CSharpAckMsg_pb2.CSharpAckMsg.NOACT):
-            self.BUSY_EXPLORE = msg.actuator.status==CSharpAckMsg_pb2.CSharpAckMsg.RESP_BUSY
-        else:
-            self.BUSY_EXPLORE = False
-        #print 'Updating sensors',(self.ARTAG,self.LIDAR)
-
+        self.LIDAR = []
+        self.ARTAG = []
+        self.BUSY_EXPLORE = False
+        for s in msg.sensors:
+            if (s.type==ltlmopMsg_pb2.PythonRequestMsg.LIDAR):
+                # we have lidar update
+                self.LIDAR = s.data
+            if (s.type==ltlmopMsg_pb2.PythonRequestMsg.ARTAG):
+                self.ARTAG = s.data # this is all the ARTag IDs we got
+        self.BUSY_EXPLORE = msg.actuator.status==ltlmopMsg_pb2.PythonRequestMsg.RESP_BUSY;
+               
     def getARTAG(self):
         result = self.ARTAG;
         return self.ARTAG

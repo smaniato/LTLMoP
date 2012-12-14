@@ -9,8 +9,7 @@
 import re
 import copy
 import numpy
-
-#nextify = lambda x: " next(%s) " % x
+import functools
 
 def nextify(p):
     # Recursive function for aggressively applying the next operator
@@ -31,7 +30,7 @@ def nextify(p):
     else:
         return " next(%s) " % p
 
-def writeSpec(text, sensorList, regionList, robotPropList):
+def writeSpec(text, sensorList, regionList, robotPropList, regionMapping):
     ''' This function creates the Spec dictionary that contains the parsed LTL
         subformulas. It takes the text that contains the structured English,
         the list of sensor propositions, the list containing
@@ -52,6 +51,11 @@ def writeSpec(text, sensorList, regionList, robotPropList):
         text = re.sub("\\b"+prop+"\\b", "s." + prop, text)
         robotPropList[i] = "s." + robotPropList[i]
 
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # HACK: THIS IS NOT REALLY A ROBOT PROP :(
+    robotPropList += ["FALSE"]
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
     # initializing the dictionary
     spec = {}
     spec['EnvInit']= ''
@@ -70,9 +74,6 @@ def writeSpec(text, sensorList, regionList, robotPropList):
     linemap['SysGoals']= []
 
     RegionGroups = {}
-
-    # List of all robot prpositions
-    allRobotProp = regionList + robotPropList
 
     # Define the number of bits needed to encode the regions
     numBits = int(numpy.ceil(numpy.log2(len(regionList))))
@@ -98,15 +99,33 @@ def writeSpec(text, sensorList, regionList, robotPropList):
     IfThenRE = re.compile('if (?P<cond>.+) then (?P<req>.+)',re.IGNORECASE)
     UnlessRE = re.compile('(?P<req>.+) unless (?P<cond>.+)',re.IGNORECASE)
     IffRE = re.compile('(?P<req>.+) if and only if (?P<cond>.+)',re.IGNORECASE)
-    CommentRE = re.compile('^\s*#',re.IGNORECASE)
+    CommentRE = re.compile('^\s*#.*?\n',re.IGNORECASE|re.MULTILINE)
     LivenessRE = re.compile('^\s*(go to|visit|infinitely often do|infinitely often sense|infinitely often)',re.IGNORECASE)
     SafetyRE = re.compile('^\s*(always|always do |do|always sense|sense)',re.IGNORECASE)
     StayRE = re.compile('(stay there|stay)',re.IGNORECASE)
+    AtLeastOnceRE = re.compile('(at least once)',re.IGNORECASE)
     EventRE = re.compile('(?P<prop>[\w\.]+) is set on (?P<setEvent>.+) and reset on (?P<resetEvent>.+)',re.IGNORECASE)
     ToggleRE = re.compile('(?P<prop>[\w\.]+) is toggled (when|on) (?P<toggleEvent>.+)',re.IGNORECASE)
     RegionGroupingRE = re.compile('group (?P<groupName>[\w]+) (is|are) (?P<regions>.+)',re.IGNORECASE)
-    QuantifierRE = re.compile('\\b(?P<quantifier>all|any)\s+(?P<groupName>\w+)',re.IGNORECASE)
+    QuantifierRE = re.compile('(?P<quantifier>all|any)\s+(?P<groupName>\w+)',re.IGNORECASE)
 
+    # Remove all comment lines
+    text = CommentRE.sub("\n", text)
+
+    # Go through and replace group editing operations with special propositions
+    internal_props = []
+    EditGroupRE = re.compile('(?P<operation>add to|remove from)\s+(?P<groupName>\w+)', re.IGNORECASE)
+    def create_edit_prop(internal_props, m):
+        prop_name = "_"+m.group('operation').replace(" ", "_")+ "_" + m.group('groupName')
+        if prop_name not in internal_props:
+            internal_props.append(prop_name)
+        return "do s." + prop_name
+    text = EditGroupRE.sub(functools.partial(create_edit_prop, internal_props), text)
+
+    robotPropList += map(lambda p: "s."+p, internal_props)
+
+    # List of all robot propositions
+    allRobotProp = regionList + robotPropList
 
     # Creating the 'Stay' formula - it is a constant formula given the number of bits.
     StayFormula = createStayFormula(numBits)
@@ -341,6 +360,68 @@ def writeSpec(text, sensorList, regionList, robotPropList):
 
                     spec[CondFormulaInfo['type']] = spec[CondFormulaInfo['type']] + CondFormulaInfo['formula']
                     linemap[CondFormulaInfo['type']].append(lineInd)
+                # check for "at least once" condition
+                elif AtLeastOnceRE.search(Requirement):
+                    # remove the 'at least once'      
+                    Requirement = Requirement.replace(' at least once','')
+
+                    # parse the liveness requirement
+                    ReqFormulaInfo = parseLiveness(Requirement,sensorList,allRobotProp,lineInd)
+                    if ReqFormulaInfo['formula'] == '': failed = True
+
+                    # If not SysGoals, then it is an error
+                    if not ReqFormulaInfo['type']=='SysGoals':
+                        print 'ERROR(15): Could not parse the sentence in line '+ str(lineInd)+' :'
+                        print line
+                        print 'because the requirement is not system liveness'
+                        failed = True
+                        continue
+
+                    if CondType == "IFF":
+                        print 'ERROR(15): Could not parse the sentence in line '+ str(lineInd)+' :'
+                        print line
+                        print 'because IFF cannot be used with "at least once"'
+                        failed = True
+                        continue
+
+                    ### example ###
+                    # "if s then visit r1 and a at least once"
+                    # ... becomes ...
+                    # []<>(s->m_r1_a)
+                    # [](next(m_r1_a) <-> (m_r1_a | (next(r1) & next(a))))
+                    
+                    regCond = ReqFormulaInfo['formula'].replace('\t\t\t []<>','')
+                    regCond = regCond.replace('& \n','')
+
+                    if QuantifierFlag == "ANY":
+                        print "not implemented yet"
+                        failed = True
+                    elif QuantifierFlag == "ALL":
+                        iterate_over = RegionGroups[quant_group]
+                    else:
+                        iterate_over = ["total hack"]
+
+                    memPropNames = []
+                    for r in iterate_over:
+                        # (INELEGANT/HACK) Figure out which undecomposed region name `r` corresponds to, so that memory props can persist correctly even after re-decomposition
+                        for real, decomp in regionMapping.iteritems():
+                            if r == "("+' | '.join(decomp)+")":
+                                break
+
+                        tmp_req = regCond.replace("next(QUANTIFIER_PLACEHOLDER)", nextify(r))
+                        tmp_req = tmp_req.replace("QUANTIFIER_PLACEHOLDER", r)
+                        
+                        internal_props.append("m" + re.sub("(e|s)\.", "", re.sub("\s+","_",tmp_req.replace(r,real).replace("&","").replace("(","").replace(")",""))).rstrip("_"))
+                        memPropNames.append("s."+internal_props[-1])
+
+                        condStayFormula = {}
+                        condStayFormula['formula'] = '\t\t\t [](next({0}) <-> ({0} | ({1}))) & \n'.format(memPropNames[-1], nextify(tmp_req))
+                        condStayFormula['type'] = 'SysTrans'
+
+                        spec[condStayFormula['type']] = spec[condStayFormula['type']] + condStayFormula['formula']
+                        linemap[condStayFormula['type']].append(lineInd)
+
+                    ReqFormulaInfo['formula'] = '\t\t\t []<>(' + ' & '.join(memPropNames) + ') & \n'
                 else:
                     # parse requirement normally
                     ReqFormulaInfo = parseLiveness(Requirement,sensorList,allRobotProp,lineInd)
@@ -554,30 +635,6 @@ def writeSpec(text, sensorList, regionList, robotPropList):
             print ''
             failed = True
 
-        ## Resolve all the quantifiers
-        #if QuantifierFlag is not None:
-        #    for f_type in ['EnvInit', 'SysInit', 'EnvTrans', 'SysTrans', 'EnvGoals', 'SysGoals']:
-        #        for i, f in enumerate(spec[f_type]):
-        #            print "!!" + f
-        #            if "QUANTIFIER_PLACEHOLDER" not in f: continue
-        #            if f_type in ['EnvInit']:
-        #                print "ERROR: Quantifier not valid in environment initial conditions"
-        #            isCondition = "->" in f[f.find("QUANTIFIER_PLACEHOLDER"):]
-        #            if QuantifierFlag == "ANY":
-        #                spec[f_type][i] = f.replace("QUANTIFIER_PLACEHOLDER", or_string)
-        #            elif QuantifierFlag == "ALL":
-        #                if isCondition:
-        #                    spec[f_type][i] = f.replace("QUANTIFIER_PLACEHOLDER", and_string)
-        #                elif f_type in ["EnvTrans", "SysTrans"]:
-        #                    for r in RegionGroups[quant_group]:
-        #                        spec[f_type].append(f.replace("QUANTIFIER_PLACEHOLDER", r))
-        #                    spec[f_type][i] = ""
-        #                elif f_type in ["EnvGoals", "SysGoals"]:
-        #                    for r in RegionGroups[quant_group]:
-        #                        spec[f_type].append(f.replace("QUANTIFIER_PLACEHOLDER", r))
-        #                    spec[f_type][i] = ""
-        #    allRobotProp.remove("QUANTIFIER_PLACEHOLDER")
-      
         if QuantifierFlag is not None:
             allRobotProp.remove("QUANTIFIER_PLACEHOLDER")
 
@@ -633,7 +690,7 @@ def writeSpec(text, sensorList, regionList, robotPropList):
         print 'They should be removed from the proposition lists\n'
     
 
-    return spec,linemap,failed
+    return spec,linemap,failed,internal_props
 
 
 def parseInit(sentence,PropList,lineInd):
@@ -673,7 +730,10 @@ def parseInit(sentence,PropList,lineInd):
 
     # checking that all propositions are 'legal' (in the list of propositions)
     for prop in re.findall('([\w\.]+)',tempFormula):
-        if not prop in PropList:
+        # HACK: special treatment of memory props because of their poor persistence (FIXME and do this properly)
+        if prop.startswith("m_"):
+            tempFormula = tempFormula.replace(prop, "s."+prop)
+        elif prop not in PropList:
             print 'ERROR(1): Could not parse the sentence in line '+ str(lineInd)+' because ' + prop + ' is not recognized\n'
             return ''
     
@@ -699,6 +759,9 @@ def parseSafety(sentence,sensorList,allRobotProp,lineInd):
     
     tempFormula = sentence[:]
     PropList = sensorList + allRobotProp
+
+    # Ignore any extra 'do's
+    tempFormula = re.sub(r"\bdo\b", "", tempFormula, re.IGNORECASE)
     
     # Replace logic operations with TLV convention
     tempFormula = replaceLogicOp(tempFormula)
@@ -770,11 +833,12 @@ def parseLiveness(sentence,sensorList,allRobotProp,lineInd):
 
         if (prop in sensorList and formulaInfo['type'] == 'SysGoals') or \
            (prop in allRobotProp and formulaInfo['type'] == 'EnvGoals'):
-            print 'ERROR(5): Could not parse the sentence in line '+ str(lineInd)+' containing:'
-            print sentence
-            print 'because both environment and robot propositions are used \n'
-            formulaInfo['type'] = 'EnvGoals' # arbitrary
-            return formulaInfo
+            #print 'ERROR(5): Could not parse the sentence in line '+ str(lineInd)+' containing:'
+            #print sentence
+            #print 'because both environment and robot propositions are used \n'
+            #formulaInfo['type'] = 'EnvGoals' # arbitrary
+            #return formulaInfo
+            pass
 
         if prop in sensorList and formulaInfo['type'] == '':
             formulaInfo['type'] = 'EnvGoals'
@@ -1211,4 +1275,3 @@ def bitEncoding(numRegions,numBits):
     bitEncode['next'] = nextBitEnc
 
     return bitEncode
-

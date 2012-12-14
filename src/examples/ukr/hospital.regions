@@ -1,0 +1,70 @@
+# This is a region definition file for the LTLMoP toolkit.
+# Format details are described at the beginning of each section below.
+# Note that all values are separated by *tabs*.
+
+Background: # Relative path of background image file
+None
+
+CalibrationPoints: # Vertices to use for map calibration: (vertex_region_name, vertex_index)
+hall3	1
+
+Obstacles: # Names of regions to treat as obstacles
+
+Regions: # Stored as JSON string
+[
+    {
+        "name": "boundary", 
+        "color": [0, 0, 255], 
+        "holeList": [], 
+        "points": [[400, 200], [400, 100], [400, 0], [300, 0], [300, 100], [300, 200], [100, 200], [100, 160], [0, 160], [0, 300], [100, 300], [400, 300]], 
+        "position": [400, 111], 
+        "type": "poly", 
+        "size": [400, 300]
+    }, 
+    {
+        "name": "hall1", 
+        "color": [0, 255, 128], 
+        "holeList": [], 
+        "points": [[0, 0], [100, 0], [100, 40], [100, 140], [0, 140]], 
+        "position": [400, 271], 
+        "type": "poly", 
+        "size": [100, 140]
+    }, 
+    {
+        "name": "hall2", 
+        "color": [255, 0, 0], 
+        "holeList": [], 
+        "points": [[0, 0], [200, 0], [300, 0], [300, 100], [0, 100]], 
+        "position": [500, 311], 
+        "type": "poly", 
+        "size": [300, 100]
+    }, 
+    {
+        "name": "office", 
+        "color": [255, 255, 128], 
+        "holeList": [], 
+        "points": [[0, 0], [100, 0], [100, 100], [0, 100]], 
+        "position": [700, 111], 
+        "type": "poly", 
+        "size": [100, 100]
+    }, 
+    {
+        "name": "hall3", 
+        "color": [0, 100, 255], 
+        "holeList": [], 
+        "points": [[0, 0], [100, 0], [100, 100], [0, 100]], 
+        "position": [700, 211], 
+        "type": "poly", 
+        "size": [100, 100]
+    }
+]
+
+Transitions: # Region 1 Name, Region 2 Name, Bidirectional transition faces (face1_x1, face1_y1, face1_x2, face1_y2, face2_x1, ...)
+boundary	hall1	400	271	400	411	400	271	500	271	500	271	500	311	400	411	500	411
+boundary	hall2	800	311	800	411	500	411	800	411	500	311	700	311
+boundary	office	800	111	800	211	700	111	800	111	700	111	700	211
+boundary	hall3	800	211	800	311	700	211	700	311
+hall1	hall2	500	311	500	411
+hall2	hall3	700	311	800	311
+office	hall3	700	211	800	211
+

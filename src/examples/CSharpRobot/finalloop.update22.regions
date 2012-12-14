@@ -1,0 +1,70 @@
+# This is a region definition file for the LTLMoP toolkit.
+# Format details are described at the beginning of each section below.
+# Note that all values are separated by *tabs*.
+
+Background: # Relative path of background image file
+None
+
+CalibrationPoints: # Vertices to use for map calibration: (vertex_region_name, vertex_index)
+
+Obstacles: # Names of regions to treat as obstacles
+
+Regions: # Stored as JSON string
+[
+    {
+        "name": "r4", 
+        "color": [0, 255, 0], 
+        "holeList": [], 
+        "points": [[0.0, 224.0], [2.0, 106.0], [357.0, 0.0], [223.0, 224.0]], 
+        "position": [343.0, -141.0], 
+        "type": "poly", 
+        "size": [357.0, 224.0]
+    }, 
+    {
+        "name": "r3", 
+        "color": [255, 0, 0], 
+        "holeList": [], 
+        "points": [[0.0, 0.0], [270.0, 0.0], [271.0, 0.0], [271.0, 212.0], [270.0, 212.0], [0.0, 212.0]], 
+        "position": [73.0, 249.0], 
+        "type": "poly", 
+        "size": [271.0, 212.0]
+    }, 
+    {
+        "name": "r2", 
+        "color": [255, 255, 0], 
+        "holeList": [], 
+        "points": [[0.0, 0.0], [223.0, 0.0], [257.0, 0.0], [257.0, 166.0], [1.0, 166.0], [0.0, 166.0]], 
+        "position": [343.0, 83.0], 
+        "type": "poly", 
+        "size": [257.0, 166.0]
+    }, 
+    {
+        "name": "r1", 
+        "color": [255, 0, 255], 
+        "holeList": [], 
+        "points": [[0.0, 0.0], [270.0, 0.0], [270.0, 166.0], [0.0, 166.0]], 
+        "position": [73.0, 83.0], 
+        "type": "poly", 
+        "size": [270.0, 166.0]
+    }, 
+    {
+        "name": "boundary", 
+        "color": [255, 0, 255], 
+        "holeList": [], 
+        "points": [[271.0, 390.0], [527.0, 390.0], [527.0, 224.0], [493.0, 224.0], [627.0, 0.0], [272.0, 106.0], [270.0, 224.0], [0.0, 224.0], [0.0, 390.0], [0.0, 602.0], [270.0, 602.0], [271.0, 602.0]], 
+        "position": [73.0, -141.0], 
+        "type": "poly", 
+        "size": [627.0, 602.0]
+    }
+]
+
+Transitions: # Region 1 Name, Region 2 Name, Bidirectional transition faces (face1_x1, face1_y1, face1_x2, face1_y2, face2_x1, ...)
+r4	r2	566.0	83.0	343.0	83.0
+r4	boundary	345.0	-35.0	700.0	-141.0	566.0	83.0	700.0	-141.0	343.0	83.0	345.0	-35.0
+r3	r2	344.0	249.0	343.0	249.0
+r3	r1	73.0	249.0	343.0	249.0
+r3	boundary	73.0	461.0	73.0	249.0	343.0	461.0	344.0	461.0	344.0	249.0	344.0	461.0	73.0	461.0	343.0	461.0
+r2	r1	343.0	83.0	343.0	249.0
+r2	boundary	566.0	83.0	600.0	83.0	600.0	249.0	344.0	249.0	600.0	249.0	600.0	83.0
+r1	boundary	343.0	83.0	73.0	83.0	73.0	83.0	73.0	249.0
+

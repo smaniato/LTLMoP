@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 =========================================
-iRobotCreateActuator.py - Actuator Handler for iRobotCreate
+CSharpRobotActuator.py - Actuator Handler for CSharpRobots: Pioneer and Segway
 =========================================
 """
 
@@ -11,7 +11,6 @@ from threading import Thread, Event
 from numpy import *
 from scipy.linalg import norm
 from ltlmopMsg_pb2 import *
-from CSharpAckMsg_pb2 import *
 
 
 class actuatorHandler:
@@ -22,7 +21,7 @@ class actuatorHandler:
         self.drive_handler = proj.h_instance['drive']
         self.proj = proj
 
-    def explore(self,actuatorVal,initial=False):
+    def requestExplore(self,actuatorVal,initial=False):
         """
         tells C# interface that it needs to explore new region
         """
@@ -32,10 +31,10 @@ class actuatorHandler:
                 ltlmop_msg = PythonRequestMsg()
                 ltlmop_msg.id=3
                 ltlmop_msg.sensor = PythonRequestMsg.NOSENSOR
-                #tlmop_msg.actuator = ltlmop_msg.Actuator() # needs to be changed!
                 ltlmop_msg.actuator.actuatorType = PythonRequestMsg.EXPLORE
                 ltlmop_msg.actuator.status = PythonRequestMsg.REQ_DO
                 response = self.CSharpCommunicator.sendMessage(ltlmop_msg)
+
         
 
                

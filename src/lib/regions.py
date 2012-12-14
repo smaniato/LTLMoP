@@ -50,12 +50,6 @@ class Point(object):
 
     def __eq__(self, other):
         EPS = 1e-6
-        def __add__(self, other):
-            if isinstance(other, Point):
-                return Point(self.x+other.x, self.y+other.y)
-            else:
-                print "type:",type(other)
-                raise TypeError("Points can only be added to other points")
 
         return abs(self.x - other[0]) < EPS \
            and abs(self.y - other[1]) < EPS
@@ -277,18 +271,7 @@ class RegionFileInterface(object):
 
         for obj in self.regions:
             for face in obj.getFaces(includeHole=True):                
-	        inTransFace = False
-	        for transFace in transitionFaces.keys():
-		    if transFace[0].x == face[0].x and transFace[0].y == face[0].y and transFace[1].x == face[1].x and transFace[1].y == face[1].y:
-		        inTransFace = True
-			face = transFace
-			break
-		    if transFace[0].x == face[1].x and transFace[0].y == face[1].y and transFace[1].x == face[0].x and transFace[1].y == face[0].y:
-		        inTransFace = True
-			face = transFace
-			break
-	           
-                if not inTransFace: transitionFaces[face] = []
+                if face not in transitionFaces: transitionFaces[face] = []
                 ignore = False
                 for other_obj in transitionFaces[face]:
                     # Prevent detection of adjoining faces when Duplicate 
@@ -296,7 +279,8 @@ class RegionFileInterface(object):
                     if other_obj.position == obj.position and \
                        [x for x in other_obj.getPoints()] == [x for x in obj.getPoints()]:
                         ignore = True
-    
+                if obj.name.lower()=="boundary":
+                    ignore = True
                 if not ignore:
                     transitionFaces[face].append(obj)
 
@@ -342,6 +326,9 @@ class RegionFileInterface(object):
 
         allFaces = [face for obj in self.regions for face in obj.getFaces(includeHole=True)]
         internalFaces = self.recalcAdjacency()
+        #print >>sys.__stderr__,allFaces
+        #print >>sys.__stderr__,internalFaces
+        print "external length",(len(set(allFaces)),len(set(internalFaces)))
         return list(set(allFaces) - set(internalFaces))
 
     def writeFile(self, filename):

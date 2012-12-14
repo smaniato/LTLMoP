@@ -5,7 +5,7 @@ Type: # Robot type
 CSharpRobot
 
 InitHandler: # Robot default init handler with default argument values
-CSharpRobotInit(robotType = 1,IPAddress = '10.0.0.86',commPort=7400,buffer=1024)
+CSharpRobotInit(robotType = 1,IPAddress = '10.0.0.86',commPort=7400,buffer=1048576)
 
 DriveHandler:
 differentialDrive()

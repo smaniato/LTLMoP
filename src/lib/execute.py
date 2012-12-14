@@ -93,7 +93,6 @@ class LTLMoPExecutor(object):
         print "Loading automaton..."
 
         aut = fsa.Automaton(self.proj)
-
         success = aut.loadFile(filename, self.proj.enabled_sensors, self.proj.enabled_actuators, self.proj.all_customs + self.proj.internal_props)
 
         return aut if success else None
@@ -151,6 +150,7 @@ class LTLMoPExecutor(object):
         print "New automaton has been created."
 
         self.proj = self.next_proj
+        
 
         print "Reinitializing execution..."
 
@@ -190,8 +190,10 @@ class LTLMoPExecutor(object):
         RegionGroupingRE = re.compile('^group\s+%s\s+(is|are)\s+(?P<regions>.+)\n' % group_name, re.IGNORECASE|re.MULTILINE)
         def gen_replacement_text(group_name, operand, m):
             regions = set(re.split(r"\s*,\s*", m.group('regions')))
-
+            
             regions -= set(["empty"])
+            #regions = set()
+            #print "ANNIE LOOK AT ME!!",m.group('regions'),list(regions),group_name,m
 
             if operator == "add":
                 regions = regions | operand
@@ -232,6 +234,10 @@ class LTLMoPExecutor(object):
     def checkForInternalFlags(self):
         for k in sorted(self.aut.current_outputs.keys()): # sort ensures group updates happen before resynthesis when triggered in same state
             # Only trigger on rising edges
+            # ADDED BY ANNIE: KEY ERROR, ADDED CHECK FOR NONE
+            #if(self.prev_outputs.get(k) is None or self.aut.current_outputs.get(k) is None):
+            #    return
+            
             if not (int(self.prev_outputs[k]) == 0 and int(self.aut.current_outputs[k]) == 1):
                 continue
 
@@ -350,7 +356,7 @@ class LTLMoPExecutor(object):
         self.proj.rfiold = self.proj.rfi  # Save the undecomposed regions
         self.proj.rfi = self.proj.loadRegionFile(decomposed=True)
         self.proj.hsub.proj = self.proj  # FIXME: this is kind of ridiculous...
-
+        
         # Import the relevant handlers
         if firstRun:
             print "Importing handler functions..."
@@ -358,7 +364,11 @@ class LTLMoPExecutor(object):
         else:
             print "Reloading motion control handler..."
             self.proj.importHandlers(['motionControl'])
-
+        #self.proj.h_instance['sensor']['Pioneer'].proj = self.proj
+        #self.proj.h_instance['sensor']['Pioneer'].rfi = self.proj.rfi
+        #print 'pause'
+        #raw_input()
+        
         # Load automaton file
         new_aut = self.loadAutFile(aut_file)
 
@@ -389,10 +399,11 @@ class LTLMoPExecutor(object):
                     init_outputs.append(prop)
 
             init_state = new_aut.chooseInitialState(init_region, init_outputs)
+            new_aut.updateOutputs()
         else:
             # Figure out our initially true outputs
             init_outputs = [k for k,v in self.aut.current_outputs.iteritems() if int(v) == 1]
-
+            
             init_state = new_aut.chooseInitialState(init_region, init_outputs)#, goal=prev_z)
 
         if init_state is None:

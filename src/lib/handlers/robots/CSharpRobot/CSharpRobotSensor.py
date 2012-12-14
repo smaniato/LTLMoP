@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 """
 =====================================
-iRobotCreateSensor.py - Sensor Handler for iRobotCreate
+CSharpRobotSensor.py - Sensor Handler for CSharpRobots: Pioneer and Segway
 =====================================
 """
 
 import threading, subprocess, os, time, socket
 from ltlmopMsg_pb2 import *
-from CSharpAckMsg_pb2 import *
 from struct import pack,unpack
 from numpy import *
 from scipy.linalg import norm
@@ -26,7 +25,12 @@ class sensorHandler:
         self.rfi = proj.loadRegionFile()
 
         # sensor variables
-        self.exploreDone = False
+        self.exploring = False
+        self.gotNewRegion = False
+        self.mapThread = _MapUpdateThread(self.proj)
+        self.mapThread.daemon = True
+        self.oldExternalFaces = []
+
 
     ###################################
     ### Available sensor functions: ###
@@ -38,7 +42,7 @@ class sensorHandler:
         """
         if initial:
             ltlmop_msg = PythonRequestMsg()
-            ltlmop_msg.id=3
+            ltlmop_msg.id=4
             ltlmop_msg.sensor=PythonRequestMsg.ARTAG
             response = self.CSharpCommunicator.sendMessage(ltlmop_msg)
             #print 'got sensor init resp ',response
@@ -79,19 +83,38 @@ class sensorHandler:
         if initial:
             return True
         else:
-            #ltlmop_msg = PythonRequestMsg()
-            #ltlmop_msg.id=3
-            #ltlmop_msg.sensor = PythonRequestMsg.NOSENSOR
-            #ltlmop_msg.actuator = ltlmop_msg.Actuator() # needs to be changed!
-            #ltlmop_msg.actuator.actuatorType = PythonRequestMsg.EXPLORE
-            #ltlmop_msg.actuator.status = PythonRequestMsg.REQ_UPDATE
-            #print 'dudu'
-            #response = self.CSharpCommunicator.sendMessage(ltlmop_msg)
-            #print 'actuator status',response.actuator.status
-            return self.CSharpCommunicator.getExploreBusy()
+            if self.CSharpCommunicator.getExploreBusy(): #we don't get velocity updates so gotta do this ourselves
+                ltlmop_msg = PythonRequestMsg()
+                ltlmop_msg.id=5
+                ltlmop_msg.sensor = PythonRequestMsg.NOSENSOR
+                ltlmop_msg.actuator.actuatorType = PythonRequestMsg.EXPLORE
+                ltlmop_msg.actuator.status = PythonRequestMsg.REQ_UPDATE
+                msg = self.CSharpCommunicator.sendMessage(ltlmop_msg)
+                if (msg.actuator is not None and msg.actuator.actuatorType!=PythonRequestMsg.NOACT):
+                    self.BUSY_EXPLORE = msg.actuator.status==PythonRequestMsg.RESP_BUSY
+
+                if(self.BUSY_EXPLORE and not self.exploring):
+                    self.exploring = True
+                return self.BUSY_EXPLORE
+            else:
+                return False
+    def doneExploring(self,initial=True):
+        """
+        returns true if LTLMoP senses that CSharp has just finished exploring
+        """
+        if initial:
+            return True
+        else:
+            if (self.exploring and (not self.CSharpCommunicator.getExploreBusy() or not self.BUSY_EXPLORE)):
+                self.exploring = False
+                return True
+            elif (self.exploring):
+                return False
+            else:
+                return False
         
         
-    def open_doorway(self,initial=False):
+    def open_doorway(self,proj,initial=False):
         """
         returns whether a new LIDAR has discovered a new doorway that was
         not included in the original map
@@ -99,23 +122,31 @@ class sensorHandler:
         if initial:
             # init LIDAR at the CSharp end
             ltlmop_msg = PythonRequestMsg()
-            ltlmop_msg.id=3
+            ltlmop_msg.id=6
             ltlmop_msg.sensor=PythonRequestMsg.OPENDOOR
-            # for now assume each region is a face
-            self.exposedFaces = self.proj.rfi.getExternalFaces() # a list of faces that are not connected to aother regions in the map
-            print 'exposedFaces:',len(self.exposedFaces)
-            for face in self.exposedFaces:
-                #new_p = ltlmop_msg.Point()
+            # update the proj with the most current rfi
+            # this is needed after resynthesis, otherwise the rfi is still the old one
+            self.rfi = proj.rfiold
+            # make sure we only send the newer rfi when we have finished exploring the region
+            if (self.mapThread.mapType==PythonRequestMsg.NEWREGIONFOUND and len(self.oldExternalFaces)>0):
+                self.exposedFaces = self.oldExternalFaces
+            else:
+                self.exposedFaces = self.rfi.getExternalFaces() # a list of faces that are not connected to aother regions in the map
+                if self.exposedFaces is None:
+                    self.exposedFaces = proj.rfi.getExternalFaces()
+                self.oldExternalFaces = self.exposedFaces
+            print 'exposedFaces:',len(self.exposedFaces)# see how many external faces we have generated
+            # get the points the external faces
+            for face_pta, face_ptb in self.exposedFaces:
                 new_f = ltlmop_msg.Face()
-                face_p1 = self.proj.coordmap_map2lab(face[0])
-                face_p2 = self.proj.coordmap_map2lab(face[1])
+                face_p1 = self.proj.coordmap_map2lab(face_pta)
+                face_p2 = self.proj.coordmap_map2lab(face_ptb)
                 new_f.p1.x = face_p1[0]
                 new_f.p1.y = face_p1[1]
-                #new_f.p1 = new_p # add first point
                 new_f.p2.x = face_p2[0]
                 new_f.p2.y = face_p2[1]
-                #new_f.p2 = new_p # add second point
                 ltlmop_msg.exfaces.faces.extend([new_f]) # add face to list
+            # get points in the current map
             for r in self.rfi.regions:
                 new_r = ltlmop_msg.Region()
                 points = map(self.proj.coordmap_map2lab,r.getPoints())
@@ -131,37 +162,60 @@ class sensorHandler:
                     new_h.y = h[1]
                     new_r.holes.extend([new_h])
                 new_r.name = r.name
-                #print 'holes size',len(new_r.holes)
-                ltlmop_msg.map.r.extend([new_r])
-            
-            response = self.CSharpCommunicator.sendMessage(ltlmop_msg)
+                print '*****',r.name
+                ltlmop_msg.map.r.extend([new_r])# add all the map/external faces to the message
+            ltlmop_msg.map.type = PythonRequestMsg.REGIONUPDATE             
             # start the map update thread
-            self.mapThread = _MapUpdateThread(self.proj)
-            self.mapThread.daemon = True
-            self.mapThread.start()
-            
-            print 'got sensor init resp '#,ltlmop_msg.map#,response
+            if (self.mapThread.notStarted):
+                self.mapThread.start()
+            # setup a sensor in case C# wants to know how we are doing
+            sensor = ltlmop_msg.Sensor()
+            sensor.type = PythonRequestMsg.OPENDOOR
+            ltlmop_msg.sensors.extend([sensor])
+            if self.mapThread.processing:
+                sensor.stat = 1
+            else:
+                sensor.stat = 0 # IDLE
+            response = self.CSharpCommunicator.sendMessage(ltlmop_msg)
+            print 'got sensor init resp '#we are able to receive a response!
             return True
         else:
             ltlmop_msg = PythonRequestMsg()
-            ltlmop_msg.id=3
+            ltlmop_msg.id=7
+            sensor = ltlmop_msg.Sensor()
+            sensor.type = PythonRequestMsg.OPENDOOR
+            if self.mapThread.processing:
+                sensor.stat = 1
+            else:
+                sensor.stat = 0 # IDLE
             ltlmop_msg.sensor=PythonRequestMsg.OPENDOOR
+            ltlmop_msg.sensors.extend([sensor])
             if self.mapThread.mapReady:
+                ltlmop_msg.id=77
                 # for now add the new region to ltlmsg and update C#
-                self.exposedFaces = self.mapThread.rfi.getExternalFaces() # a list of faces that are not connected to aother regions in the map
-                print 'exposedFaces:',len(self.exposedFaces)
-                for face in self.exposedFaces:
-                    #new_p = ltlmop_msg.Point()
+                # temporary regions should not be grown out of temporary regions
+                    # external faces unchanged until we are sure that his is the right map
+                if (self.mapThread.mapType==PythonRequestMsg.NEWREGIONFOUND):
+                    self.exposedFaces = self.proj.rfi.getExternalFaces()
+                else:
+                    self.exposedFaces = self.mapThread.rfi.getExternalFaces() # a list of faces that are not connected to aother regions in the map
+                    #if (len(self.exposedFaces)==0):
+                    #    self.mapThread.rfi.regions.pop(self.mapThread.rfi.indexOfRegionWithName("boundary"))
+                    #    self.exposedFaces = self.mapThread.rfi.getExternalFaces() # a list of faces that are not connected to aother regions in the map
+                    
+                    print 'NOT NEW REGION ONLY AN UPDATE!',len(self.proj.rfi.regions)#,len(self.mapThread.rfi)]
+                print 'exposedFacesB:',len(self.exposedFaces)
+                # get the most updated external face from the handler so we can let C# know
+                for face_pta, face_ptb in self.exposedFaces:
                     new_f = ltlmop_msg.Face()
-                    face_p1 = self.proj.coordmap_map2lab(face[0])
-                    face_p2 = self.proj.coordmap_map2lab(face[1])
+                    face_p1 = self.proj.coordmap_map2lab(face_pta)
+                    face_p2 = self.proj.coordmap_map2lab(face_ptb)
                     new_f.p1.x = face_p1[0]
                     new_f.p1.y = face_p1[1]
-                    #new_f.p1 = new_p # add first point
                     new_f.p2.x = face_p2[0]
                     new_f.p2.y = face_p2[1]
-                    #new_f.p2 = new_p # add second point
                     ltlmop_msg.exfaces.faces.extend([new_f]) # add face to list
+                # get the most updated list of map points and let C# know something has changed
                 for r in self.mapThread.rfi.regions:
                     new_r = ltlmop_msg.Region()
                     new_r.name = r.name
@@ -177,20 +231,27 @@ class sensorHandler:
                         new_h.x = h[0]
                         new_h.y = h[1]
                         new_r.holes.extend([new_h])
-                    
+                    # lets see what have we got here 
                     print 'name: ',r.name
                     ltlmop_msg.map.r.extend([new_r])
-                response = self.CSharpCommunicator.sendMessage(ltlmop_msg)
-                self.mapThread.mapReady = False
-                return True
-            else:
-                response = self.CSharpCommunicator.sendMessage(ltlmop_msg)
-                if len(response.map.r)==0:
-                    print "region received is empty!"
-                    
+                ltlmop_msg.map.type = PythonRequestMsg.REGIONUPDATE
+                response = self.CSharpCommunicator.sendMessage(ltlmop_msg)#off we go!
+                self.mapThread.mapReady = False #now we are ready to get a new map!
+                # need to make sure that we only trigger when C# has found temporary region and
+                # not just finishing up exploration
+                if (self.mapThread.mapType==PythonRequestMsg.NEWREGIONFOUND):
+                    return True
                 else:
-                    print "NEW MAP RECEIVED"
-                    self.mapThread.updateMap(response.map.r)
+                    return False
+            else:
+                ltlmop_msg.id=75 # this is for when we don't have a newe map to send
+                response = self.CSharpCommunicator.sendMessage(ltlmop_msg)
+                # check to see if we are getting a map from C#
+                if len(response.map.r)!=0 and not self.mapThread.processing:
+                    # if so, let's keep the mapThread busy
+                    print "NEW MAP RECEIVED",response.map.type
+                    self.mapThread.updateMap(response.map)
+
                 return False
 
     def regionAdded(self, initial):
@@ -198,7 +259,6 @@ class sensorHandler:
 
         if initial:
             return
-
         if self.mapThread.regionAddedFlag.isSet():
             self.addedRegions = copy.deepcopy(self.mapThread.addedRegions)
             self.mapThread.regionAddedFlag.clear()
@@ -219,42 +279,42 @@ class sensorHandler:
         else:
             return False
 
+#this is a happy thread that will convert a pythonRequestMsg's map field into a region file that
+#LTLMoP can interpret! Thread is initiated at the start of open_doorway and map procesing is triggered
+#when the gotNewMap flag is set and we are not in the process of processing somthing else
 class _MapUpdateThread(threading.Thread):
     def __init__(self, proj, *args, **kwds):
-        self.map_basename = proj.getFilenamePrefix()
+        self.map_basename = proj.getFilenamePrefix().split('.')[0]
         self.project_root = proj.project_root
         self.regionList = set([r.name for r in proj.rfiold.regions])
         self.regionAddedFlag = threading.Event()
+        self.regionRemovedFlag = threading.Event()
         self.proj = proj
         self.coordmap_lab2map = proj.coordmap_lab2map
         self.gotNewMap = False
         self.new_map = []
-        self.rfi = []
+        self.rfi = proj.rfi
         self.mapReady = False;
+        self.mapType = 1;
+        self.processing = False;
+        self.notStarted = True
 
         super(_MapUpdateThread, self).__init__(*args, **kwds)
     def run(self):
         import regions
         print "running..."
+        self.notStarted = False
         map_number = 1
         data = []
         while True:
-            if self.gotNewMap:
+            if self.gotNewMap and not self.mapReady:
+                self.processing = True
                 print "GOTnEWmAP!@"
                 self.rfi = regions.RegionFileInterface(transitions=[])
 
                 self.rfi.regions = []
-                # first convert the map from CSharpAckMsg to a list of regions
+                # first convert the map from PythonRequestMsg to a list of regions
                 for reg in self.new_map:
-                    # convert each region into json
-                    #data{'name':reg.name,
-                    #     'color':(0,255,0),
-                    #     }
-                    #data['points'] = []
-                    #for p in reg.points: # add all the points of the region in lab coordinates
-                    #data['points'].append((p.x,p.y))
-                    #r = regions.Region()
-                    #r.setData(data)
                     # transform the points to map coordinates
                     # convert each region
                     r = regions.Region()
@@ -262,28 +322,17 @@ class _MapUpdateThread(threading.Thread):
                     r.pointArray = []
                     r.name = reg.name
                     count = 0
-                    #print 'name:',reg.name,len(reg.points),len(r.pointArray)
+                    print 'regions in new map:',r.name,len(reg.points)
                     for p in reg.points: # add all the points of the region in lab coordinates
-                        #print (p.x,p.y)
-                        #print 'transformed',self.coordmap_lab2map(regions.Point(p.x,p.y))
                         transformed_p = self.coordmap_lab2map(regions.Point(p.x,p.y))
-                        #print 'transformed:',(transformed_p),len(r.pointArray),count
                         r_pos = r.position
                         r.addPoint(regions.Point(round(transformed_p[0]-r_pos.x),round(transformed_p[1]-r_pos.y)),count)
-                        #r.addPoint(regions.Point(p.x,p.y),count)
                         count = count + 1
-                        #data['points'].append((p.x,p.y))
-                    #r.setData(data)
                     if (len(reg.points)>0):
-                        # transform the points to map coordinates
-                        #r.pointArray = [self.coordmap_lab2map(*p) for p in r.pointArray]
-                        
-                        #r.pointArray = [Point(*p) for p in r.pointArray]
-                        #r.recalcBoundingBox()
-                        #print 'points added:',len(r.pointArray)
-                        self.rfi.regions.append(r)
-                    #else:
-                    #    #print "i got an empty region for some reason!",reg
+                        print 'added2RFI:',r.name
+                        if (r.name!='boundary'):
+                            self.rfi.regions.append(r)
+                    
                 # recompute the boundary
                 self.rfi.doMakeBoundary()
 
@@ -297,36 +346,30 @@ class _MapUpdateThread(threading.Thread):
                 # Tell simGUI to update
                 print "REGIONS:" + reg_filename
 
+                #self.regionList = set([r.name for r in proj.rfiold.regions])
                 newRegionList = set([r.name for r in self.rfi.regions])
 
                 # Check for any substantive changes
                 self.addedRegions = newRegionList - self.regionList
                 self.removedRegions = self.regionList - newRegionList
+
+                
                 map_number += 1
                 self.gotNewMap = False
                 print "added: " + str(self.addedRegions)
                 self.mapReady = True
-                #for r in rfi.regions:
-                #    for r_old in self.proj.rfi.regions:
-                #        if not(r_old.name == r.name):
-                #            #print "NEW REGION:%d,%d,%d,%d"%(r.pointArray[0].x,r.pointArray[0].y,r.pointArray[1].x,r.pointArray[1].y)
-                #            print "new_r:%d,%d,%d,%d"%(r.pointArray[0].x,r.pointArray[0].y,r.pointArray[1].x,r.pointArray[1].y)
-                
-                #self.proj.rfi.regions = copy.deepcopy(rfi.regions)
-                
-                #compiler = SpecCompiler(self.proj.getFilenamePrefix() + ".spec")
-                #print "re-decompose region"
-                #compiler._decompose()
-                #self.proj = compiler.proj
-                #self.decomposedRFI = compiler.parser.proj.rfi
-                #compiler._writeSMVFile()
-                #print "done compiling :D"
+                if self.addedRegions:
+                    self.regionList = newRegionList # make sure we update the reference
+                    print "added: " + str(self.addedRegions)
+                    self.regionAddedFlag.set()
+                self.processing = False
 
 
     def updateMap(self, new_map):
-        # store the updated map received from CSharpAckMsg
+        # store the updated map received from PythonRequestMsg
         print "updated map!"
-        self.new_map = new_map
+        self.new_map = new_map.r
+        self.mapType = new_map.type
         self.gotNewMap = True
         
         

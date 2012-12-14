@@ -872,10 +872,6 @@ class SpecEditorFrame(wx.Frame):
         self.list_box_locphrases.Set(self.proj.regionMapping.keys())
         self.list_box_locphrases.Select(0)
 
-        self.appendLog("Creating SMV file...\n", "BLUE")
-
-        compiler._writeSMVFile()
-
         self.appendLog("Creating LTL file...\n", "BLUE")
 
         self.traceback = compiler._writeLTLFile()
@@ -893,6 +889,9 @@ class SpecEditorFrame(wx.Frame):
             f.close()
             self.text_ctrl_LTL.SetValue(ltl)
 
+        self.appendLog("Creating SMV file...\n", "BLUE")
+
+        compiler._writeSMVFile()
 
         self.appendLog("Creating automaton...\n", "BLUE")
 

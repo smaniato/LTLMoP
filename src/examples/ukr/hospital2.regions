@@ -1,0 +1,69 @@
+# This is a region definition file for the LTLMoP toolkit.
+# Format details are described at the beginning of each section below.
+# Note that all values are separated by *tabs*.
+
+Background: # Relative path of background image file
+tumblr_l7zcme6e1B1qzrb50o1_400.jpg
+
+CalibrationPoints: # Vertices to use for map calibration: (vertex_region_name, vertex_index)
+
+Obstacles: # Names of regions to treat as obstacles
+
+Regions: # Stored as JSON string
+[
+    {
+        "name": "boundary", 
+        "color": [0, 0, 255], 
+        "holeList": [], 
+        "points": [[409, 424], [555, 412], [563, 268], [571, 138], [571, 101], [566, 3], [416, 0], [412, 133], [408, 256], [435, 259], [412, 272], [382, 265], [175, 264], [131, 268], [0, 277], [13, 425], [103, 428]], 
+        "position": [51, 87], 
+        "type": "poly", 
+        "size": [571, 428]
+    }, 
+    {
+        "name": "hall1", 
+        "color": [255, 255, 0], 
+        "holeList": [], 
+        "points": [[103, 160], [13, 157], [0, 9], [131, 0]], 
+        "position": [51, 355], 
+        "type": "poly", 
+        "size": [131, 160]
+    }, 
+    {
+        "name": "hall2", 
+        "color": [0, 255, 0], 
+        "holeList": [], 
+        "points": [[309, 13], [332, 0], [460, 9], [452, 153], [306, 165], [0, 169], [28, 9], [72, 5], [279, 6]], 
+        "position": [154, 346], 
+        "type": "poly", 
+        "size": [460, 169]
+    }, 
+    {
+        "name": "hall3", 
+        "color": [0, 255, 0], 
+        "holeList": [], 
+        "points": [[4, 0], [163, 5], [155, 135], [27, 126], [0, 123]], 
+        "position": [459, 220], 
+        "type": "poly", 
+        "size": [163, 135]
+    }, 
+    {
+        "name": "office", 
+        "color": [176, 0, 255], 
+        "holeList": [], 
+        "points": [[4, 0], [154, 3], [159, 101], [159, 138], [0, 133]], 
+        "position": [463, 87], 
+        "type": "poly", 
+        "size": [159, 138]
+    }
+]
+
+Transitions: # Region 1 Name, Region 2 Name, Bidirectional transition faces (face1_x1, face1_y1, face1_x2, face1_y2, face2_x1, ...)
+boundary	hall1	64	512	154	515	51	364	182	355	51	364	64	512
+boundary	hall2	182	355	226	351	463	359	486	346	460	511	606	499	606	499	614	355	433	352	463	359	226	351	433	352	154	515	460	511
+boundary	hall3	459	343	463	220	459	343	486	346	614	355	622	225
+boundary	office	617	90	622	188	622	188	622	225	467	87	617	90	463	220	467	87
+hall1	hall2	154	515	182	355
+hall2	hall3	486	346	614	355
+hall3	office	463	220	622	225
+

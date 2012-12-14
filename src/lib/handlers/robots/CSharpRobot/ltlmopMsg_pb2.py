@@ -100,6 +100,23 @@ _PYTHONREQUESTMSG_ROBOTTYPE = descriptor.EnumDescriptor(
   options=None,
 )
 
+_PYTHONREQUESTMSG_MAPTYPE = descriptor.EnumDescriptor(
+  name='MapType',
+  full_name='LTLMoPCsharpInterface.PythonRequestMsg.MapType',
+  filename='MapType',
+  values=[
+    descriptor.EnumValueDescriptor(
+      name='NEWREGIONFOUND', index=0, number=0,
+      options=None,
+      type=None),
+    descriptor.EnumValueDescriptor(
+      name='REGIONUPDATE', index=1, number=1,
+      options=None,
+      type=None),
+  ],
+  options=None,
+)
+
 
 _PYTHONREQUESTMSG_VELOCITY = descriptor.Descriptor(
   name='Velocity',
@@ -219,6 +236,13 @@ _PYTHONREQUESTMSG_REGION = descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
+    descriptor.FieldDescriptor(
+      name='area', full_name='LTLMoPCsharpInterface.PythonRequestMsg.Region.area', index=3,
+      number=5, type=1, cpp_type=5, label=1,
+      default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
   ],
   extensions=[
   ],
@@ -237,6 +261,13 @@ _PYTHONREQUESTMSG_MAP = descriptor.Descriptor(
       name='r', full_name='LTLMoPCsharpInterface.PythonRequestMsg.Map.r', index=0,
       number=2, type=11, cpp_type=10, label=3,
       default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    descriptor.FieldDescriptor(
+      name='type', full_name='LTLMoPCsharpInterface.PythonRequestMsg.Map.type', index=1,
+      number=3, type=14, cpp_type=8, label=1,
+      default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
@@ -332,6 +363,41 @@ _PYTHONREQUESTMSG_POSE = descriptor.Descriptor(
   ],
   options=None)
 
+_PYTHONREQUESTMSG_SENSOR = descriptor.Descriptor(
+  name='Sensor',
+  full_name='LTLMoPCsharpInterface.PythonRequestMsg.Sensor',
+  filename='ltlmopMsg.proto',
+  containing_type=None,
+  fields=[
+    descriptor.FieldDescriptor(
+      name='type', full_name='LTLMoPCsharpInterface.PythonRequestMsg.Sensor.type', index=0,
+      number=1, type=14, cpp_type=8, label=1,
+      default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    descriptor.FieldDescriptor(
+      name='stat', full_name='LTLMoPCsharpInterface.PythonRequestMsg.Sensor.stat', index=1,
+      number=2, type=1, cpp_type=5, label=1,
+      default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    descriptor.FieldDescriptor(
+      name='data', full_name='LTLMoPCsharpInterface.PythonRequestMsg.Sensor.data', index=2,
+      number=3, type=1, cpp_type=5, label=3,
+      default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=descriptor._ParseOptions(descriptor_pb2.FieldOptions(), '\020\001')),
+  ],
+  extensions=[
+  ],
+  nested_types=[],  # TODO(robinson): Implement.
+  enum_types=[
+  ],
+  options=None)
+
 _PYTHONREQUESTMSG = descriptor.Descriptor(
   name='PythonRequestMsg',
   full_name='LTLMoPCsharpInterface.PythonRequestMsg',
@@ -394,6 +460,20 @@ _PYTHONREQUESTMSG = descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
+    descriptor.FieldDescriptor(
+      name='ResendRequest', full_name='LTLMoPCsharpInterface.PythonRequestMsg.ResendRequest', index=8,
+      number=10, type=8, cpp_type=7, label=1,
+      default_value=False,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    descriptor.FieldDescriptor(
+      name='sensors', full_name='LTLMoPCsharpInterface.PythonRequestMsg.sensors', index=9,
+      number=11, type=11, cpp_type=10, label=3,
+      default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
   ],
   extensions=[
   ],
@@ -403,6 +483,7 @@ _PYTHONREQUESTMSG = descriptor.Descriptor(
     _PYTHONREQUESTMSG_ACTUATORTYPE,
     _PYTHONREQUESTMSG_ACTUATORSTATUS,
     _PYTHONREQUESTMSG_ROBOTTYPE,
+    _PYTHONREQUESTMSG_MAPTYPE,
   ],
   options=None)
 
@@ -412,9 +493,11 @@ _PYTHONREQUESTMSG_ACTUATOR.fields_by_name['status'].enum_type = _PYTHONREQUESTMS
 _PYTHONREQUESTMSG_REGION.fields_by_name['points'].message_type = _PYTHONREQUESTMSG_POINT
 _PYTHONREQUESTMSG_REGION.fields_by_name['holes'].message_type = _PYTHONREQUESTMSG_POINT
 _PYTHONREQUESTMSG_MAP.fields_by_name['r'].message_type = _PYTHONREQUESTMSG_REGION
+_PYTHONREQUESTMSG_MAP.fields_by_name['type'].enum_type = _PYTHONREQUESTMSG_MAPTYPE
 _PYTHONREQUESTMSG_FACE.fields_by_name['p1'].message_type = _PYTHONREQUESTMSG_POINT
 _PYTHONREQUESTMSG_FACE.fields_by_name['p2'].message_type = _PYTHONREQUESTMSG_POINT
 _PYTHONREQUESTMSG_EXTERNALFACES.fields_by_name['faces'].message_type = _PYTHONREQUESTMSG_FACE
+_PYTHONREQUESTMSG_SENSOR.fields_by_name['type'].enum_type = _PYTHONREQUESTMSG_SENSORTYPE
 _PYTHONREQUESTMSG.fields_by_name['robot'].enum_type = _PYTHONREQUESTMSG_ROBOTTYPE
 _PYTHONREQUESTMSG.fields_by_name['vel'].message_type = _PYTHONREQUESTMSG_VELOCITY
 _PYTHONREQUESTMSG.fields_by_name['actuator'].message_type = _PYTHONREQUESTMSG_ACTUATOR
@@ -422,6 +505,7 @@ _PYTHONREQUESTMSG.fields_by_name['sensor'].enum_type = _PYTHONREQUESTMSG_SENSORT
 _PYTHONREQUESTMSG.fields_by_name['map'].message_type = _PYTHONREQUESTMSG_MAP
 _PYTHONREQUESTMSG.fields_by_name['pose'].message_type = _PYTHONREQUESTMSG_POSE
 _PYTHONREQUESTMSG.fields_by_name['exfaces'].message_type = _PYTHONREQUESTMSG_EXTERNALFACES
+_PYTHONREQUESTMSG.fields_by_name['sensors'].message_type = _PYTHONREQUESTMSG_SENSOR
 
 class PythonRequestMsg(message.Message):
   __metaclass__ = reflection.GeneratedProtocolMessageType
@@ -457,5 +541,9 @@ class PythonRequestMsg(message.Message):
   class Pose(message.Message):
     __metaclass__ = reflection.GeneratedProtocolMessageType
     DESCRIPTOR = _PYTHONREQUESTMSG_POSE
+  
+  class Sensor(message.Message):
+    __metaclass__ = reflection.GeneratedProtocolMessageType
+    DESCRIPTOR = _PYTHONREQUESTMSG_SENSOR
   DESCRIPTOR = _PYTHONREQUESTMSG
 

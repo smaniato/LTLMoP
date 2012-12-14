@@ -6,54 +6,65 @@ Background: # Relative path of background image file
 None
 
 CalibrationPoints: # Vertices to use for map calibration: (vertex_region_name, vertex_index)
+r4	2
+r2	1
 r1	0
-r3	1
-r3	2
 
 Obstacles: # Names of regions to treat as obstacles
 
 Regions: # Stored as JSON string
 [
     {
-        "name": "boundary", 
-        "color": [255, 255, 0], 
-        "holeList": [], 
-        "points": [[527, 378], [353, 378], [155, 378], [0, 378], [0, 0], [155, 0], [353, 0], [527, 0]], 
-        "position": [124, 92], 
-        "type": "poly", 
-        "size": [527, 378]
-    }, 
-    {
-        "name": "r2", 
-        "color": [255, 255, 0], 
-        "position": [279, 92], 
+        "name": "r4", 
+        "color": [255, 0, 0], 
+        "position": [344, 249], 
         "type": "rect", 
-        "size": [198, 378]
-    }, 
-    {
-        "name": "r1", 
-        "color": [204, 50, 50], 
-        "holeList": [], 
-        "points": [[0, 0], [155, 0], [155, 378], [0, 378]], 
-        "position": [124, 92], 
-        "type": "poly", 
-        "size": [155, 378]
+        "size": [256, 212]
     }, 
     {
         "name": "r3", 
-        "color": [128, 255, 0], 
+        "color": [255, 0, 0], 
         "holeList": [], 
-        "points": [[0, 0], [174, 0], [174, 378], [0, 378]], 
-        "position": [477, 92], 
+        "points": [[0, 0], [270, 0], [271, 0], [271, 212], [270, 212], [0, 212]], 
+        "position": [73, 249], 
         "type": "poly", 
-        "size": [174, 378]
+        "size": [271, 212]
+    }, 
+    {
+        "name": "r2", 
+        "color": [204, 50, 50], 
+        "holeList": [], 
+        "points": [[0, 0], [257, 0], [257, 166], [1, 166], [0, 166]], 
+        "position": [343, 83], 
+        "type": "poly", 
+        "size": [257, 166]
+    }, 
+    {
+        "name": "r1", 
+        "color": [176, 0, 255], 
+        "position": [73, 83], 
+        "type": "rect", 
+        "size": [270, 166]
+    }, 
+    {
+        "name": "boundary", 
+        "color": [255, 255, 0], 
+        "holeList": [], 
+        "points": [[527, 166], [527, 378], [271, 378], [270, 378], [0, 378], [0, 166], [0, 0], [270, 0], [527, 0]], 
+        "position": [73, 83], 
+        "type": "poly", 
+        "size": [527, 378]
     }
 ]
 
 Transitions: # Region 1 Name, Region 2 Name, Bidirectional transition faces (face1_x1, face1_y1, face1_x2, face1_y2, face2_x1, ...)
-boundary	r2	279	470	477	470	477	92	279	92
-boundary	r1	124	92	279	92	279	470	124	470	124	92	124	470
-boundary	r3	651	470	651	92	651	470	477	470	477	92	651	92
-r2	r1	279	92	279	470
-r2	r3	477	92	477	470
+r4	r3	344	461	344	249
+r4	r2	600	249	344	249
+r4	boundary	600	249	600	461	600	461	344	461
+r3	r2	343	249	344	249
+r3	r1	73	249	343	249
+r3	boundary	344	461	343	461	73	249	73	461	343	461	73	461
+r2	r1	343	83	343	249
+r2	boundary	343	83	600	83	600	83	600	249
+r1	boundary	73	83	343	83	73	83	73	249
 
