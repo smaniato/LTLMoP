@@ -719,24 +719,30 @@ class Region(object):
 
 
         lastPt = None
+        count = 0 # added by annie for debugging
         for pt in self.getPoints():
 
             thisPt = pt
-
+            count = count +1 # added by annie for debugging
+        
             if lastPt is not None:
+                print "count~!",self.name,lastPt.x,lastPt.y,thisPt.x,thisPt.y,count
                 if lastPt != thisPt:
                     yield frozenset((lastPt, thisPt))
                 else:
                     print "WARNING: region {} has side of length 0".format(self.name)
+                    
+
             else:
                 firstPt = thisPt
-
+           
             lastPt = thisPt
 
         if lastPt != firstPt:
             yield frozenset((lastPt, firstPt)) # Closing face
         else:
             print "WARNING: region {} has side of length 0".format(self.name)
+            print lastPt.x,lastPt.y,firstPt.x,firstPt.y
 
         # also include edges of holes in the get faces for checking adjancency
         if includeHole:

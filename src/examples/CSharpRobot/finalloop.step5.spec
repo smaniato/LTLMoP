@@ -17,7 +17,7 @@ convexify: True
 fastslow: False
 
 CurrentConfigName:
-pioneer loop
+segway loop
 
 Customs: # List of custom propositions
 explore_room_done
@@ -25,7 +25,7 @@ explore
 needs_resynthesis
 
 RegionFile: # Relative path of region description file
-finalloop.update4.regions
+finalloop.update3.regions
 
 Sensors: # List of sensor propositions and their state (enabled = 1, disabled = 0)
 LIDAR, 0
@@ -41,15 +41,15 @@ region_removed, 0
 
 RegionMapping: # Mapping between region names and their decomposed counterparts
 r4 = p1
-newRegion1 = p6
-newRegion3 = p5
+newRegion1 = p5
+newRegion2 = p5
 r1 = p4
 r2 = p3
 r3 = p2
 others = 
 
 Spec: # Specification in structured English
-robot starts in newRegion3 with resynthesize and explore_room_done and requestExplore and explore and not needs_resynthesis
+robot starts in newRegion1 with resynthesize and explore_room_done and requestExplore and explore and not needs_resynthesis
 ### assumptions ###
 
 
@@ -57,7 +57,7 @@ robot starts in newRegion3 with resynthesize and explore_room_done and requestEx
 
 #group patrol_locations is empty
 
-group patrol_locations is r4, newRegion1, newRegion3, r1, r2, r3
+group patrol_locations is r4, newRegion1, r1, r2, r3
 
 ### exploration settings ###
 
@@ -71,7 +71,7 @@ if you are activating explore_room_done then do resynthesize
 # --------- begin auto-generated exploration spec -------
 
 # keep track of places you need to explore, at all times (TODO: BFS vs DFS?)
-group unexplored_rooms is newRegion3
+group unexplored_rooms is newRegion2
 add to unexplored_rooms if and only if you are sensing start of region_added
 remove from unexplored_rooms if and only if you are activating explore_room_done
 

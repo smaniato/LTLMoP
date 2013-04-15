@@ -17,7 +17,7 @@ convexify: True
 fastslow: False
 
 CurrentConfigName:
-pioneer loop
+segway loop
 
 Customs: # List of custom propositions
 explore_room_done
@@ -41,7 +41,7 @@ region_removed, 0
 
 RegionMapping: # Mapping between region names and their decomposed counterparts
 r4 = p1
-newRegion1 = p5
+newRegion1 = p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16
 r1 = p4
 r2 = p3
 r3 = p2

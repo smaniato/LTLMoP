@@ -65,6 +65,7 @@ class _CSharpCommunicator:
         self.ARTAG = []
         self.LIDAR = []
         self.BUSY_EXPLORE = False
+        self.pose = None
         
     def start(self):
         """
@@ -131,6 +132,7 @@ class _CSharpCommunicator:
                 self.TCPSock.send(sent_str)
                 data_length = self.TCPSock.recv(self.buffer)
                 response = self.TCPSock.recv(self.buffer)
+                print 'msg size!!!!',len(response)
                 result = self.parseResponse(response)
                 success = True
             except:
@@ -162,6 +164,9 @@ class _CSharpCommunicator:
                 self.LIDAR = s.data
             if (s.type==ltlmopMsg_pb2.PythonRequestMsg.ARTAG):
                 self.ARTAG = s.data # this is all the ARTag IDs we got
+        self.pose=msg.pose
+        #if(self.pose!=None):
+        #    print 'got some pose!',self.pose.x,self.pose.y
         self.BUSY_EXPLORE = msg.actuator.status==ltlmopMsg_pb2.PythonRequestMsg.RESP_BUSY;
                
     def getARTAG(self):
@@ -174,6 +179,9 @@ class _CSharpCommunicator:
     def getExploreBusy(self):
         result = self.BUSY_EXPLORE
         return self.BUSY_EXPLORE
+    def getPose(self):
+        #print 'getting pose for pose handler!'
+        return self.pose
         
     
         

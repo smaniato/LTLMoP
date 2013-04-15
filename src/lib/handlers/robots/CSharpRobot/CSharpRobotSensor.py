@@ -11,6 +11,7 @@ from struct import pack,unpack
 from numpy import *
 from scipy.linalg import norm
 from regions import Point, Color
+import Polygon
 import copy
 from specCompiler import SpecCompiler
 import json
@@ -151,11 +152,19 @@ class sensorHandler:
                 new_r = ltlmop_msg.Region()
                 points = map(self.proj.coordmap_map2lab,r.getPoints())
                 holes = [map(proj.coordmap_map2lab, r.getPoints(hole_id=i)) for i in xrange(len(r.holeList))]
-                for p in points:
-                    new_p = ltlmop_msg.Point()
-                    new_p.x = p[0]
-                    new_p.y = p[1]
-                    new_r.points.extend([new_p])
+                print 'region direction',r.name,Polygon.Polygon(r.pointArray).orientation()
+                if Polygon.Polygon(r.pointArray).orientation()==1:
+                    for p in points:
+                        new_p = ltlmop_msg.Point()
+                        new_p.x = p[0]
+                        new_p.y = p[1]
+                        new_r.points.extend([new_p])
+                else:
+                    for p in reversed(points):
+                        new_p = ltlmop_msg.Point()
+                        new_p.x = p[0]
+                        new_p.y = p[1]
+                        new_r.points.extend([new_p])
                 for h in holes:
                     new_h = ltlmop_msg.Point()
                     new_h.x = h[0]
@@ -164,7 +173,8 @@ class sensorHandler:
                 new_r.name = r.name
                 print '*****',r.name
                 ltlmop_msg.map.r.extend([new_r])# add all the map/external faces to the message
-            ltlmop_msg.map.type = PythonRequestMsg.REGIONUPDATE             
+            ltlmop_msg.map.type = PythonRequestMsg.REGIONUPDATE
+            
             # start the map update thread
             if (self.mapThread.notStarted):
                 self.mapThread.start()
@@ -177,6 +187,11 @@ class sensorHandler:
             else:
                 sensor.stat = 0 # IDLE
             response = self.CSharpCommunicator.sendMessage(ltlmop_msg)
+            if len(response.map.r)!=0 and not self.mapThread.processing:
+                print "updated MAP RECEIVED",response.map.type
+                self.mapThread.updateMap(response.map)
+
+                
             print 'got sensor init resp '#we are able to receive a response!
             return True
         else:
@@ -195,6 +210,7 @@ class sensorHandler:
                 # for now add the new region to ltlmsg and update C#
                 # temporary regions should not be grown out of temporary regions
                     # external faces unchanged until we are sure that his is the right map
+                
                 if (self.mapThread.mapType==PythonRequestMsg.NEWREGIONFOUND):
                     self.exposedFaces = self.proj.rfi.getExternalFaces()
                 else:
@@ -221,11 +237,20 @@ class sensorHandler:
                     new_r.name = r.name
                     points = map(self.proj.coordmap_map2lab,r.getPoints())
                     holes = [map(proj.coordmap_map2lab, r.getPoints(hole_id=i)) for i in xrange(len(r.holeList))]
-                    for p in points:
-                        new_p = ltlmop_msg.Point()
-                        new_p.x = p[0]
-                        new_p.y = p[1]
-                        new_r.points.extend([new_p])
+                    print 'region direction',r.name,Polygon.Polygon(r.pointArray).orientation()
+                    if Polygon.Polygon(r.pointArray).orientation()==1:
+                        for p in points:
+                            new_p = ltlmop_msg.Point()
+                            new_p.x = p[0]
+                            new_p.y = p[1]
+                            new_r.points.extend([new_p])
+                    else:
+                        for p in reversed(points):
+                            new_p = ltlmop_msg.Point()
+                            new_p.x = p[0]
+                            new_p.y = p[1]
+                            new_r.points.extend([new_p])
+
                     for h in holes:
                         new_h = ltlmop_msg.Point()
                         new_h.x = h[0]
@@ -236,6 +261,7 @@ class sensorHandler:
                     ltlmop_msg.map.r.extend([new_r])
                 ltlmop_msg.map.type = PythonRequestMsg.REGIONUPDATE
                 response = self.CSharpCommunicator.sendMessage(ltlmop_msg)#off we go!
+                print 'lalalala',response.map.type
                 self.mapThread.mapReady = False #now we are ready to get a new map!
                 # need to make sure that we only trigger when C# has found temporary region and
                 # not just finishing up exploration
@@ -328,6 +354,7 @@ class _MapUpdateThread(threading.Thread):
                         r_pos = r.position
                         r.addPoint(regions.Point(round(transformed_p[0]-r_pos.x),round(transformed_p[1]-r_pos.y)),count)
                         count = count + 1
+                        print 'addedpoints',p.x,p.y
                     if (len(reg.points)>0):
                         print 'added2RFI:',r.name
                         if (r.name!='boundary'):
@@ -335,6 +362,7 @@ class _MapUpdateThread(threading.Thread):
                     
                 # recompute the boundary
                 self.rfi.doMakeBoundary()
+                print 'domakeBoundary done!!!!!!!!!!'
 
                 # When we receive one, write it to a new regions file 
                 reg_filename = "%s.update%d.regions" % (self.map_basename, map_number)
