@@ -1,0 +1,450 @@
+Experiment Status Log
+
+[21:34:17] Loading specification file c:\Users\Annie\LTLMoP\src\examples\CSharpRobot\finalloop.spec...
+[21:34:17] Loading config file c:\Users\Annie\LTLMoP\src\examples\CSharpRobot\configs\basicsim.config...
+[21:34:17] Loading config file c:\Users\Annie\LTLMoP\src\examples\CSharpRobot\configs\calibrate.config...
+[21:34:17] Loading config file c:\Users\Annie\LTLMoP\src\examples\CSharpRobot\configs\lala.config...
+[21:34:17] Loading config file c:\Users\Annie\LTLMoP\src\examples\CSharpRobot\configs\loop.config...
+[21:34:17] Loading config file c:\Users\Annie\LTLMoP\src\examples\CSharpRobot\configs\loop_test.config...
+[21:34:17] ERROR: Cannot find main robot for this config
+[21:34:17] ERROR: Missing Robot data in config file c:\Users\Annie\LTLMoP\src\examples\CSharpRobot\configs\loop_test.config
+[21:34:17] WARNING: Cannot load configuration c:\Users\Annie\LTLMoP\src\examples\CSharpRobot\configs\loop_test.config, missing main robot object
+[21:34:17] Loading config file c:\Users\Annie\LTLMoP\src\examples\CSharpRobot\configs\New_Region_Exploration.config...
+[21:34:17] Loading config file c:\Users\Annie\LTLMoP\src\examples\CSharpRobot\configs\pioneer_loop.config...
+[21:34:17] Loading config file c:\Users\Annie\LTLMoP\src\examples\CSharpRobot\configs\segway_loop.config...
+[21:34:17] Loading region file c:\Users\Annie\LTLMoP\src\examples\CSharpRobot\loop.regions...
+[21:34:17] -> Found definitions for 5 regions.
+[21:34:18] Loading region file c:\Users\Annie\LTLMoP\src\examples\CSharpRobot\finalloop_decomposed.regions...
+[21:34:18] -> Found definitions for 4 regions.
+[21:34:18] Importing handler functions...
+[21:34:18] -> handlers.robots.CSharpRobot.CSharpRobotInit
+[21:34:18] Connecting to CSharp...
+[21:34:18] Done.
+[21:34:18] sent!!!!
+[21:34:18] 88
+[21:34:19] CSharp Ack:
+[21:34:19] 88
+[21:34:20] -> handlers.pose.viconPose
+[21:34:20] >> Connecting...
+[21:34:20] >> Requesting stream info...
+[21:34:20] >> Receiving stream info...
+[21:34:20] >> Subscribed to streams: Time 100.00 fps <F>, spider06:spider06 <t-X>, spider06:spider06 <t-Y>, spider06:spider06 <a-Z>
+[21:34:20] >> Starting streams...
+[21:34:20] -> handlers.robots.CSharpRobot.CSharpRobotLocomotionCommand
+[21:34:20] -> handlers.drive.differentialDrive
+[21:34:20] -> handlers.motionControl.vectorController
+[21:34:20] -> handlers.robots.CSharpRobot.CSharpRobotSensor
+[21:34:20] Loading region file c:\Users\Annie\LTLMoP\src\examples\CSharpRobot\loop.regions...
+[21:34:20] -> Found definitions for 5 regions.
+[21:34:20] -> handlers.share.dummySensor
+[21:34:20] -> handlers.robots.CSharpRobot.CSharpRobotActuator
+[21:34:20] -> handlers.share.dummyActuator
+[21:34:20] (POSE) Initial pose: [ 5.03614885  0.45192159  2.10024773]
+[21:34:20] Loading automaton...
+[21:34:21] Loaded 1226 states.
+[21:34:48] Start!
+[21:34:48] Starting from initial region: p3 (r2)
+[21:34:48] external length
+[21:34:48] (14, 5)
+[21:34:48] exposedFaces:
+[21:34:48] 9
+[21:34:48] *****
+[21:34:48] r4
+[21:34:48] *****
+[21:34:48] r3
+[21:34:48] *****
+[21:34:48] r2
+[21:34:48] *****
+[21:34:48] r1
+[21:34:48] *****
+[21:34:48] boundary
+[21:34:48] running...
+[21:34:52] sent!!!!
+[21:34:52] 0
+[21:34:52] got sensor init resp
+[21:34:52] sent!!!!
+[21:34:52] 66
+[21:34:52] (ACT) Actuator resynthesize is now 0!
+[21:34:52] Output proposition "_add_to_patrol_locations" is now False!
+[21:34:52] Output proposition "_add_to_unexplored_rooms" is now False!
+[21:34:52] Output proposition "_remove_from_unexplored_rooms" is now False!
+[21:34:52] Starting from state 84.
+[21:34:52] sent!!!!
+[21:34:52] 66
+[21:34:52] Heading to region p2 (r3)...
+[21:34:53] sent!!!!
+[21:34:53] 13
+[21:34:53] sent!!!!
+[21:34:53] 66
+[21:34:53] sent!!!!
+[21:34:53] 13
+[21:34:53] sent!!!!
+[21:34:53] 66
+[21:34:54] sent!!!!
+[21:34:54] 13
+[21:34:54] sent!!!!
+[21:34:54] 0
+[21:34:54] NEW MAP RECEIVED
+[21:34:54] 0
+[21:34:54] updated map!
+[21:34:54] GOTnEWmAP!@
+[21:34:54] regions in new map:
+[21:34:54] r4
+[21:34:54] 4
+[21:34:54] added2RFI:
+[21:34:54] r4
+[21:34:54] regions in new map:
+[21:34:54] r3
+[21:34:54] 6
+[21:34:54] added2RFI:
+[21:34:54] r3
+[21:34:54] regions in new map:
+[21:34:54] r2
+[21:34:54] 9
+[21:34:54] added2RFI:
+[21:34:54] r2
+[21:34:54] regions in new map:
+[21:34:54] r1
+[21:34:54] 4
+[21:34:54] added2RFI:
+[21:34:54] r1
+[21:34:54] regions in new map:
+[21:34:54] boundary
+[21:34:54] 13
+[21:34:54] added2RFI:
+[21:34:54] boundary
+[21:34:54] regions in new map:
+[21:34:54] newRegion1
+[21:34:54] 4
+[21:34:54] added2RFI:
+[21:34:54] newRegion1
+[21:34:54] regions in new map:
+[21:34:54] newRegion2
+[21:34:54] 4
+[21:34:54] added2RFI:
+[21:34:54] newRegion2
+[21:34:54] WARNING: Region "boundary" not found.
+[21:34:54] Wrote region file c:\Users\Annie\LTLMoP\src\examples\CSharpRobot\finalloop.update1.regions.
+[21:34:54] added: set([u'newRegion1', u'newRegion2'])
+[21:34:54] added: set([u'newRegion1', u'newRegion2'])
+[21:34:54] sent!!!!
+[21:34:54] 13
+[21:34:54] external length
+[21:34:54] (13, 5)
+[21:34:54] exposedFacesB:
+[21:34:54] 8
+[21:34:54] name:
+[21:34:54] r4
+[21:34:54] name:
+[21:34:54] r3
+[21:34:55] name:
+[21:34:55] r2
+[21:34:55] name:
+[21:34:55] r1
+[21:34:55] name:
+[21:34:55] newRegion1
+[21:34:55] name:
+[21:34:55] newRegion2
+[21:34:55] name:
+[21:34:55] boundary
+[21:34:55] sent!!!!
+[21:34:55] 66
+[21:34:56] sent!!!!
+[21:34:56] 13
+[21:34:56] Output proposition "_add_to_unexplored_rooms" is now True!
+[21:34:56] Output proposition "resynthesize" is now True!
+[21:34:56] sent!!!!
+[21:34:56] 13
+[21:34:57] (ACT) Actuator resynthesize is now True!
+[21:34:57] Output proposition "needs_resynthesis" is now True!
+[21:34:57] Now in state 92 (z = 2)
+[21:34:57] Added region(s) newRegion1, newRegion2 to group unexplored_rooms.
+[21:34:57] Using newest region file: c:\Users\Annie\LTLMoP\src\examples\CSharpRobot\finalloop.update1.regions
+[21:34:57] Wrote new spec file: c:\Users\Annie\LTLMoP\src\examples\CSharpRobot\finalloop.step1.spec
+[21:34:57] Starting resynthesis...
+[21:34:57] ##############################################
+[21:34:57] Warning:
+[21:34:57] The following propositions seem to be unused:
+[21:34:57] ['e.NEW_DOORWAY', 'FALSE']
+[21:34:57] They should be removed from the proposition lists
+[21:35:06] ==== Constructing and playing the game ======
+Games time: 537
+Garbage collection #1: 50021 nodes / 37 free / 0.153s / 0.153s total
+Resizing node table from 50021 to 100019
+Specification is realizable assuming instantaneous actions...
+==== Building an implementation =========
+-----------------------------------------
+-----------------------------------------
+Strategy time: 6311
+===== Done ==============================
+[21:35:06] New automaton has been created.
+[21:35:06] Reinitializing execution...
+[21:35:06] Reloading motion control handler...
+[21:35:06] -> handlers.motionControl.vectorController
+[21:35:06] Loading automaton...
+[21:35:10] Loaded 796 states.
+[21:35:10] Starting from initial region: p4 (r1)
+[21:35:10] exposedFaces:
+[21:35:10] 9
+[21:35:10] *****
+[21:35:10] r4
+[21:35:10] *****
+[21:35:10] r3
+[21:35:10] *****
+[21:35:10] r2
+[21:35:10] *****
+[21:35:10] r1
+[21:35:10] *****
+[21:35:10] newRegion1
+[21:35:10] *****
+[21:35:10] newRegion2
+[21:35:10] *****
+[21:35:10] boundary
+[21:35:11] sent!!!!
+[21:35:11] 0
+[21:35:11] got sensor init resp
+[21:35:11] sent!!!!
+[21:35:11] 66
+[21:35:11] (ACT) Actuator resynthesize is now 1!
+[21:35:11] Starting from state 554.
+[21:35:11] sent!!!!
+[21:35:11] 66
+[21:35:11] Heading to region p3 (r2)...
+[21:35:11] sent!!!!
+[21:35:11] 13
+[21:35:12] sent!!!!
+[21:35:12] 66
+[21:35:12] sent!!!!
+[21:35:12] 13
+[21:35:12] sent!!!!
+[21:35:12] 66
+[21:35:12] sent!!!!
+[21:35:12] 13
+[21:35:13] sent!!!!
+[21:35:13] 66
+[21:35:13] sent!!!!
+[21:35:13] 13
+[21:35:13] Crossed border from p4 (r1) to p3 (r2)!
+[21:35:13] Output proposition "_add_to_unexplored_rooms" is now False!
+[21:35:13] Output proposition "resynthesize" is now False!
+[21:35:14] sent!!!!
+[21:35:14] 13
+[21:35:14] (ACT) Actuator resynthesize is now False!
+[21:35:14] Output proposition "needs_resynthesis" is now False!
+[21:35:14] Now in state 1 (z = 0)
+[21:35:14] sent!!!!
+[21:35:14] 66
+[21:35:14] Heading to region p6 (newRegion1)...
+[21:35:14] sent!!!!
+[21:35:14] 13
+[21:35:14] sent!!!!
+[21:35:14] 66
+[21:35:15] sent!!!!
+[21:35:15] 13
+[21:35:15] sent!!!!
+[21:35:15] 66
+[21:35:15] sent!!!!
+[21:35:15] 13
+[21:35:16] sent!!!!
+[21:35:16] 66
+[21:35:16] sent!!!!
+[21:35:16] 13
+[21:35:16] sent!!!!
+[21:35:16] 66
+[21:35:16] sent!!!!
+[21:35:16] 13
+[21:35:17] sent!!!!
+[21:35:17] 66
+[21:35:17] sent!!!!
+[21:35:17] 13
+[21:35:17] sent!!!!
+[21:35:17] 66
+[21:35:18] sent!!!!
+[21:35:18] 13
+[21:35:18] sent!!!!
+[21:35:18] 66
+[21:35:18] sent!!!!
+[21:35:18] 13
+[21:35:18] Crossed border from p3 (r2) to p6 (newRegion1)!
+[21:35:18] Now in state 35 (z = 0)
+[21:35:19] sent!!!!
+[21:35:19] 66
+[21:35:19] sent!!!!
+[21:35:19] 13
+[21:35:19] Output proposition "requestExplore" is now True!
+[21:35:19] sent!!!!
+[21:35:19] 13
+[21:35:19] DO EXPLORE :D
+[21:35:20] sent!!!!
+[21:35:20] 78
+[21:35:20] Now in state 71 (z = 0)
+[21:35:21] sent!!!!
+[21:35:21] 66
+[21:35:21] sent!!!!
+[21:35:21] 13
+[21:35:21] sent!!!!
+[21:35:21] 66
+[21:35:22] sent!!!!
+[21:35:22] 13
+[21:35:22] sent!!!!
+[21:35:22] 13
+[21:35:22] Now in state 57 (z = 0)
+[21:35:22] sent!!!!
+[21:35:22] 66
+[21:35:23] sent!!!!
+[21:35:23] 13
+[21:35:23] sent!!!!
+[21:35:23] 13
+[21:35:23] sent!!!!
+[21:35:23] 0
+[21:35:23] NEW MAP RECEIVED
+[21:35:23] 1
+[21:35:23] updated map!
+[21:35:23] GOTnEWmAP!@
+[21:35:23] regions in new map:
+[21:35:23] r4
+[21:35:23] 4
+[21:35:23] added2RFI:
+[21:35:23] r4
+[21:35:23] regions in new map:
+[21:35:23] r3
+[21:35:23] 6
+[21:35:23] added2RFI:
+[21:35:23] r3
+[21:35:23] regions in new map:
+[21:35:23] r2
+[21:35:23] 9
+[21:35:23] added2RFI:
+[21:35:23] r2
+[21:35:23] regions in new map:
+[21:35:23] r1
+[21:35:23] 4
+[21:35:23] added2RFI:
+[21:35:23] r1
+[21:35:23] regions in new map:
+[21:35:23] newRegion1
+[21:35:23] 4
+[21:35:23] added2RFI:
+[21:35:23] newRegion1
+[21:35:23] regions in new map:
+[21:35:23] newRegion2
+[21:35:23] 4
+[21:35:23] added2RFI:
+[21:35:23] newRegion2
+[21:35:23] regions in new map:
+[21:35:23] boundary
+[21:35:23] 17
+[21:35:23] added2RFI:
+[21:35:23] boundary
+[21:35:23] WARNING: Region "boundary" not found.
+[21:35:23] Wrote region file c:\Users\Annie\LTLMoP\src\examples\CSharpRobot\finalloop.update2.regions.
+[21:35:23] added: set([u'newRegion1', u'newRegion2'])
+[21:35:23] added: set([u'newRegion1', u'newRegion2'])
+[21:35:23] sent!!!!
+[21:35:23] 13
+[21:35:23] sent!!!!
+[21:35:23] 13
+[21:35:23] Output proposition "_add_to_unexplored_rooms" is now True!
+[21:35:23] Output proposition "resynthesize" is now True!
+[21:35:24] sent!!!!
+[21:35:24] 13
+[21:35:24] (ACT) Actuator resynthesize is now True!
+[21:35:24] Output proposition "requestExplore" is now False!
+[21:35:24] sent!!!!
+[21:35:24] 13
+[21:35:24] Output proposition "needs_resynthesis" is now True!
+[21:35:24] Now in state 58 (z = 0)
+[21:35:24] Added region(s) newRegion1, newRegion2 to group unexplored_rooms.
+[21:35:24] Using newest region file: c:\Users\Annie\LTLMoP\src\examples\CSharpRobot\finalloop.update2.regions
+[21:35:24] Wrote new spec file: c:\Users\Annie\LTLMoP\src\examples\CSharpRobot\finalloop.step2.spec
+[21:35:24] Starting resynthesis...
+[21:35:25] ##############################################
+[21:35:25] Warning:
+[21:35:25] The following propositions seem to be unused:
+[21:35:25] ['e.NEW_DOORWAY', 'FALSE']
+[21:35:25] They should be removed from the proposition lists
+[21:35:31] ==== Constructing and playing the game ======
+Games time: 540
+Specification is realizable assuming instantaneous actions...
+==== Building an implementation =========
+-----------------------------------------
+-----------------------------------------
+Strategy time: 4812
+===== Done ==============================
+[21:35:31] New automaton has been created.
+[21:35:31] Reinitializing execution...
+[21:35:32] Reloading motion control handler...
+[21:35:32] -> handlers.motionControl.vectorController
+[21:35:32] Loading automaton...
+[21:35:34] Loaded 644 states.
+[21:35:34] Starting from initial region: p6 (newRegion1)
+[21:35:34] external length
+[21:35:34] (24, 7)
+[21:35:34] exposedFaces:
+[21:35:34] 17
+[21:35:34] *****
+[21:35:34] r4
+[21:35:34] *****
+[21:35:34] r3
+[21:35:34] *****
+[21:35:34] r2
+[21:35:34] *****
+[21:35:34] r1
+[21:35:34] *****
+[21:35:34] newRegion1
+[21:35:34] *****
+[21:35:34] newRegion2
+[21:35:34] *****
+[21:35:34] boundary
+[21:35:34] sent!!!!
+[21:35:34] 66
+[21:35:34] got sensor init resp
+[21:35:34] external length
+[21:35:34] (24, 7)
+[21:35:34] NOT NEW REGION ONLY AN UPDATE!
+[21:35:34] 6
+[21:35:34] exposedFacesB:
+[21:35:34] 17
+[21:35:35] name:
+[21:35:35] r4
+[21:35:35] name:
+[21:35:35] r3
+[21:35:35] name:
+[21:35:35] r2
+[21:35:35] name:
+[21:35:35] r1
+[21:35:35] name:
+[21:35:35] newRegion1
+[21:35:35] name:
+[21:35:35] newRegion2
+[21:35:35] name:
+[21:35:35] boundary
+[21:35:35] sent!!!!
+[21:35:35] 66
+[21:35:36] (ACT) Actuator resynthesize is now 1!
+[21:35:36] Starting from state 402.
+[21:35:36] sent!!!!
+[21:35:36] 66
+[21:35:36] sent!!!!
+[21:35:36] 13
+[21:35:36] Output proposition "_add_to_unexplored_rooms" is now False!
+[21:35:36] Output proposition "resynthesize" is now False!
+[21:35:37] sent!!!!
+[21:35:37] 13
+[21:35:37] (ACT) Actuator resynthesize is now False!
+[21:35:37] Output proposition "requestExplore" is now True!
+[21:35:37] sent!!!!
+[21:35:37] 13
+[21:35:37] DO EXPLORE :D
+[21:35:38] sent!!!!
+[21:35:38] 78
+[21:35:38] Output proposition "needs_resynthesis" is now False!
+[21:35:38] Now in state 1 (z = 0)
+[21:35:39] sent!!!!
+[21:35:39] 66
+[21:35:39] Pause...
+[21:35:40] sent!!!!
+[21:35:40] 13
+[21:35:40] sent!!!!
+[21:35:40] 13
+

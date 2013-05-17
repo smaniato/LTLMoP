@@ -132,7 +132,7 @@ class _CSharpCommunicator:
                 self.TCPSock.send(sent_str)
                 data_length = self.TCPSock.recv(self.buffer)
                 response = self.TCPSock.recv(self.buffer)
-                print 'msg size!!!!',len(response)
+                #print 'msg size!!!!',len(response)
                 result = self.parseResponse(response)
                 success = True
             except:
@@ -168,6 +168,7 @@ class _CSharpCommunicator:
         #if(self.pose!=None):
         #    print 'got some pose!',self.pose.x,self.pose.y
         self.BUSY_EXPLORE = msg.actuator.status==ltlmopMsg_pb2.PythonRequestMsg.RESP_BUSY;
+        
                
     def getARTAG(self):
         result = self.ARTAG;

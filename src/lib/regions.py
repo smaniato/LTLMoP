@@ -233,6 +233,7 @@ class RegionFileInterface(object):
             clean = False
             while not clean:
                 clean = True
+                #print 'obj2',obj2.name
                 for other_pta, other_ptb in obj2.getFaces():
                     [on_segment_a, d_a, pint_a] = pointLineIntersection(other_pta, other_ptb, pta)
                     [on_segment_b, d_b, pint_b] = pointLineIntersection(other_pta, other_ptb, ptb)
@@ -256,6 +257,7 @@ class RegionFileInterface(object):
                             obj2.addPoint(ptb-obj2.position, idx)
                             clean = False
                             break
+                #print obj2.name,'done'
 
     def recalcAdjacency(self):
         """
@@ -425,6 +427,7 @@ class RegionFileInterface(object):
                 newRegion.setData(rd)    
 
             self.regions.append(newRegion)
+            #print ['reading file:',newRegion.name,len(newRegion.pointArray)]
 
         # Make an empty adjacency matrix of size (# of regions) x (# of regions)
         self.transitions = [[[] for j in range(len(self.regions))] for i in range(len(self.regions))]
@@ -456,12 +459,16 @@ class RegionFileInterface(object):
         return True
 
     def doMakeBoundary(self):
+        #print 'regionList',[r.name for r in self.regions]
         if self.indexOfRegionWithName("boundary") != -1:
             self.regions.pop(self.indexOfRegionWithName("boundary"))
-
+        #print 'regionListAfter',[r.name for r in self.regions]
+        
         bound_poly = Polygon.Polygon()
         for r in self.regions:
             points = [(pt.x,pt.y) for pt in r.getPoints()]
+            print r.name,[p[0] for p in points]
+            print r.name,[p[1] for p in points]
             bound_poly += Polygon.Polygon(points)
 
         # create new region object
@@ -470,6 +477,8 @@ class RegionFileInterface(object):
         bound_region.pointArray = [Point(*p) for p in bound_poly[0]]
         bound_region.name = "boundary"
         bound_region.recalcBoundingBox()
+        #print 'boundary points', [(pt.x,pt.y) for pt in bound_region.getPoints()]
+        
         self.regions.append(bound_region)
         self.checkSubfaces(bound_region)
         self.recalcAdjacency()
@@ -726,11 +735,12 @@ class Region(object):
             count = count +1 # added by annie for debugging
         
             if lastPt is not None:
-                print "count~!",self.name,lastPt.x,lastPt.y,thisPt.x,thisPt.y,count
+                #if 'p1' not in str(self.name):
+                #    print "count~!",self.name,(lastPt.x,lastPt.y),(thisPt.x,thisPt.y)
                 if lastPt != thisPt:
                     yield frozenset((lastPt, thisPt))
                 else:
-                    print "WARNING: region {} has side of length 0".format(self.name)
+                    print "WARNING: region {0} has side of length 0".format(self.name)
                     
 
             else:
@@ -740,9 +750,12 @@ class Region(object):
 
         if lastPt != firstPt:
             yield frozenset((lastPt, firstPt)) # Closing face
+            #if 'p1' not in str(self.name):
+            #    print 'close face'
         else:
-            print "WARNING: region {} has side of length 0".format(self.name)
-            print lastPt.x,lastPt.y,firstPt.x,firstPt.y
+            print "WARNING: region {0} has side of length 0".format(self.name)
+            #print lastPt.x,lastPt.y,firstPt.x,firstPt.y
+            
 
         # also include edges of holes in the get faces for checking adjancency
         if includeHole:

@@ -34,6 +34,8 @@ class actuatorHandler:
                 ltlmop_msg.actuator.actuatorType = PythonRequestMsg.EXPLORE
                 ltlmop_msg.actuator.status = PythonRequestMsg.REQ_DO
                 response = self.CSharpCommunicator.sendMessage(ltlmop_msg)
+            else:
+                print 'requestExploreFalse'
 
         
 

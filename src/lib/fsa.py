@@ -305,7 +305,7 @@ class Automaton:
                 if state.outputs[key] == '1':
                     FILE.write( key + '\\n')
                 else:
-                    FILE.write( '¬' + key + '\\n')
+                    FILE.write( 'ï¾¬' + key + '\\n')
             #FILE.write( "("+state.rank + ')\\n ')
             FILE.write('\" ];\n')
 
@@ -318,7 +318,7 @@ class Automaton:
                     if nextState.inputs[key] == '1':
                         FILE.write( key + '\\n')
                     else:
-                        FILE.write( '¬' + key + '\\n')
+                        FILE.write( 'ï¾¬' + key + '\\n')
                 FILE.write('\" ];\n')
 
         FILE.write('} \n')
@@ -372,8 +372,12 @@ class Automaton:
                 for key, value in state.outputs.iteritems():
                     # Ignore "bitX" output propositions
                     if re.match('^bit\d+$', key): continue
-
-                    if int(self.current_outputs[key]) != int(value):
+                    # force undefined props to be false cause that's how we roll
+                    if key not in self.current_outputs and int(value) == 1:
+                        okay = False
+                        break
+                    
+                    if (key in self.current_outputs) and int(self.current_outputs[key]) != int(value):
                         okay = False
                         break
 

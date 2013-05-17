@@ -17,7 +17,7 @@ convexify: True
 fastslow: False
 
 CurrentConfigName:
-segway loop
+DemoDayNoVICON
 
 Customs: # List of custom propositions
 explore_room_done
@@ -25,7 +25,7 @@ explore
 needs_resynthesis
 
 RegionFile: # Relative path of region description file
-finalloop.update3.regions
+finalloop.update5.regions
 
 Sensors: # List of sensor propositions and their state (enabled = 1, disabled = 0)
 LIDAR, 0
@@ -40,16 +40,17 @@ region_removed, 0
 ======== SPECIFICATION ========
 
 RegionMapping: # Mapping between region names and their decomposed counterparts
-r4 = p1
-newRegion1 = p6
-newRegion2 = p5, p6
-r1 = p4
-r2 = p3
-r3 = p2
+newRegion1 = p8, p9, p10, p11, p12, p13, p14
+newRegion2 = p6
+newRegion3 = p5
+newRegion4 = p4
+r1 = p3
+r2 = p2
+r3 = p1
 others = 
 
 Spec: # Specification in structured English
-robot starts in newRegion1 with resynthesize and explore_room_done and requestExplore and explore and not needs_resynthesis
+robot starts in r2 with resynthesize and explore_room_done and not requestExplore and explore and not needs_resynthesis
 ### assumptions ###
 
 
@@ -57,7 +58,7 @@ robot starts in newRegion1 with resynthesize and explore_room_done and requestEx
 
 #group patrol_locations is empty
 
-group patrol_locations is r4, newRegion1, r1, r2, r3
+group patrol_locations is newRegion1, r1, r2, r3
 
 ### exploration settings ###
 
@@ -71,7 +72,7 @@ if you are activating explore_room_done then do resynthesize
 # --------- begin auto-generated exploration spec -------
 
 # keep track of places you need to explore, at all times (TODO: BFS vs DFS?)
-group unexplored_rooms is newRegion2
+group unexplored_rooms is newRegion3
 add to unexplored_rooms if and only if you are sensing start of region_added
 remove from unexplored_rooms if and only if you are activating explore_room_done
 
@@ -83,6 +84,7 @@ if you are activating explore and needs_resynthesis then do resynthesize
 if you are activating explore and not region_added then visit all unexplored_rooms and requestExplore and explore_room_done at least once
 if you are not in any unexplored_room then do not requestExplore
 
+#if you are activating requestExplore then stay there
 if you were activating requestExplore or you are activating requestExplore then stay there
 
 # environment assumptions
@@ -92,6 +94,7 @@ if you are activating requestExplore then infinitely often do not BUSY_EXPLORING
 #if you were not activating requestExplore then do not BUSY_EXPLORING
 
 # react instantly to UKR-related sensors
+#if you are sensing region_added then stay there
 if you are sensing region_added or you were sensing region_added then stay there
 #if you are activating explore_room_done then stay there
 

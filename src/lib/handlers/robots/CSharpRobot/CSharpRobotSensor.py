@@ -96,8 +96,10 @@ class sensorHandler:
 
                 if(self.BUSY_EXPLORE and not self.exploring):
                     self.exploring = True
+                #print 'dont get V',self.BUSY_EXPLORE
                 return self.BUSY_EXPLORE
             else:
+                #print 'get V so false'
                 return False
     def doneExploring(self,initial=True):
         """
@@ -131,6 +133,7 @@ class sensorHandler:
             # make sure we only send the newer rfi when we have finished exploring the region
             if (self.mapThread.mapType==PythonRequestMsg.NEWREGIONFOUND and len(self.oldExternalFaces)>0):
                 self.exposedFaces = self.oldExternalFaces
+                print 'old external faces!'
             else:
                 self.exposedFaces = self.rfi.getExternalFaces() # a list of faces that are not connected to aother regions in the map
                 if self.exposedFaces is None:
@@ -152,6 +155,7 @@ class sensorHandler:
                 new_r = ltlmop_msg.Region()
                 points = map(self.proj.coordmap_map2lab,r.getPoints())
                 holes = [map(proj.coordmap_map2lab, r.getPoints(hole_id=i)) for i in xrange(len(r.holeList))]
+                #print 'name',r.name,len(r.pointArray)
                 print 'region direction',r.name,Polygon.Polygon(r.pointArray).orientation()
                 if Polygon.Polygon(r.pointArray).orientation()==1:
                     for p in points:
@@ -212,7 +216,7 @@ class sensorHandler:
                     # external faces unchanged until we are sure that his is the right map
                 
                 if (self.mapThread.mapType==PythonRequestMsg.NEWREGIONFOUND):
-                    self.exposedFaces = self.proj.rfi.getExternalFaces()
+                    self.exposedFaces = self.oldExternalFaces
                 else:
                     self.exposedFaces = self.mapThread.rfi.getExternalFaces() # a list of faces that are not connected to aother regions in the map
                     #if (len(self.exposedFaces)==0):
@@ -237,7 +241,7 @@ class sensorHandler:
                     new_r.name = r.name
                     points = map(self.proj.coordmap_map2lab,r.getPoints())
                     holes = [map(proj.coordmap_map2lab, r.getPoints(hole_id=i)) for i in xrange(len(r.holeList))]
-                    print 'region direction',r.name,Polygon.Polygon(r.pointArray).orientation()
+                    #print 'region direction',r.name,Polygon.Polygon(r.pointArray).orientation()
                     if Polygon.Polygon(r.pointArray).orientation()==1:
                         for p in points:
                             new_p = ltlmop_msg.Point()
@@ -348,7 +352,8 @@ class _MapUpdateThread(threading.Thread):
                     r.pointArray = []
                     r.name = reg.name
                     count = 0
-                    print 'regions in new map:',r.name,len(reg.points)
+                    #print 'regions in new map:',len(reg.points)
+                    print 'regions in new map name:',r.name,len(reg.points)
                     for p in reg.points: # add all the points of the region in lab coordinates
                         transformed_p = self.coordmap_lab2map(regions.Point(p.x,p.y))
                         r_pos = r.position
