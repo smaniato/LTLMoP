@@ -96,7 +96,7 @@ class ExecutorResynthesisExtensions:
         c = specCompiler.SpecCompiler()
         c.proj = new_proj
 
-        # Make sure rfi is non-decomposed here
+        # Make sure rfi is non-decomposed here ("rfi" = RegionFileInterface)
         c.proj.loadRegionFile(decomposed=False)
 
         if c.proj.compile_options["decompose"]:
@@ -135,7 +135,3 @@ class ExecutorResynthesisExtensions:
         return True
         
         # TODO: reload from file less often
-
-
-
-

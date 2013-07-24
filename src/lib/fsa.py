@@ -355,8 +355,9 @@ class Automaton:
                 if state.outputs[key] == '1':
                     FILE.write( key + '\\n')
                 else:
-                    FILE.write( '!' + key + '\\n')
-            #FILE.write( "("+state.rank + ')\\n ')
+                    FILE.write( '!' + key + '\\n')				# \neg sign would go here.
+            # This is where I can choose to show/hide the state's rank when viewing the automaton. (~Spyros)        
+            FILE.write( "("+state.rank + ')\\n ') 				# Comment to hide rank.
             FILE.write('\" ];\n')
 
         # Write the transitions with the input labels (only inputs that are true)
@@ -372,7 +373,7 @@ class Automaton:
                     if nextState.inputs[key] == '1':
                         FILE.write( key + '\\n')
                     else:
-                        FILE.write( '!' + key + '\\n')
+                        FILE.write( '!' + key + '\\n')	        # \neg sign would go here.
                 FILE.write('\" ];\n')
 
         FILE.write('} \n')
