@@ -12,6 +12,9 @@ class poseHandler:
     def __init__(self, proj, shared_data,x=0.7,y=0.5,yaw=0):
         """
         Pose Handler for basic simulated robot
+        x (float): initial pose x
+        y (float): initial pose y 
+        yaw (float): initial pose theta
         """
         self.CSharpCommunicator = proj.shared_data['robocomm']
         self.initPose=array([x,y,yaw])
