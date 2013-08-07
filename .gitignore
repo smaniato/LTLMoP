@@ -22,3 +22,10 @@ sysBugs.txt
 *.sat
 src/lib/cores/picosat*
 .settings
+# Spyros: ignore all files in these directories:
+spyros-tests/
+LTLMoP structure/
+# Spyros: also ignore files with these extensions:
+*.pdf
+# Spyros: finally, ignore these very specific files:
+LTLMoP_GitHub_Setup.py
