@@ -54,7 +54,7 @@ Spec: # Specification in structured English
 #### Group definitions ####
 
 # Letters that we can detect
-Group recipients is letter1, letter2
+Group letters is letter1, letter2
 
 # Memory Propositions indicating that we are currently carrying a given letter
 Group letterslot is carrying_letter1, carrying_letter2
@@ -65,37 +65,46 @@ Group letterdestination is r1, r2
 # Actions that deliver each letter
 Group letterdelivery is deliver_letter1, deliver_letter2
 
+# Regions to patrol if you are not carrying letters
+Group patrolRooms is mail_room, hall_n
+
 robot starts in mail_room with false
 environment starts with false
 
 # C(letter_slot) = {letters, letter_delivery}
-letterslot correspond to recipients
-letterslot correspond to letterdelivery
+letterslot corresponds to letters
+letterslot corresponds to letterdelivery
 
 # C(lettery_delivery) = {letter_destination, letter slot}
-letterdelivery correspond to letterdestination
-letterdelivery correspond to letterslot
+letterdelivery corresponds to letterdestination
+letterdelivery corresponds to letterslot
 
 
 #### Spec-rewriting and resynthesis mechanics ####
 
 # This is only triggered if we see a letter we haven't ever seen before
-If you are sensing new_letter then add to group recipients and resynthesize
+If you are sensing new_letter then add to group letters and resynthesize
 
 #### Letter delivery specification ####
 
 # Keep track of what we're carrying
-each letterslot is set on mail_room and the corresponding recipients and pick_up and reset on the corresponding letterdelivery
+each letterslot is set on the corresponding letters and pick_up and reset on the corresponding letterdelivery
 
 # Deliver only in the destination room, and only if you have that letter
 do each letterdelivery if and only if you are in the corresponding letterdestination and you are activating the corresponding letterslot
 
 # No spurious pickups
-Do pick_up if and only if you are sensing any recipients
+Do pick_up if and only if you are sensing any letters
 
 # Our goal is to get rid of all our letters
-Infinitely often not any letterslot
+infinitely often not each letterslot
 
 # Go back to the mailroom if we have nothing else to do
-If you are not activating any letterslot then go to mail_room
+If you are not activating any letterslot then visit each patrolRooms
+
+# Environment assumption: Be nice don't show us letters all the time
+Infinitely often not any letters
+
+# F/S stuffs
+If you are activating pick_up then stay there
 
