@@ -17,6 +17,9 @@ fastslow: False
 decompose: True
 use_region_bit_encoding: True
 
+CurrentConfigName:
+basicsim
+
 Customs: # List of custom propositions
 carrying_letter1
 carrying_letter2
