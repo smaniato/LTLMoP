@@ -53,7 +53,7 @@ def usage(script_name):
                               -s FILE, --spec-file FILE:
                                   Load experiment configuration from FILE """ % script_name)
 
-class LTLMoPExecutor(object, ExecutorResynthesisExtensions):
+class LTLMoPExecutor(ExecutorResynthesisExtensions, object):
     """
     This is the main execution object, which combines the synthesized discrete automaton
     with a set of handlers (as specified in a .config file) to create and run a hybrid controller
@@ -63,6 +63,8 @@ class LTLMoPExecutor(object, ExecutorResynthesisExtensions):
         """
         Create a new execution context object
         """
+
+        super(LTLMoPExecutor, self).__init__()
 
         self.proj = project.Project() # this is the project that we are currently using to execute
         self.aut = None
@@ -207,6 +209,9 @@ class LTLMoPExecutor(object, ExecutorResynthesisExtensions):
             logging.error("Please create one by going to [Run] > [Configure Simulation...] in SpecEditor and then try again.")
             sys.exit(2)
 
+        # HACK: give the proj a reference to executor
+        self.proj.executor = self
+
         # Import the relevant handlers
         if firstRun:
             logging.info("Importing handler functions...")
@@ -214,6 +219,8 @@ class LTLMoPExecutor(object, ExecutorResynthesisExtensions):
         else:
             #print "Reloading motion control handler..."
             #self.proj.importHandlers(['motionControl'])
+            logging.info("Reinitializing sensor/actuator handlers...")
+            self.proj.importHandlers([])
             pass
 
         # We are done initializing at this point if there is no aut file yet
@@ -284,14 +291,11 @@ class LTLMoPExecutor(object, ExecutorResynthesisExtensions):
             if not self.alive.isSet():
                 break
             
-            self.prev_outputs = deepcopy(self.aut.current_outputs)
             self.prev_z = self.aut.current_state.rank
 
             tic = self.timer_func()
             self.aut.runIteration()
             toc = self.timer_func()
-
-            #self.checkForInternalFlags()
 
             # Rate limiting of execution and GUI update
             while (toc - tic) < 0.05:
@@ -387,6 +391,7 @@ def execute_main(listen_port=None, spec_file=None, aut_file=None, show_gui=False
     logging.info("Waiting for XML-RPC server to shut down...")
     xmlrpc_server.shutdown()
     XMLRPCServerThread.join()
+    logging.info("XML-RPC server shutdown complete.  Goodbye.")
 
 
 ### Command-line argument parsing ###
