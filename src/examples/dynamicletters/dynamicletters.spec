@@ -8,6 +8,7 @@ Actions: # List of action propositions and their state (enabled = 1, disabled = 
 pick_up, 1
 deliver_letter1, 1
 resynthesize, 1
+deliver_letter2, 1
 
 CompileOptions:
 convexify: True
@@ -18,6 +19,7 @@ use_region_bit_encoding: True
 
 Customs: # List of custom propositions
 carrying_letter1
+carrying_letter2
 
 RegionFile: # Relative path of region description file
 slurp_hospital.regions
@@ -25,6 +27,7 @@ slurp_hospital.regions
 Sensors: # List of sensor propositions and their state (enabled = 1, disabled = 0)
 new_letter, 1
 letter1, 1
+letter2, 1
 
 
 ======== SPECIFICATION ========
@@ -48,36 +51,48 @@ Spec: # Specification in structured English
 #### Group definitions ####
 
 # Letters that we can detect
-Group letters is letter1.
+Group recipients is letter1, letter2
 
-# Propositions indicating that we are currently carrying a given letter
-Group letter_slots is carrying_letter1.
+# Memory Propositions indicating that we are currently carrying a given letter
+Group letterslot is carrying_letter1, carrying_letter2
 
 # Regions that each letter needs to end up in.
-Group letter_destinations is r1.
+Group letterdestination is r1, r2
 
 # Actions that deliver each letter
-Group letter_delivery is deliver_letter1.
+Group letterdelivery is deliver_letter1, deliver_letter2
+
+robot starts in mail_room with false
+environment starts with false
+
+# C(letter_slot) = {letters, letter_delivery}
+letterslot correspond to recipients
+letterslot correspond to letterdelivery
+
+# C(lettery_delivery) = {letter_destination, letter slot}
+letterdelivery correspond to letterdestination
+letterdelivery correspond to letterslot
+
 
 #### Spec-rewriting and resynthesis mechanics ####
 
 # This is only triggered if we see a letter we haven't ever seen before
-If you are sensing new_letter then add to group letters and resynthesize.
+If you are sensing new_letter then add to group recipients and resynthesize
 
 #### Letter delivery specification ####
 
 # Keep track of what we're carrying
-Corresponding letter_slot is set on mail_room and sensing any letter and pick_up and reset on corresponding letter_delivery.
+each letterslot is set on mail_room and the corresponding recipients and pick_up and reset on the corresponding letterdelivery
 
 # Deliver only in the destination room, and only if you have that letter
-If you are not in the corresponding letter_destination and activating the corresponding letter_slot then do not do any letter_delivery.
+do each letterdelivery if and only if you are in the corresponding letterdestination and you are activating the corresponding letterslot
 
 # No spurious pickups
-If you are not sensing any letter then do not do pick_up.
+Do pick_up if and only if you are sensing any recipients
 
 # Our goal is to get rid of all our letters
-Infinitely often not any letter_slots.
+Infinitely often not any letterslot
 
 # Go back to the mailroom if we have nothing else to do
-If you are not activating any letter_slots then go to mail_room.
+If you are not activating any letterslot then go to mail_room
 
