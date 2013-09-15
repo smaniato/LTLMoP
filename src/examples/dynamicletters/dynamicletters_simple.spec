@@ -52,13 +52,13 @@ Spec: # Specification in structured English
 Group Letters is letter1, letter2
 
 # Regions that each letter needs to end up in.
-Group Destinations is r1, r2
+Group Offices is r1, r2
 
 # Regions to patrol if you are not carrying letters
 Group PatrolRooms is mailRoom, hallW, hallN
 
 # C(letters) = {Destinations}
-Letters correspond to Destinations
+Letters correspond to Offices
 
 #robot starts in mailRoom with false
 #environment starts with false
@@ -69,7 +69,7 @@ Letters correspond to Destinations
 If you are sensing newLetter then add to group Letters and resynthesize
 
 #### Letter delivery specification ####
-if you are sensing any Letters then go to the corresponding Destination
+If you are sensing any Letters then go to the corresponding Office
 
 # No spurious pickups
 #Do pick_up if and only if you are sensing any Letters
