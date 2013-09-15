@@ -46,40 +46,32 @@ hallW = p13, p14
 r4 = p3
 
 Spec: # Specification in structured English
-#### Group definitions ####
+### Group definitions ###
 
 # Letters that we can detect
-Group Letters is letter1, letter2
+Group Letters is letter1
 
 # Regions that each letter needs to end up in.
-Group Offices is r1, r2
+Group Offices is r1
 
 # Regions to patrol if you are not carrying letters
 Group PatrolRooms is mailRoom, hallW, hallN
 
-# C(letters) = {Destinations}
+#### Correspondences ###
 Letters correspond to Offices
 
-#robot starts in mailRoom with false
-#environment starts with false
+### Mission tasks ###
 
-#### Spec-rewriting and resynthesis mechanics ####
-
-# This is only triggered if we see a letter we haven't ever seen before
-If you are sensing newLetter then add to group Letters and resynthesize
-
-#### Letter delivery specification ####
-If you are sensing any Letters then go to the corresponding Office
-
-# No spurious pickups
-#Do pick_up if and only if you are sensing any Letters
-
-# Go back to the mailroom if we have nothing else to do
+# Deliver letters to their recipients' offices:
+If you are sensing any Letters then go to the corresponding Offices
+# Go back to the mailroom if we have nothing else to do:
 If you are not sensing any Letters then visit each PatrolRoom
 
-# Environment assumption: Be nice don't show us letters all the time
-Infinitely often not newLetter
+### Open-world settings ###
 
-# F/S stuffs
+If you are sensing newLetter then add to group Letters and resynthesize
 If you are sensing newLetter then stay there
+
+# Environment fairness assumption:
+Infinitely often not newLetter
 
