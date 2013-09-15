@@ -68,17 +68,18 @@ Group letterdelivery is deliver_letter1, deliver_letter2
 # Regions to patrol if you are not carrying letters
 Group patrolRooms is mail_room, hall_n
 
-robot starts in mail_room with false
-environment starts with false
-
-# C(letter_slot) = {letters, letter_delivery}
+# C(letterslot) = {letters, letterdelivery}
 letterslot corresponds to letters
 letterslot corresponds to letterdelivery
 
-# C(lettery_delivery) = {letter_destination, letter slot}
+# C(letterydelivery) = {letterdestination, letterslot}
 letterdelivery corresponds to letterdestination
 letterdelivery corresponds to letterslot
 
+# C(letters) = {letterslot, letterdestination, letterdelivery}
+letters correspond to letterslot
+letters correspond to letterdestination
+letters correspond to letterdelivery
 
 #### Spec-rewriting and resynthesis mechanics ####
 
