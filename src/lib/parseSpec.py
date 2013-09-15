@@ -396,7 +396,7 @@ def parseCorresponding(semstring, correlations, allGroups):
         #Build conjunction out of all generated sentences
         if len(newSentences) == 0:
             semstring = ''
-        if len(newSentences) == 1:
+        elif len(newSentences) == 1:
             semstring = newSentences[0]
         else:
             semstring = 'And(' + ',And('.join(newSentences[0:-1]) + ',' + newSentences[-1] + ')'*(len(newSentences)-1)
