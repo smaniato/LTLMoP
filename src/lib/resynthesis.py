@@ -150,6 +150,9 @@ class ExecutorResynthesisExtensions(object):
                 logging.debug("Adding new sensor proposition {!r}".format(ref))
                 self.next_proj.enabled_sensors.append(ref)
                 self.next_proj.all_sensors.append(ref)
+
+                # Set the corresponding dummySensor to be initially true
+                self.next_proj.currentConfig.prop_mapping[ref] = "share.dummySensor.buttonPress(button_name='{}',init_value=True)".format(ref)
             
             # Figure out if there are any corresponding groups which we will also need to update
             corresponding_groups = self._findGroupsInCorrespondenceWithGroup(m.group('groupName'))
