@@ -125,7 +125,7 @@ def writeSpec(text, sensorList, regionList, robotPropList):
             #We want to recognize the group name with or without a trailing 's'
             grammarText += '\nGROUP[SEM=<' + groupName + '>] -> \'' + groupName + '\' | \''+groupName+'s\' | \''+re.sub(r'(\w+)s',r'\1',groupName)+'\''
             #Add specified regions to our dictionary of region groups
-            regionGroups[groupName] = re.split(r', *', m_groupDef.group('items'))
+            regionGroups[groupName] = filter(lambda x: x!='empty',re.split(r', *', m_groupDef.group('items')))
             allGroups[groupName] = regionGroups[groupName]
             #print '\tGroups updated: ' + str(regionGroups)
 
@@ -137,7 +137,7 @@ def writeSpec(text, sensorList, regionList, robotPropList):
             #We want to recognize the group name with or without a trailing 's'
             grammarText += '\nSENSORGROUP[SEM=<' + groupName + '>] -> \'' + groupName + '\' | \''+groupName+'s\' | \''+re.sub(r'(\w+)s',r'\1',groupName)+'\''
             #Add specified sensors to out dictionary of sensor groups
-            sensorGroups[groupName] = re.split(r', *', m_sensorGroupDef.group('items'))
+            sensorGroups[groupName] = filter(lambda x: x!='empty',re.split(r', *', m_sensorGroupDef.group('items')))
             allGroups[groupName] = sensorGroups[groupName]
             #print '\tSensor groups updated: ' + str(sensorGroups)
 
@@ -149,7 +149,7 @@ def writeSpec(text, sensorList, regionList, robotPropList):
             #We want to recognize the group name with or without a trailing 's'
             grammarText += '\nACTIONGROUP[SEM=<' + groupName + '>] -> \'' + groupName + '\' | \''+groupName+'s\' | \''+re.sub(r'(\w+)s',r'\1',groupName)+'\''
             #Add specified sensors to out dictionary of sensor groups
-            actionGroups[groupName] = re.split(r', *', m_actionGroupDef.group('items'))
+            actionGroups[groupName] = filter(lambda x: x!='empty',re.split(r', *', m_actionGroupDef.group('items')))
             allGroups[groupName] = actionGroups[groupName]
             #print '\tAction groups updated: ' + str(actionGroups)
 
@@ -190,7 +190,7 @@ def writeSpec(text, sensorList, regionList, robotPropList):
             if propName not in robotPropList:
                 robotPropList.append(propName.lower())
                 internal_props.append(propName.lower())
-            line = r_groupOp.sub('do '+propName, line)
+            line = re.sub(m_groupOp.group(0),'do '+propName, line)
             textLines[lineInd] = line
             m_groupOp = r_groupOp.search(line)
 
@@ -333,6 +333,7 @@ def parseGroupAny(semstring, allGroups):
         groupName = re.search(r'\$Any\((\w+)\)',semstring).groups()[0]
         if groupName in allGroups:
             if len(allGroups[groupName]) == 0: return ''
+            if len(allGroups[groupName]) == 1: return re.sub(r'\$Any\('+groupName+'\)',allGroups[groupName][0],semstring)
             group = allGroups[groupName]
             anyClause = 'Or(' + ',Or('.join(group[0:-1]) + ',' + group[-1] + ')'*(len(group)-1)
             semstring = re.sub(r'\$Any\('+groupName+'\)', anyClause, semstring)
@@ -345,6 +346,7 @@ def parseGroupEach(semstring, allGroups):
         groupName = re.search(r'\$Each\((\w+)\)',semstring).group(1)
         if groupName in allGroups:
             if len(allGroups[groupName]) == 0: return ''
+            if len(allGroups[groupName]) == 1: return re.sub(r'\$Each\('+groupName+'\)', allGroups[groupName][0], semstring)
             newSentences = []
             for groupItem in allGroups[groupName]:
                 newSentences.append(re.sub(r'\$Each\('+groupName+'\)',groupItem,semstring))
