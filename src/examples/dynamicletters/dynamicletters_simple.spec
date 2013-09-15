@@ -69,16 +69,16 @@ Letters correspond to Destinations
 If you are sensing newLetter then add to group Letters and resynthesize
 
 #### Letter delivery specification ####
-if you are sensing any Letters and you are not sensing newLetter then go to the corresponding Destination
+if you are sensing any Letters then go to the corresponding Destination
 
 # No spurious pickups
 #Do pick_up if and only if you are sensing any Letters
 
 # Go back to the mailroom if we have nothing else to do
-If you are not sensing any Letters and you are not sensing newLetter then go to mailRoom
+If you are not sensing any Letters then visit each PatrolRoom
 
 # Environment assumption: Be nice don't show us letters all the time
-#Infinitely often not newLetter
+Infinitely often not newLetter
 
 # F/S stuffs
 If you are sensing newLetter then stay there
