@@ -256,7 +256,8 @@ def writeSpec(text, sensorList, regionList, robotPropList):
             # the appropriate section of the specification
             stringLTL = prefix2infix(semstring)
             
-            spec[syntree.node['SPEC']] += stringLTL + ' & \n'
+            if stringLTL != '':
+                spec[syntree.node['SPEC']] += stringLTL + ' & \n'
             linemap[syntree.node['SPEC']].append(lineNo)
             LTL2LineNo[stringLTL] = lineNo
             
@@ -322,7 +323,7 @@ def parseGroupAll(semstring, allGroups):
     while semstring.find('$All') != -1:
         groupName = re.search(r'\$All\((\w+)\)',semstring).groups()[0]
         if groupName in allGroups:
-            if len(allGroups[groupName]) == 0: return ''
+            if len(allGroups[groupName]) == 0: return re.sub(r'\$All\('+groupName+'\)','TRUE',semstring)
             semstring = appendAllClause(semstring, 0, allGroups[groupName])
         else:
             print('Error: Could not resolve group '+groupName)
@@ -332,7 +333,7 @@ def parseGroupAny(semstring, allGroups):
     while semstring.find('$Any') != -1:
         groupName = re.search(r'\$Any\((\w+)\)',semstring).groups()[0]
         if groupName in allGroups:
-            if len(allGroups[groupName]) == 0: return ''
+            if len(allGroups[groupName]) == 0: return re.sub(r'\$Any\('+groupName+'\)','FALSE',semstring)
             if len(allGroups[groupName]) == 1: return re.sub(r'\$Any\('+groupName+'\)',allGroups[groupName][0],semstring)
             group = allGroups[groupName]
             anyClause = 'Or(' + ',Or('.join(group[0:-1]) + ',' + group[-1] + ')'*(len(group)-1)
