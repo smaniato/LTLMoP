@@ -23,8 +23,6 @@ RegionFile: # Relative path of region description file
 slurp_hospital.regions
 
 Sensors: # List of sensor propositions and their state (enabled = 1, disabled = 0)
-letter1, 1
-letter2, 1
 newLetter, 1
 
 
@@ -49,10 +47,10 @@ Spec: # Specification in structured English
 ### Group definitions ###
 
 # Letters that we can detect
-Group Letters is letter1
+Group Letters is empty
 
 # Regions that each letter needs to end up in.
-Group Offices is r1
+Group Offices is empty
 
 # Regions to patrol if you are not carrying letters
 Group PatrolRooms is mailRoom, hallW, hallN
