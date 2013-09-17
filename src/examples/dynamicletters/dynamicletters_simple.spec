@@ -10,7 +10,7 @@ resynthesize, 1
 CompileOptions:
 convexify: True
 parser: nltk
-fastslow: False
+fastslow: True
 decompose: True
 use_region_bit_encoding: True
 
@@ -58,18 +58,15 @@ Group PatrolRooms is mailRoom, hallW, hallN
 #### Correspondences ###
 Letters correspond to Offices
 
+
 ### Mission tasks ###
 
 # Deliver letters to their recipients' offices:
 If you are sensing any Letters then go to the corresponding Offices
-# Go back to the mailroom if we have nothing else to do:
+
+# If you are not carrying any letters, patrol the building:
 If you are not sensing any Letters then visit each PatrolRoom
 
 ### Open-world settings ###
-
 If you are sensing newLetter then add to group Letters and resynthesize
-If you are sensing newLetter then stay there
-
-# Environment fairness assumption:
-Infinitely often not newLetter
 
