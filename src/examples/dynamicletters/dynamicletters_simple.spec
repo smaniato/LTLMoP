@@ -44,20 +44,18 @@ hallW = p13, p14
 r4 = p3
 
 Spec: # Specification in structured English
-### Group definitions ###
+### Group & Correspondence definitions ###
 
-# Letters that we can detect
+# Letters that the robot already knows about.
 Group Letters is empty
 
 # Regions that each letter needs to end up in.
 Group Offices is empty
 
-# Regions to patrol if you are not carrying letters
+# Regions to patrol if the robot is not carrying letters.
 Group PatrolRooms is mailRoom, hallW, hallN
 
-#### Correspondences ###
 Letters correspond to Offices
-
 
 ### Mission tasks ###
 
