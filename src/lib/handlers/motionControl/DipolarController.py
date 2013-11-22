@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 ==================================================
-PlotRRT
+DipolarController
 ==================================================
 
 This class uses matplotlib to aid in plotting several components of
