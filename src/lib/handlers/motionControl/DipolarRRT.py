@@ -59,9 +59,9 @@ def diffAngles(angle1, angle2):
     return (angle1 - angle2 + np.pi)%(2*np.pi) - np.pi
 
 
-class MapRRT:
+class RRTMap:
     
-    def __init__(self, boundary, allObstacles):
+    def __init__(self, boundary, allObstacles=None):
         ''' An object with the outline of the map, a list of obstacles,
         and the poses that the robot starts and ends on.
         
@@ -71,14 +71,17 @@ class MapRRT:
         :param endPose: numpy 3D array
         '''
         self.boundary = boundary
-        self.allObstacles = allObstacles
-        
+        if allObstacles is not None:
+            self.allObstacles = allObstacles
+        else:
+            self.allObstacles = []
+            
         self.cFree = Polygon.Polygon(boundary)
         for obst in allObstacles:
             self.cFree -= obst
             
             
-class RobotRRT:
+class RRTRobot:
     
     def __init__(self, pose, outline, radius=None):
         """ An object that represents the robot location and outline.
@@ -89,35 +92,67 @@ class RobotRRT:
         :param radius: radius of a circle encompasing the robot and centered at
                         pose. Only used for 2D RRT
         """
-        self.pose = pose
+        self.pose = np.array(pose)
         self.shape = outline
         self.radius = radius
         
+    
+    @classmethod
+    def circularRobot(cls, pose, radius=None):
+        """ Create a circular representation of a robot.
+        
+        :param pose: numpy 3D array
+        :param radius: radius of the robot
+        """
+        center = (pose[0], pose[1])
+        tempPoly = pShapes.Circle(radius, center)
+        
+        return cls.__init__(self, pose, tempPoly, radius)
         
     def moveRobotTo(self, newPose):
         """ Updates the robot pose and outline to match the new pose
         
         :param newPose: numpy 3D array
         """
+        # TODO: DIR V DOES NOT NEED BE A VECTOR SPLIT IT UP
         dirV = newPose[:2] - self.pose[:2]
         angleDiff = diffAngles(newPose[2], self.pose[2])
         self.shape.shift(dirV[0], dirV[1])
+        # TODO: DONT MAKE A NEW ARRAY JUST UPDATE VALUES
         self.pose = np.array(newPose)
         self.shape.rotate(angleDiff, newPose[0], newPose[1])
         
         
     def copy(self):
-        return RobotRRT(np.array(self.pose), Polygon.Polygon(self.shape))
+        return RRTRobot(np.array(self.pose), Polygon.Polygon(self.shape))
 
 
-class PlotterRRT:
+class RRTPlotter:
     
-    def __init__(self, figure, axes):
+    def __init__(self, figure=None, axes=None):
         """ An object to facilitate plotting common structures on the given 
         matplotlib figure and axes.
         """
-        self.fig = figure
-        self.ax = axes
+        if figure is None or axes is None:
+            self.fig, self.ax = plt.subplots()
+        else:
+            self.fig = figure
+            self.ax = axes
+
+
+    def clearPlot(self):
+        """ Clear the current axes. """
+        plt.cla()
+        
+        
+    def ion(self):
+        """ Interactive on. """
+        plt.ion()
+
+        
+    def ioff(self):
+        """ Interactive off. """
+        plt.ioff()
 
 
     def drawPolygon(self, poly, color='k', width=1):
@@ -163,7 +198,7 @@ class PlotterRRT:
         
         :param startPose: numpy 3D array
         :param endPose: numpy 3D array
-        :param robot: a RobotRRT object
+        :param robot: a RRTRobot object
         """
         robotTemp = robot.copy()
         
@@ -177,7 +212,7 @@ class PlotterRRT:
     def drawMap(self, fullMap):
         """ Draw the map with boundary and obstacles
         
-        :param fullMap: a MapRRT object
+        :param fullMap: a RRTMap object
         """
         self.drawPolygon(fullMap.boundary, color='k', width=3)
          
@@ -210,7 +245,7 @@ class PlotterRRT:
     def showMapAndTrees(self, fullMap, allTrees):
         """ Draw and plot the fullMap and trees. Mainly used to help debug
         
-        :param fullMap: a MapRRT object
+        :param fullMap: a RRTMap object
         :param allTrees: a list of trees from the RRT
         """
         self.drawMap(fullMap)
@@ -300,15 +335,15 @@ class DipolarController:
         dist = u*delT
         
         if np.abs(delAng) < .0000001:
-            poseN[0] = poseN[0] + dist*np.cos(posePrev[2])   
-            poseN[1] = poseN[1] + dist*np.sin(posePrev[2])
+            poseN[0] += dist*np.cos(posePrev[2])   
+            poseN[1] += dist*np.sin(posePrev[2])
         else:
             # Radius of circle and length of displacement vector
             rad = dist/delAng;
             vecL = np.sqrt( (rad*np.sin(delAng))**2 + (rad - rad*np.cos(delAng))**2) * np.sign(dist)
             
-            poseN[0] = poseN[0] + vecL*np.cos(delAng/2 + poseN[2])
-            poseN[1] = poseN[1] + vecL*np.sin(delAng/2 + poseN[2])
+            poseN[0] += vecL*np.cos(delAng/2 + poseN[2])
+            poseN[1] += vecL*np.sin(delAng/2 + poseN[2])
             poseN[2] = (poseN[2] + delAng)%(2*np.pi)
             
         return poseN
@@ -346,7 +381,7 @@ class Node:
         self.pose = np.array([self.x, self.y, self.theta])
   
 
-class PlannerRRT:
+class DipolarRRT:
     
     def __init__(self, fullMap, robot, plotter=None):
         """ An RRT path planner that takes into account orientation 
@@ -354,9 +389,9 @@ class PlannerRRT:
         
         Note: Dipoles and poses are always numpy arrays with x, y, and theta.
 
-        :param fullMap: A MapRRT object
+        :param fullMap: A RRTMap object
         :param robot: A robotRRT object
-        :param plotter: A PlotterRRT object. If plotting is desired
+        :param plotter: A RRTPlotter object. If plotting is desired
         """
                 
         # TODO: CHECK TO SEE WHICH SHOULD BE KEPT HERE
@@ -696,7 +731,7 @@ class PlannerRRT:
         return None 
 
 
-    def getDipolePathTraveled(self, path):
+    def get2DPathRepresent(self, path):
         """ Takes a path as a list of nodes and runs the dipolar controler to
         return a close approximation of the path traveled as a list of dipoles
         """
@@ -706,6 +741,9 @@ class PlannerRRT:
             pathDi.append(path[i+1].pose)
             pathTraveled += pathDi
         return pathTraveled        
+    
+    def pathNodeToDipoles(self, path):
+        return [node.pose for node in path]
         
 
 class TestRRT:    
@@ -786,7 +824,7 @@ class TestRRT:
         else:
             return None
                 
-        testMap = MapRRT(boundary, allObstacles)    
+        testMap = RRTMap(boundary, allObstacles)    
         return startPose, endPose, testMap
     
     
@@ -800,16 +838,16 @@ class TestRRT:
         startPose, endPose, testMap = self.getSampleMapRRT(3)
         
         robotOutline = Polygon.Polygon([(-.25,0), (.25,0), (0,.5)])
-        robot = RobotRRT(np.array([0,.2,np.pi/2]), robotOutline)
+        robot = RRTRobot(np.array([0,.2,np.pi/2]), robotOutline)
         
         figure, axes = plt.subplots()
-        plotter = PlotterRRT(figure, axes)
+        plotter = RRTPlotter(figure, axes)
         plotter.drawMap(testMap)
         axes.grid()
         
         plotter.drawStartAndGoalRobotShape(startPose, endPose, robot)
         
-        planner = PlannerRRT(testMap, robot, plotter)
+        planner = DipolarRRT(testMap, robot, plotter)
         planner.DEBUGER = self.DEBUGER
         planner.PLOT_TREE = self.PLOT_TREE
         planner.PLOT_TREE_FAIL = self.PLOT_TREE_FAIL
@@ -821,7 +859,7 @@ class TestRRT:
             return
         
         if self.PLOT_RRT_PATH:
-            pathT = planner.getDipolePathTraveled(rrtPath)
+            pathT = planner.get2DPathRepresent(rrtPath)
             plotter.drawDipolePath2D(pathT, color='g', width=3)
             
         print "Smoothing Path"
@@ -829,7 +867,7 @@ class TestRRT:
         print "Done Smoothing Path"
         
         if self.PLOT_SHORT_PATH:
-            pathT = planner.getDipolePathTraveled(shortPath)
+            pathT = planner.get2DPathRepresent(shortPath)
             plotter.drawDipolePath2D(pathT, color='r', width=3)
             
         print "Showing Final Results"
@@ -843,9 +881,9 @@ class TestRRT:
         startPose, endPose, testMap = self.getSampleMapRRT(3)
         
         robotOutline = Polygon.Polygon([(-.25,0), (.25,0), (0,.5)])
-        robot = RobotRRT(np.array([0,.2,np.pi/2]), robotOutline)
+        robot = RRTRobot(np.array([0,.2,np.pi/2]), robotOutline)
         
-        planner = PlannerRRT(testMap, robot)
+        planner = DipolarRRT(testMap, robot)
         planner.DEBUGER = False
         planner.PLOT_TREE = False
         planner.PLOT_TREE_FAIL = False
@@ -859,16 +897,16 @@ class TestRRT:
         planner.getShortcutPathDipole(rrtPath)
         
 
-if __name__ == "__main__":
-    print "Starting"
-    timeS = clock()
-    
-    test = TestRRT()
-    test.runRRTDipoleControlAndShortcut()    
+# if __name__ == "__main__":
+#     print "Starting"
+#     timeS = clock()
+#     
+#     test = TestRRT()
+# #     test.runRRTDipoleControlAndShortcut()    
 #     test.runRRTDipoleControlAndShortcutNoPlot()    
-#     cProfile.run("test.runRRTDipoleControlAndShortcutNoPlot()") 
-    
-    print "Done: " + str(clock()-timeS)
+# #     cProfile.run("test.runRRTDipoleControlAndShortcutNoPlot()") 
+#     
+#     print "Done: " + str(clock()-timeS)
 
 
 
