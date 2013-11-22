@@ -26,13 +26,13 @@ class RRTMap:
         :param endPose: numpy 3D array
         '''
         self.boundary = boundary
-        if allObstacles is not None:
-            self.allObstacles = allObstacles
-        else:
+        if allObstacles == None:
             self.allObstacles = []
+        else:
+            self.allObstacles = allObstacles
             
         self.cFree = Polygon.Polygon(boundary)
-        for obst in allObstacles:
+        for obst in self.allObstacles:
             self.cFree -= obst
             
             
@@ -61,7 +61,7 @@ class RRTRobot:
         center = (pose[0], pose[1])
         tempPoly = pShapes.Circle(radius, center)
         
-        return cls.__init__(self, pose, tempPoly, radius)
+        return cls(pose, tempPoly, radius)
         
     def moveRobotTo(self, newPose):
         """ Updates the robot pose and outline to match the new pose

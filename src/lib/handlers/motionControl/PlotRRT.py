@@ -25,7 +25,8 @@ class RRTPlotter:
             
     def clearPlot(self):
         """ Clear the current axes. """
-        plt.cla()
+        plt.close()
+        self.fig, self.ax = plt.subplots()
         
     def ion(self):
         """ Interactive on. """

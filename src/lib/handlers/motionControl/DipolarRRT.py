@@ -50,8 +50,8 @@ from numpy.linalg import norm
 
 from DipolarController import DipolarController
 from PlotRRT import RRTPlotter
-from RRTMapAndRobot import RRTMap, RRTRobot
 import Polygon.Shapes as pShapes
+from RRTMapAndRobot import RRTMap, RRTRobot
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -80,6 +80,9 @@ class DipolarRRT:
         self.DEBUGER = False        # Debugger is on
         self.PLOT_TREE = False      # Plot RRT tree as it is grown
         self.PLOT_TREE_FAIL = False # Plot RRT tree in case of timeout
+        
+        # Settings
+        self.CONNECT_DIST = .5      # Euclidean distance between nodes for CONNECT
         
         self.fullMap = fullMap
         self.robot = robot
@@ -223,7 +226,7 @@ class DipolarRRT:
         if any will make progress and extend from one of them. New nodes are added
         to tree.
         """
-        MAX_DIST = 1
+        MAX_DIST = self.CONNECT_DIST
         NUM_CONSIDERED = 5
         
         # Get the index of the closest nodes to dipole
@@ -303,7 +306,7 @@ class DipolarRRT:
             oldTreeLength = len(tree)
             
             if self.PLOT_TREE and self.plotter != None:
-                print "Tree: iteration: " + str(currIter)
+#                 print "Tree: iteration: " + str(currIter)
                 if numNewNodes > 0:
                     if self.DEBUGER:
                         self.plotter.drawMap(self.fullMap)
@@ -597,12 +600,12 @@ pass
 # if __name__ == "__main__":
 #     print "Starting"
 #     timeS = clock()
-#     
+#      
 #     test = TestRRT()
-# #     test.runRRTDipoleControlAndShortcut()    
-#     test.runRRTDipoleControlAndShortcutNoPlot()    
+#     test.runRRTDipoleControlAndShortcut()    
+# #     test.runRRTDipoleControlAndShortcutNoPlot()    
 # #     cProfile.run("test.runRRTDipoleControlAndShortcutNoPlot()") 
-#     
+#      
 #     print "Done: " + str(clock()-timeS)
 
 

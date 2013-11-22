@@ -15,7 +15,7 @@ decompose: True
 use_region_bit_encoding: True
 
 CurrentConfigName:
-SimulatedRobot
+DipolarRRT
 
 Customs: # List of custom propositions
 
@@ -36,10 +36,8 @@ r2 = p3
 r3 = p2
 
 Spec: # Specification in structured English
-visit r1 if and only if you are sensing Go
-visit r2 if and only if you are sensing Go
+visit r1 if and only if you are not sensing Go
 visit r3 if and only if you are sensing Go
-visit r4 if and only if you are sensing Go
 
 do NotifyReachedR1 if and only if you are in r1
 
