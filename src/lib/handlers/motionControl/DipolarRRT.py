@@ -40,17 +40,19 @@ TODO:
 
 from __future__ import division
 
+from Queue import PriorityQueue
 import cProfile
 from random import random
-from time import sleep, clock
+from time import clock
 
 import Polygon
 from numpy.linalg import norm
 
+from DipolarController import DipolarController
+from PlotRRT import RRTPlotter
 import Polygon.Shapes as pShapes
 import matplotlib.pyplot as plt
 import numpy as np
-from Queue import PriorityQueue
 
 
 def diffAngles(angle1, angle2):
@@ -96,7 +98,6 @@ class RRTRobot:
         self.shape = outline
         self.radius = radius
         
-    
     @classmethod
     def circularRobot(cls, pose, radius=None):
         """ Create a circular representation of a robot.
@@ -122,264 +123,9 @@ class RRTRobot:
         self.pose = np.array(newPose)
         self.shape.rotate(angleDiff, newPose[0], newPose[1])
         
-        
     def copy(self):
         return RRTRobot(np.array(self.pose), Polygon.Polygon(self.shape))
-
-
-class RRTPlotter:
-    
-    def __init__(self, figure=None, axes=None):
-        """ An object to facilitate plotting common structures on the given 
-        matplotlib figure and axes.
-        """
-        if figure is None or axes is None:
-            self.fig, self.ax = plt.subplots()
-        else:
-            self.fig = figure
-            self.ax = axes
-
-
-    def clearPlot(self):
-        """ Clear the current axes. """
-        plt.cla()
-        
-        
-    def ion(self):
-        """ Interactive on. """
-        plt.ion()
-
-        
-    def ioff(self):
-        """ Interactive off. """
-        plt.ioff()
-
-
-    def drawPolygon(self, poly, color='k', width=1):
-        """ Draw the outline of a polygon object
-        """
-        vertices = np.array(poly[0] + [poly[0][0]])
-        self.ax.plot(vertices[:,0], vertices[:,1], 
-                 color=color, linewidth=width)
-        plt.draw()
-    
-    
-    def drawTree(self, tree, color='k', width=1):
-        """ For drawing trees created in RRT
-        """
-        for node in tree:
-            parent = node.parent
-            if parent != None:
-                self.drawEdge(node, parent, color, width)
-    
-                
-    def drawEdge(self, node1, node2, color='k', width=1):
-        """ Draw the edge that connects two nodes from the RRT
-        """
-        self.ax.plot([node1.x, node2.x], [node1.y, node2.y], 
-                 'o-', color=color, linewidth=width)
-        plt.draw()
-    
-    
-    def drawStartAndGoalPoints(self, startPoint, goalPoint):
-        """ Places a green marker at the start point and a red one at the end
-        point
-        
-        :param startPoint: numpy 2D array
-        :param gialPoint: numpy 2D array
-        """
-        self.ax.plot(startPoint[0], startPoint[1], 'go')
-        self.ax.plot(goalPoint[0], goalPoint[1], 'ro')
-        plt.draw()
-        
-        
-    def drawStartAndGoalRobotShape(self, startPose, goalPose, robot):
-        """ Plot the robots outline at the start and end pose
-        
-        :param startPose: numpy 3D array
-        :param endPose: numpy 3D array
-        :param robot: a RRTRobot object
-        """
-        robotTemp = robot.copy()
-        
-        robotTemp.moveRobotTo(startPose)   
-        self.drawPolygon(robotTemp.shape, color='g', width=2)
-        
-        robotTemp.moveRobotTo(goalPose)   
-        self.drawPolygon(robotTemp.shape, color='r', width=2)
-
-    
-    def drawMap(self, fullMap):
-        """ Draw the map with boundary and obstacles
-        
-        :param fullMap: a RRTMap object
-        """
-        self.drawPolygon(fullMap.boundary, color='k', width=3)
-         
-        # Obstacles
-        for obst in fullMap.allObstacles:
-            self.drawPolygon(obst, color='b', width=3)
-        
-        plt.draw()
-    
-    
-    def drawNodePath2D(self, path, color='k', width=1):
-        """ Draw the path assuming that nodes are connected by straight lines
-        
-        :param path: a list of nodes
-        """
-        points = [node.XY for node in path]
-        self.drawDipolePath2D(points, color=color, width=width)
-    
-    
-    def drawDipolePath2D(self, path, color='k', width=1):
-        """ Draw the path assuming that dipoles are connected by straight lines
-        
-        :param path: a list of dipoles
-        """
-        points = np.array(path)
-        self.ax.plot(points[:,0], points[:,1], color=color, linewidth=width)
-        plt.draw()
-        
-        
-    def showMapAndTrees(self, fullMap, allTrees):
-        """ Draw and plot the fullMap and trees. Mainly used to help debug
-        
-        :param fullMap: a RRTMap object
-        :param allTrees: a list of trees from the RRT
-        """
-        self.drawMap(fullMap)
-        
-        for tree in allTrees:
-            self.drawTree(tree, color='k', width=1)
-            
-        plt.show()
-    
-    
-class DipolarController:
-    
-    def __init__(self, k1=.5, k2=1.5, lambdaValue=3):
-        """ A class that uses the dipolar controller from the paper: Model 
-        Predictive Control for the Navigation of a Nonholonomic Vehicle with 
-        Field-of-View Constraints
-        
-        :param k1: Linear velocity
-        :param k2: Angular velocity gain
-        :param lambdaValue: Dipole's field shape
-        Parameters are further explained in the literature
-        """
-        self.k1 = k1
-        self.k2 = k2
-        self.lam = lambdaValue
-    
-
-    def getFieldAt(self, poseCurr, poseDes):
-        """ Calculate the dipolar field at poseCurr that is generated from 
-        the dipole at poseDes
-        
-        :param poseCurr: numpy 3D array. The current pose
-        :param poseDes: numpy 3D array. The desired pose
-        :return: fieldXVector, fieldYVector
-        """
-        rX = poseCurr[0] - poseDes[0]
-        rY = poseCurr[1] - poseDes[1]
-        pX = np.cos(poseDes[2])
-        pY = np.sin(poseDes[2])
-        
-        a1 = self.lam*(pX*rX + pY*rY)
-        a2 = rX*rX + rY*rY
-        
-        return (a1*rX - a2*pX, a1*rY - a2*pY)
-        
-    
-    def getControlls(self, poseCurr, poseDes, posePrev, delT):                         # No Backup
-        """ Get the dipolar controls that will take the robot from poseCurr to
-        poseDes.
-        
-        :param poseCurr: numpy 3D array. The current pose
-        :param poseDes: numpy 3D array. The desired pose
-        :param poseDes: numpy 3D array. The previous pose
-        :param delT: The time elapsed since posePrev
-        :return: linearVelocity, angularVelocity
-        """
-        rX = poseCurr[0] - poseDes[0]
-        rY = poseCurr[1] - poseDes[1]    
-        ang = poseCurr[2]
-        u = -self.k1 * np.sign(rX*np.cos(ang) + rY*np.sin(ang)) + \
-            np.tanh(rX*rX + rY*rY)
-           
-        dipoleField = self.getFieldAt(poseCurr, poseDes)
-        dipoleFieldPrev = self.getFieldAt(posePrev, poseDes)
-        phi = np.arctan2(dipoleField[1], dipoleField[0])
-        phiPrev = np.arctan2(dipoleFieldPrev[1], dipoleFieldPrev[0])
-           
-        w = -self.k2*diffAngles(ang, phi) + diffAngles(phi, phiPrev)/delT
-    
-        return u, w  
-    
-    
-    def integrateForwards(self, posePrev, u, w, delT):
-
-        """ Calculate the robots new position based on the previous position,
-        controls, and time elapsed.
-        
-        :param poseDes: numpy 3D array. The previous pose
-        :param u: linear velocity
-        :param w: angular velocity
-        :param delT: time elapsed
-        :return: poseN: the new pose of the robot
-        """
-        poseN = np.array(posePrev)
-        
-        delAng = w*delT
-        dist = u*delT
-        
-        if np.abs(delAng) < .0000001:
-            poseN[0] += dist*np.cos(posePrev[2])   
-            poseN[1] += dist*np.sin(posePrev[2])
-        else:
-            # Radius of circle and length of displacement vector
-            rad = dist/delAng;
-            vecL = np.sqrt( (rad*np.sin(delAng))**2 + (rad - rad*np.cos(delAng))**2) * np.sign(dist)
-            
-            poseN[0] += vecL*np.cos(delAng/2 + poseN[2])
-            poseN[1] += vecL*np.sin(delAng/2 + poseN[2])
-            poseN[2] = (poseN[2] + delAng)%(2*np.pi)
-            
-        return poseN
-  
-  
-class Node:
-    
-    def __init__(self, x=0, y=0, theta=0, XY=None, pose=None, parent=None):
-        """ An object to represent poses and connections amongst them. If 
-        instantiated, the value of later parameters will override the 
-        previous (ex. pose can override all) 
-
-        :param x: The x coordinate
-        :param y: The y coordinate
-        :param theta: The orientation in radians
-        :param XY: List with x and y 
-        :param pose: List with x, y, and theta
-        :param parent: The node from which it stems
-        """
-        # TODO: LEFT OFF HERE   
-        self.x = x
-        self.y = y
-        self.theta = theta
-        
-        if XY != None:
-            self.x = XY[0]
-            self.y = XY[1]
-        if pose != None:
-            self.x = pose[0]
-            self.y = pose[1]
-            self.theta = pose[2]
-
-        self.parent = parent
-        self.XY = np.array([self.x, self.y])
-        self.pose = np.array([self.x, self.y, self.theta])
-  
+     
 
 class DipolarRRT:
     
@@ -404,8 +150,7 @@ class DipolarRRT:
         self.robot = robot
         self.dipControl = DipolarController(k1=.5, k2=1.5, lambdaValue=3)
         self.plotter = plotter
-        
-        
+            
     def get2DPathLength(self, path):
         """ Get the length of a path along the set of 2D waypoints.
         
@@ -415,15 +160,13 @@ class DipolarRRT:
                      for i in range(len(path)-1)]
         return sum(distances)
 
-        
     def sampleDipole(self):
         """ Returns a random dipole within the map's C-Free
         """
         randPoint = self.fullMap.cFree.sample(random)
         randAng = 2 * np.pi * random()
         return np.array([randPoint[0], randPoint[1], randAng])
-    
-    
+        
     def getDipoleDistanceHeur(self, dipoleStart, dipoleEnd):
         """ Calculate a heuristic distance from dipoleStart to dipoleEnd. The
         distance is a linear combination of the euclidean distance between
@@ -455,7 +198,6 @@ class DipolarRRT:
         
         return totalDist
     
-    
     def getNClosestIndicesDipole(self, dipole, tree, N=1):
         """ Uses the distance heuristic to return a list with the indices 
         of the N closest nodes within the tree to dipole.    
@@ -464,7 +206,6 @@ class DipolarRRT:
                      for nodeX in tree]
         closestIndices = sorted(range(len(distances)), key=lambda i: distances[i])
         return closestIndices[:N]
-    
     
     def getDipoleToDipolePath(self, dipoleStart, dipoleEnd, timeout = .5):
         """ Returns (connected, path) where connected is True if a collision
@@ -499,7 +240,6 @@ class DipolarRRT:
         
         return (False, path)
     
-    
     def closeEnoughDipole(self, currPose, endPose):
         """ Returns true if the euclidean and angular distances between currPose
         and endPose is below the set threshold.
@@ -514,7 +254,6 @@ class DipolarRRT:
             return True
         else:
             return False
-    
     
     # TODO: Method has not been used in a long time. Must be updated.
     def extendTreeDipole(self, tree, dipole):
@@ -536,12 +275,11 @@ class DipolarRRT:
         pathFound, _ = self.getDipoleToDipolePath(closestNode.pose, dipole)
         
         if pathFound:
-            tree.append(Node(pose=dipole, parent=closestNode))
+            tree.append(self.Node(pose=dipole, parent=closestNode))
             
             return True
         else:
             return False
-    
     
     def extendTreeDipoleConnect(self, tree, dipole):
         """ Finds the closest node in three to dipole and tries to extend from 
@@ -582,7 +320,7 @@ class DipolarRRT:
                     collided = True
                     break
                 
-                currNode = Node(pose=pathT[-1], parent=parentT)
+                currNode = self.Node(pose=pathT[-1], parent=parentT)
                 
                 tree.append(currNode)
                 parentT = currNode
@@ -592,13 +330,12 @@ class DipolarRRT:
             if not collided:
                 connected, pathT = self.getDipoleToDipolePath(dipoleCurr, dipole)
                 if connected:
-                    currNode = Node(pose=pathT[-1], parent=parentT)
+                    currNode = self.Node(pose=pathT[-1], parent=parentT)
                     tree.append(currNode)
                     
             # If the tree has grown then progress was made. Dont go to next neighbors
             if len(tree) > startTreeLen:
                 return
-    
     
     def getRRTDipoleControlPath(self, startPose, endPose):
         """ Returns a path from startPose to endPose in the form of a list of
@@ -610,7 +347,7 @@ class DipolarRRT:
         startPose = np.array(startPose).astype(float)
         endPose = np.array(endPose).astype(float)
     
-        tree = [Node(pose=startPose, parent=None)]
+        tree = [self.Node(pose=startPose, parent=None)]
         
         oldTreeLength = 1
         
@@ -662,7 +399,6 @@ class DipolarRRT:
             plt.show()
             
         return None
-    
     
     def getShortcutPathDipole(self, path):
         """ Use the shortcut heuristic to return a shorter path in the form of
@@ -730,7 +466,6 @@ class DipolarRRT:
         # No path was found 
         return None 
 
-
     def get2DPathRepresent(self, path):
         """ Takes a path as a list of nodes and runs the dipolar controler to
         return a close approximation of the path traveled as a list of dipoles
@@ -745,6 +480,35 @@ class DipolarRRT:
     def pathNodeToDipoles(self, path):
         return [node.pose for node in path]
         
+    class Node:
+    
+        def __init__(self, x=0, y=0, theta=0, XY=None, pose=None, parent=None):
+            """ An object to represent poses and connections amongst them. If 
+            instantiated, the value of later parameters will override the 
+            previous (ex. pose can override all) 
+    
+            :param x: The x coordinate
+            :param y: The y coordinate
+            :param theta: The orientation in radians
+            :param XY: List with x and y 
+            :param pose: List with x, y, and theta
+            :param parent: The node from which it stems
+            """
+            self.x = x
+            self.y = y
+            self.theta = theta
+            
+            if XY != None:
+                self.x = XY[0]
+                self.y = XY[1]
+            if pose != None:
+                self.x = pose[0]
+                self.y = pose[1]
+                self.theta = pose[2]
+    
+            self.parent = parent
+            self.XY = np.array([self.x, self.y])
+            self.pose = np.array([self.x, self.y, self.theta])
 
 class TestRRT:    
     
@@ -755,8 +519,7 @@ class TestRRT:
         self.PLOT_SHORT_PATH = False
         self.PLOT_SHORT_PATH = True
         self.PLOT_TREE_FAIL = True      # Plot final tree if it times out
-    
-    
+        
     def getSampleMapRRT(self, mapIndex):
         """ Return a (startPose, endPose, map) .Map index defines which of the 
         maps will be returned.
@@ -826,8 +589,7 @@ class TestRRT:
                 
         testMap = RRTMap(boundary, allObstacles)    
         return startPose, endPose, testMap
-    
-    
+
     def runRRTDipoleControlAndShortcut(self):
         """ Run the dipolar RRT/shortcut and plot according to parameters 
         specified in this class' init function.
@@ -874,7 +636,6 @@ class TestRRT:
         plt.ioff()
         plt.show()
 
-
     def runRRTDipoleControlAndShortcutNoPlot(self):     
         """ Use this method to time the implementation and/or profile it
         """       
@@ -896,7 +657,7 @@ class TestRRT:
             
         planner.getShortcutPathDipole(rrtPath)
         
-
+pass
 # if __name__ == "__main__":
 #     print "Starting"
 #     timeS = clock()

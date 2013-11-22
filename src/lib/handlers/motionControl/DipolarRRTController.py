@@ -1,8 +1,11 @@
 #!/usr/bin/env python
 """
 ==================================================
-skeletonController.py - Skeleton Motion Controller
+DipolarController.py - Dipolar Motion Controller
 ==================================================
+
+This class uses a dipolar field along with an RRT to generate paths for the
+robot as well as the linear and angular velocities to drive them.
 """
 from Polygon import Polygon
 from numpy import *
@@ -41,7 +44,7 @@ class motionControlHandler:
         Returns ``True`` if we've reached the destination region.
         """
 
-        # TODO: Whats going on here
+        # TODO: What's going on here
         if current_reg == next_reg and not last:
             # No need to move!
             self.drive_handler.setVelocity(0, 0)  # So let's stop
@@ -64,18 +67,16 @@ class motionControlHandler:
             self.drive_handler.setVelocity(0, 0)
             return True  # Already there
 
-        # Calculate a velocity vector in the *GLOBAL REFERENCE FRAME* 
-        # that will get us on our way to the next region
+        # Calculate the linear and angular velocities
         nextWaypoint = self.path[self.nextWaypointIndex]
         u, v = self.diController.getControlls(pose, nextWaypoint, 
                                               self.prevPose, self.dT)
-        vx, vy = 0, 0
 
         # Pass this desired velocity on to the drive handler
         # It also gets the current heading of the robot
-        self.drive_handler.setVelocity(vx, vy, pose[2])
+        self.drive_handler.setVelocity(u, v, pose[2])
         
-        # TODO: Whats going on here
+        # TODO: What's going on here
         # Figure out whether we've exited the current region
         if is_inside([pose[0], pose[1]], vertices):
             arrived = False
