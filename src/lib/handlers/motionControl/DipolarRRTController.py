@@ -50,7 +50,7 @@ class motionControlHandler:
 
     def gotoRegion(self, current_reg, next_reg, last=False):
         """
-        Returns ``True`` if we've reached the destination region.
+        Returns ``True`` if we've reached the center of destination region.
         """
 
 #         print "D-- gotoRegion()"
@@ -91,9 +91,9 @@ class motionControlHandler:
         v, w = self.diController.getControlls(pose, nextWaypoint, 
                                               self.prevPose, self.dT)
         
-#         print "Current pose:", pose
-#         print "Next waypoint:", nextWaypoint
-#         print "V, W", v, w
+        print "Current pose:", pose
+        print "Next waypoint:", nextWaypoint
+        print "V, W", v, w
 
         # Pass this desired velocity on to the drive handler
         # It also gets the current heading of the robot

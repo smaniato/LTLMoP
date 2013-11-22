@@ -4,7 +4,7 @@
 basicSimulator.py -- A simple robot simulator provides pose by integrating given locomotion cmd
 ================================================================
 """
-from numpy import array,sqrt,dot
+from numpy import array,sqrt,dot, cos, sin, abs, pi, sign
 from math import atan2,log10,ceil
 import time, sys
 import thread
@@ -54,7 +54,21 @@ class basicSimulator:
                 time_span = (self.timer_func()-self.time)
                 time_span = time_span*10**ceil(log10(0.03/time_span))
                 vel = array(self.curVel)*time_span
-                self.pose[0:2] = self.pose[0:2]+vel
+                #self.pose[0:2] = self.pose[0:2]+vel
+                
+                delAng = vel[1]
+                dist = vel[0]
+                if abs(delAng) < .0000001:
+                    self.pose[0] += dist*cos(self.pose[2])   
+                    self.pose[1] += dist*sin(self.pose[2])
+                else:            
+                    rad = dist/delAng;
+                    vecL = sqrt( (rad*sin(delAng))**2 + (rad - rad*cos(delAng))**2) * sign(dist)
+                    
+                    self.pose[0] += vecL*cos(delAng/2 + self.pose[2])
+                    self.pose[1] += vecL*sin(delAng/2 + self.pose[2])
+                    self.pose[2] = (self.pose[2] + delAng)%(2*pi)
+                
                 self.setVel_called=False
             else:
                 self.pose[0:2] = self.pose[0:2]+array([0.0,0.0])*(self.timer_func()-self.time)
