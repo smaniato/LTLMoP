@@ -82,7 +82,7 @@ class DipolarRRT:
         self.PLOT_TREE_FAIL = False # Plot RRT tree in case of timeout
         
         # Settings
-        self.CONNECT_DIST = .5      # Euclidean distance between nodes for CONNECT
+        self.CONNECT_DIST = 1      # Euclidean distance between nodes for CONNECT
         
         self.fullMap = fullMap
         self.robot = robot
@@ -596,11 +596,11 @@ class TestRRT:
             
         planner.getShortcutPathDipole(rrtPath)
         
-pass
+# pass
 # if __name__ == "__main__":
 #     print "Starting"
 #     timeS = clock()
-#      
+#       
 #     test = TestRRT()
 #     test.runRRTDipoleControlAndShortcut()    
 # #     test.runRRTDipoleControlAndShortcutNoPlot()    

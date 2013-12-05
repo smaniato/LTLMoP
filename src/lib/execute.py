@@ -340,6 +340,7 @@ class LTLMoPExecutor(ExecutorStrategyExtensions,ExecutorResynthesisExtensions, o
             self.postEvent("FREQ", int(math.ceil(avg_freq)))
             pose = self.hsub.getPose(cached=True)[0:2]
             self.postEvent("POSE", tuple(map(int, self.hsub.coordmap_lab2map(pose))))
+            self.postEvent("VEL", (10*math.cos(pose[2]), 10*math.sin(pose[2]))) # From DipoleRRT merge
 
             last_gui_update_time = self.timer_func()
 
