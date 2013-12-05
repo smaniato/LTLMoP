@@ -48,10 +48,10 @@ from time import clock
 import Polygon
 from numpy.linalg import norm
 
-from DipolarController import DipolarController
-from PlotRRT import RRTPlotter
+from _DipolarCLoopControl import DipolarController
+from _PlotRRT import RRTPlotter
 import Polygon.Shapes as pShapes
-from RRTMapAndRobot import RRTMap, RRTRobot
+from _RRTMapAndRobot import RRTMap, RRTRobot
 import matplotlib.pyplot as plt
 import numpy as np
 

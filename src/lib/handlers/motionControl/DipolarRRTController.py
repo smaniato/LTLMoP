@@ -9,7 +9,7 @@ robot as well as the linear and angular velocities to drive them.
 """
 from Polygon import Polygon
 from numpy import *
-from DipolarRRT import RRTMap, RRTPlotter, RRTRobot, DipolarRRT, DipolarController
+from _DipolarRRT import RRTMap, RRTPlotter, RRTRobot, DipolarRRT, DipolarController
 
 from time import sleep
 
