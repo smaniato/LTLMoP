@@ -59,7 +59,7 @@ QUESTIONS:
 from __future__ import division
 
 from Queue import PriorityQueue
-from random import random
+from random import random, randint
 from time import clock
 
 import Polygon
@@ -308,15 +308,15 @@ class DipolarRRT:
             if len(tree) > startTreeLen:
                 return
     
-    def getRRTDipoleControlPath(self, startPose, endPose):
-        """ Returns a path from startPose to endPose in the form of a list of
-        Nodes. Uses a dipole controller to connect nodes in the RRT.
+    def getRRTDipoleControlPath(self, startPose, goalPoseList, goalBias=.2):
+        """ Returns a path from startPose to an goalPose in the form of a 
+        list of Nodes. Uses a dipole controller to connect nodes in the RRT.
         """
-        GOAL_BIAS = .2          # Percentage of attempt to connect to endPose
-        MAX_ITTER = 700         # Maximum number of tree itterations
+        goalBias = .2           # Percentage of attempt to connect to goalPose
+        MAX_ITTER = 700         # Maximum number of tree iterations
         
         startPose = np.array(startPose).astype(float)
-        endPose = np.array(endPose).astype(float)
+        goalPose = [np.array(goalPose).astype(float) for goalPose in goalPoseList]
     
         tree = [self.Node(pose=startPose, parent=None)]
         
@@ -326,8 +326,9 @@ class DipolarRRT:
             
             # Select dipole to drive towards
             randNumber = random()
-            if randNumber <= GOAL_BIAS:
-                randDipole = endPose
+            if randNumber <= goalBias:
+                randIndex = randint(0, len(goalPoseList)-1)
+                randDipole = goalPoseList[randIndex]
             else:
                 randDipole = self.sampleDipole()
             
@@ -348,10 +349,16 @@ class DipolarRRT:
                     else:
                         self.plotter.drawTree(tree[-numNewNodes:], color='k', 
                                               width=2)
-                        self.plotter.drawStartAndGoalPoints(startPose, endPose)
+                        self.plotter.drawStartAndGoalPoints(startPose, goalPose)
                     
             # Reached end
-            if self.closeEnoughDipole(tree[-1].pose, endPose):
+            finished = False
+            for goalPose in goalPoseList:
+                if self.closeEnoughDipole(tree[-1].pose, goalPose):
+                    finished = True
+                    break
+            
+            if finished:
                 
                 print "Tree total iterations: " + str(currIter)
                 
@@ -629,17 +636,17 @@ class TestRRT:
             
         planner.getShortcutPathDipole(rrtPath)
         
-# pass
-# if __name__ == "__main__":
-#     print "Starting"
-#     timeS = clock()
-#       
-#     test = TestRRT()
-#     test.runRRTDipoleControlAndShortcut()    
-# #     test.runRRTDipoleControlAndShortcutNoPlot()    
-# #     cProfile.run("test.runRRTDipoleControlAndShortcutNoPlot()") 
-#      
-#     print "Done: " + str(clock()-timeS)
+pass
+if __name__ == "__main__":
+    print "Starting"
+    timeS = clock()
+       
+    test = TestRRT()
+    test.runRRTDipoleControlAndShortcut()    
+#     test.runRRTDipoleControlAndShortcutNoPlot()    
+#     cProfile.run("test.runRRTDipoleControlAndShortcutNoPlot()") 
+      
+    print "Done: " + str(clock()-timeS)
 
 
 

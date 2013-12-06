@@ -13,7 +13,6 @@ import Polygon
 import Polygon.Shapes as pShapes
 import numpy as np
 import cPickle as pickle
-from _DipolarRRT import diffAngles 
 
 
 class RRTMap:
@@ -82,4 +81,9 @@ class RRTRobot:
         return RRTRobot(np.array(self.pose), Polygon.Polygon(self.shape),
                          self.backLen)
 
+
+def diffAngles(angle1, angle2):
+    """ Returns difference between -pi and pi. Relative to angle2.
+    """
+    return (angle1 - angle2 + np.pi)%(2*np.pi) - np.pi
 

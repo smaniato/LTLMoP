@@ -25,7 +25,7 @@ class motionControlHandler:
         dipolarGain (float): The k1 gain for the dipolar closed loop controller. (default=0.5)
         """
         # Settings
-        self.DEBUG = True           # Print statements for debugging
+        self.DEBUG = False           # Print statements for debugging
         self.DEBUGER = False        # If using a debugger. Matplotlib workaround
         self.PLOT_REG = True       # Plot the current and next region
         self.PLOT_TREE = True      # Plot the RRT live
@@ -138,10 +138,9 @@ class motionControlHandler:
         goalPoseList = self.getGoalPoses(current_reg, next_reg, nextRegPoly)    
         if len(goalPoseList) == 0:
             raise Exception("Error: DipolarRRTController - No goal pose found.")
-        goalPose = goalPoseList[0] 
         
         if self.DEBUG:
-            print "GoalPose:", goalPose
+            print "GoalPose:", goalPoseList
         
         # Start plotting and generating the path
         self.plotter.clearPlot()
@@ -152,12 +151,13 @@ class motionControlHandler:
             self.plotter.drawPolygon(nextRegBoundary, color='g', width=3)
             for obst in allObstacles:
                 self.plotter.drawPolygon(obst, color='k', width=3)
-            self.plotter.drawStartAndGoalRobotShape(pose, goalPose, self.robot)
+            for goalPose in goalPoseList:
+                self.plotter.drawStartAndGoalRobotShape(pose, goalPose, self.robot)
             
         if self.DEBUG:
             print "Getting RRTPath"
             
-        rrtPath = self.rrt.getRRTDipoleControlPath(pose, goalPose)
+        rrtPath = self.rrt.getRRTDipoleControlPath(pose, goalPoseList)
     
         if self.PLOT_PATH:
             pathT = self.rrt.get2DPathRepresent(rrtPath)
