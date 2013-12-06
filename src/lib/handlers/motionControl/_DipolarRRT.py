@@ -41,6 +41,7 @@ TODO:
     timming issues with 
     fix test after changes are made
     possible issues with different dT for LTLMoP and RRT
+    fix oscilations due to 
     
 QUESTIONS:
     Does hardcoding a dT make sense?
@@ -49,7 +50,7 @@ QUESTIONS:
         distIntoPoly = self.robot.backLen * 1.1 + self.closeEnoughDist
     raise error if no goal pose is found
     a lot of warnings for not having certain files: ompl, nxtMotors, etc
-    
+    Can I downsample the map size in ltlmop?
     
 """
 

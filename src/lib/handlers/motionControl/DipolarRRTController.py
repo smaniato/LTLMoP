@@ -12,7 +12,7 @@ from __future__ import division
 
 from Polygon import Polygon
 import numpy as np
-from _DipolarRRT import RRTMap, RRTPlotter, RRTRobot, DipolarRRT, DipolarController
+from _DipolarRRT import RRTMap, RRTPlotter, RRTRobot, DipolarRRT, DipolarController, diffAngles
 
 
 class motionControlHandler:
@@ -25,7 +25,7 @@ class motionControlHandler:
         dipolarGain (float): The k1 gain for the dipolar closed loop controller. (default=.5)
         """
         # Settings
-        self.DEBUG = True           # Print statements for debugging
+        self.DEBUG = False           # Print statements for debugging
         self.DEBUGER = False        # If using a debugger. Matplotlib workaround
         self.PLOT_REG = True       # Plot the current and next region
         self.PLOT_TREE = True      # Plot the RRT live
@@ -124,11 +124,11 @@ class motionControlHandler:
         
         pose = self.pose_handler.getPose()
         
-        rrt = DipolarRRT(rrtMap, self.robot, self.plotter)
-        rrt.DEBUGER = self.DEBUGER
-        rrt.PLOT_TREE = self.PLOT_TREE
-        rrt.PLOT_TREE_FAIL = self.PLOT_TREE_FAIL
-        rrt.connectDist = self.nodeDistInter
+        self.rrt.updateMap(rrtMap)
+        self.rrt.DEBUGER = self.DEBUGER
+        self.rrt.PLOT_TREE = self.PLOT_TREE
+        self.rrt.PLOT_TREE_FAIL = self.PLOT_TREE_FAIL
+        self.rrt.connectDist = self.nodeDistInter
         
         # Goal poses (for now use single pose)
         goalPoseList = self.getGoalPoses(current_reg, next_reg, nextRegPoly)    
@@ -150,20 +150,20 @@ class motionControlHandler:
                 self.plotter.drawPolygon(obst, color='k', width=3)
             self.plotter.drawStartAndGoalRobotShape(pose, goalPose, self.robot)
             
-        rrtPath = rrt.getRRTDipoleControlPath(pose, goalPose)
+        rrtPath = self.rrt.getRRTDipoleControlPath(pose, goalPose)
     
         if self.PLOT_PATH:
-            pathT = rrt.get2DPathRepresent(rrtPath)
+            pathT = self.rrt.get2DPathRepresent(rrtPath)
             self.plotter.drawDipolePath2D(pathT, color='g', width=3)
             
-        shortPath = rrt.getShortcutPathDipole(rrtPath)
+        shortPath = self.rrt.getShortcutPathDipole(rrtPath)
         
         if self.PLOT_PATH:
-            pathT = rrt.get2DPathRepresent(shortPath)
+            pathT = self.rrt.get2DPathRepresent(shortPath)
             self.plotter.drawDipolePath2D(pathT, color='r', width=3)
             
         # Update instance fields
-        self.path = rrt.pathNodeToDipoles(shortPath)    # Convert to 3D vector
+        self.path = self.rrt.pathNodeToDipoles(shortPath)    # Convert to 3D vector
         self.nextWaypointIndex = 0
         self.storedNextReg = next_reg
         
@@ -231,14 +231,14 @@ class motionControlHandler:
 #             print "Norm:", faceNorm
 #             print "PoseT:", poseT
             
-        return goalPoses
+        return goalPoses    
         
     def closeEnough(self, pose1, pose2):
         """ Returns true if pose1 and pose2 are within a threshold distance
         and angle difference.
         """       
         dist = np.linalg.norm(pose1[:2] - pose2[:2])
-        angDiff = abs(pose1[2] - pose2[2])
+        angDiff = abs(diffAngles(pose1[2], pose2[2]))
         
         if dist < self.closeEnoughDist and angDiff < self.closeEnoughAng:
             return True
