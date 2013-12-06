@@ -16,12 +16,13 @@ from _DipolarRRT import RRTMap, RRTPlotter, RRTRobot, DipolarRRT, DipolarControl
 
 
 class motionControlHandler:
-    def __init__(self, proj, shared_data, robotType, nodeDistInter):
+    def __init__(self, proj, shared_data, robotType, nodeDistInter, dipolarGain):
         """
         An RRT with dipoles for connecting nodes.
         
         robotType (int): The robot shape to be used. Circle with radius .1 is 0. (default=0)
         nodeDistInter (float): The max euclidean distance between nodes. (default=1)
+        dipolarGain (float): The k1 gain for the dipolar closed loop controller. (default=.5)
         """
         # Settings
         self.DEBUG = True           # Print statements for debugging
@@ -41,21 +42,25 @@ class motionControlHandler:
         self.rfi = proj.rfi
         self.coordmap_map2lab = proj.coordmap_map2lab
         
+        # Plotter
+        self.plotter = RRTPlotter()
+        self.plotter.ion()                       # Turn on interactive mode
+        
+        # Dipolar controller
+        self.dipController = DipolarController(k1=dipolarGain)
+        self.prevPose = self.pose_handler.getPose()
+        self.dT = 1/20.0    # The time elapsed since the call to controller
+        
         # RRT Variables
         self.robot = self.getRobot(robotType)
         self.nodeDistInter = nodeDistInter
         self.path = None
         self.nextWaypointIndex = None
         self.storedNextReg = None
-        
-        # Dipolar controller
-        self.dipController = DipolarController()
-        self.prevPose = self.pose_handler.getPose()
-        self.dT = 1/15.0    # The time elapsed since the call to controller
-        
-        # Plotter
-        self.plotter = RRTPlotter()
-        self.plotter.ion()                       # Turn on interactive mode
+        self.rrt = DipolarRRT(None, self.robot, plotter=self.plotter, 
+                              dipController=self.dipController)
+        self.rrt.setCloseEnoughVals(self.closeEnoughDist, self.closeEnoughAng)
+        self.rrt.setConnectDist(nodeDistInter)
 
     def gotoRegion(self, current_reg, next_reg, last=False):
         """
@@ -94,6 +99,7 @@ class motionControlHandler:
         self.prevPose = pose  
         
         if self.DEBUG:
+            print "-----------------"
             print "Current pose:", pose
             print "Next waypoint:", nextWaypoint
             print "V:", v, "    W:", w
@@ -104,10 +110,14 @@ class motionControlHandler:
         """ Calculate the path to go from current_reg to next_reg. """
         
         # Current and next regions
-        currRegBoundary, currRegObstList = self.regionToPoly(current_reg)
-        nextRegBoundary, nextRegObstList = self.regionToPoly(next_reg)
+        currRegBoundary, currRegObstList = self.getRegionPolygons(current_reg)
+        nextRegBoundary, nextRegObstList = self.getRegionPolygons(next_reg)
         fullBoundary = currRegBoundary + nextRegBoundary
         allObstacles = currRegObstList + nextRegObstList
+        
+        nextRegPoly = nextRegBoundary
+        for obst in nextRegObstList:
+            nextRegPoly -= obst
         
         # Prepare RRT
         rrtMap = RRTMap(fullBoundary, allObstacles=allObstacles)
@@ -118,19 +128,26 @@ class motionControlHandler:
         rrt.DEBUGER = self.DEBUGER
         rrt.PLOT_TREE = self.PLOT_TREE
         rrt.PLOT_TREE_FAIL = self.PLOT_TREE_FAIL
-        rrt.CONNECT_DIST = self.nodeDistInter
+        rrt.connectDist = self.nodeDistInter
         
         # Goal poses (for now use single pose)
-        goalPoseList = self.getGoalPoses(current_reg, next_reg, rrtMap)    
+        goalPoseList = self.getGoalPoses(current_reg, next_reg, nextRegPoly)    
         if len(goalPoseList) == 0:
             raise Exception("Error: DipolarRRTController - No goal pose found.")
         goalPose = goalPoseList[0] 
+        
+        if self.DEBUG:
+            print "GoalPose:", goalPose
         
         # Start plotting and generating the path
         self.plotter.clearPlot()
         
         if self.PLOT_REG:
-            self.plotter.drawMap(rrtMap)
+#             self.plotter.drawMap(rrtMap)
+            self.plotter.drawPolygon(currRegBoundary, color='r', width=3)
+            self.plotter.drawPolygon(nextRegBoundary, color='g', width=3)
+            for obst in allObstacles:
+                self.plotter.drawPolygon(obst, color='k', width=3)
             self.plotter.drawStartAndGoalRobotShape(pose, goalPose, self.robot)
             
         rrtPath = rrt.getRRTDipoleControlPath(pose, goalPose)
@@ -150,7 +167,7 @@ class motionControlHandler:
         self.nextWaypointIndex = 0
         self.storedNextReg = next_reg
         
-    def getRegionBoundaryAndObstaclePolygons(self, targetReg):
+    def getRegionPolygons(self, targetReg):
         """ Returns a polygon representing the region boundary and a list
         of polygons representing the obstacles or holes in the region. 
         """
@@ -169,7 +186,7 @@ class motionControlHandler:
         
         return regionPoly, obstacleList
     
-    def getGoalPoses(self, currRegion, nextRegion, rrtMap):        
+    def getGoalPoses(self, currRegion, nextRegion, nextRegPoly):        
         """ Returns a list of numpy 1 x 3 numpy arrays with possible goal poses
           
         For each transition face between the two regions: Find the center point 
@@ -181,24 +198,38 @@ class motionControlHandler:
         element.
         Take a deep breath and read that over.
         """
-        distIntoPoly = self.robot.backLen * 1.1 + self.closeEnoughDist
+        distIntoPoly = self.robot.backLen * 1.1 + self.closeEnoughDist + 20
+#         distIntoPoly = self.robot.backLen * 1.1 + self.closeEnoughDist
+    
         robotCopy = self.robot.copy()
         
         goalPoses = []
-        for transFace in self.proj.rfi.transitions[currRegion][nextRegion]:
+        for transFace in self.rfi.transitions[currRegion][nextRegion]:
             transFacePoints = [x for x in transFace]
             transFacePoints = np.array(map(self.coordmap_map2lab, transFacePoints))
             
             center = (transFacePoints[0,:] + transFacePoints[1,:]) / 2
             faceDir = transFacePoints[1,:] - transFacePoints[0,:]
-            faceNorm = np.array([-faceDir[1], faceDir[0]])
+            faceNorm = np.array([faceDir[1], -faceDir[0]])
+            faceNorm = faceNorm/np.linalg.norm(faceNorm) * distIntoPoly
+            
+            # Check for correct direction face norm
+            pointT = center + faceNorm
+            if not nextRegPoly.isInside(pointT[0], pointT[1]):
+                faceNorm *= -1
             
             # Direction and point for the goalPose
             dirT = np.arctan2(faceNorm[1], faceNorm[0])
-            pointT = center + faceNorm/np.linalg.norm(faceNorm) * distIntoPoly
+            pointT = center + faceNorm
             poseT = np.array([pointT[0], pointT[1], dirT])
-            if rrtMap.cFree.covers(robotCopy):
+            robotCopy.moveRobotTo(poseT)
+            if nextRegPoly.covers(robotCopy.shape):
                 goalPoses.append(poseT)
+                
+#             print "TPoints:", transFacePoints
+#             print "C:", center
+#             print "Norm:", faceNorm
+#             print "PoseT:", poseT
             
         return goalPoses
         
@@ -215,7 +246,7 @@ class motionControlHandler:
             return False
         
     def getRobot(self, robotType):
-        if robotType == 1:
+        if robotType == 0:
             return RRTRobot.circularRobot([0,0,0], .1)
         else:
             msg = "ERROR: DipolarRRTController - Undefined robot type."

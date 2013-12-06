@@ -38,7 +38,9 @@ TODO:
     fix issue with DEBUGGER mode
     figure out when robot is within the next region
     explain what cFree is in RRTMap
-    
+    timming issues with 
+    fix test after changes are made
+    possible issues with different dT for LTLMoP and RRT
     
 QUESTIONS:
     Does hardcoding a dT make sense?
@@ -46,13 +48,14 @@ QUESTIONS:
     ammount to move into region from transition face is 
         distIntoPoly = self.robot.backLen * 1.1 + self.closeEnoughDist
     raise error if no goal pose is found
+    a lot of warnings for not having certain files: ompl, nxtMotors, etc
+    
     
 """
 
 from __future__ import division
 
 from Queue import PriorityQueue
-import cProfile
 from random import random
 from time import clock
 
@@ -75,7 +78,7 @@ def diffAngles(angle1, angle2):
 
 class DipolarRRT:
     
-    def __init__(self, fullMap, robot, plotter=None):
+    def __init__(self, fullMap, robot, plotter=None, dipController=None):
         """ An RRT path planner that takes into account orientation 
         requirements.
         
@@ -84,6 +87,7 @@ class DipolarRRT:
         :param fullMap: A RRTMap object
         :param robot: A robotRRT object
         :param plotter: A RRTPlotter object. If plotting is desired
+        :param dipController: A DipolarController object
         """
                 
         # TODO: CHECK TO SEE WHICH SHOULD BE KEPT HERE
@@ -93,12 +97,30 @@ class DipolarRRT:
         self.PLOT_TREE_FAIL = False # Plot RRT tree in case of timeout
         
         # Settings
-        self.CONNECT_DIST = 1      # Euclidean distance between nodes for CONNECT
+        self.connectDist = 1       # Euclidean distance between nodes for CONNECT
+        self.closeEnoughDist = .25
+        self.closeEnoughAng = .5
         
         self.fullMap = fullMap
         self.robot = robot
-        self.dipControl = DipolarController(k1=.5, k2=1.5, lambdaValue=3)
+        if dipController is None:
+            self.dipControl = DipolarController(k1=.5, k2=1.5, lambdaValue=3)
+        else:
+            self.dipControl = dipController
         self.plotter = plotter
+        
+    def updateMap(self, newMap):
+        self.fullMap = newMap
+        
+    def setCloseEnoughVals(self, dist=None, ang=None):
+        """ Set the values that are checked when closeEnoughDipole is called. """
+        if dist is not None:
+            self.closeEnoughDist = dist
+        if ang is not None:
+            self.closeEnoughAng = ang
+            
+    def setConnectDist(self, dist):
+        self.connectDist = dist
             
     def get2DPathLength(self, path):
         """ Get the length of a path along the set of 2D waypoints.
@@ -192,14 +214,11 @@ class DipolarRRT:
     def closeEnoughDipole(self, currPose, endPose):
         """ Returns true if the euclidean and angular distances between currPose
         and endPose is below the set threshold.
-        """
-        DIST_THRESH = .25
-        ANG_THRESH = .5
-        
+        """        
         dist = norm(currPose[:2] - endPose[:2])
         angDiff = np.abs(diffAngles(currPose[2], endPose[2]))
         
-        if dist < DIST_THRESH and angDiff < ANG_THRESH:
+        if dist < self.closeEnoughDist and angDiff < self.closeEnoughAng:
             return True
         else:
             return False
@@ -237,7 +256,7 @@ class DipolarRRT:
         if any will make progress and extend from one of them. New nodes are added
         to tree.
         """
-        MAX_DIST = self.CONNECT_DIST
+        MAX_DIST = self.connectDist
         NUM_CONSIDERED = 5
         
         # Get the index of the closest nodes to dipole
@@ -264,12 +283,12 @@ class DipolarRRT:
             for _ in range(numIntervals):
                 dipoleNext[:2] += dirV[:2]  
                 
-                connected, pathT = self.getDipoleToDipolePath(dipoleCurr, dipoleNext)
+                connected, _ = self.getDipoleToDipolePath(dipoleCurr, dipoleNext)
                 if not connected:
                     collided = True
                     break
                 
-                currNode = self.Node(pose=pathT[-1], parent=parentT)
+                currNode = self.Node(pose=dipoleNext, parent=parentT)
                 
                 tree.append(currNode)
                 parentT = currNode
@@ -277,9 +296,9 @@ class DipolarRRT:
             
             # Attempt to connect to the last node
             if not collided:
-                connected, pathT = self.getDipoleToDipolePath(dipoleCurr, dipole)
+                connected, _ = self.getDipoleToDipolePath(dipoleCurr, dipole)
                 if connected:
-                    currNode = self.Node(pose=pathT[-1], parent=parentT)
+                    currNode = self.Node(pose=dipole, parent=parentT)
                     tree.append(currNode)
                     
             # If the tree has grown then progress was made. Dont go to next neighbors

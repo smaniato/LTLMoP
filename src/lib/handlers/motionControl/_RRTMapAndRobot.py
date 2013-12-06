@@ -78,7 +78,8 @@ class RRTRobot:
         self.shape.rotate(angleDiff, newPose[0], newPose[1])
         
     def copy(self):
-        return RRTRobot(np.array(self.pose), Polygon.Polygon(self.shape))
+        return RRTRobot(np.array(self.pose), Polygon.Polygon(self.shape),
+                         self.backLen)
 
 
 def diffAngles(angle1, angle2):
