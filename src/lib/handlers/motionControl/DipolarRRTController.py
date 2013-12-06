@@ -31,8 +31,8 @@ class motionControlHandler:
         self.PLOT_TREE = True      # Plot the RRT live
         self.PLOT_TREE_FAIL = True # Plot the RRT if it fails to find a path
         self.PLOT_PATH = True       # Plot path generated
-        self.closeEnoughDist = .5   # The max distance from waypoint
-        self.closeEnoughAng = .25   # The max angle difference from pose
+        self.closeEnoughDist = 1   # The max distance from waypoint
+        self.closeEnoughAng = .5   # The max angle difference from pose
         
         # Get references to handlers we'll need to communicate with
         self.drive_handler = proj.h_instance['drive']
@@ -43,7 +43,7 @@ class motionControlHandler:
         self.coordmap_map2lab = proj.coordmap_map2lab
         
         # Plotter
-        self.plotter = RRTPlotter()
+        self.plotter = RRTPlotter(invertY=True)
         self.plotter.ion()                       # Turn on interactive mode
         
         # Dipolar controller

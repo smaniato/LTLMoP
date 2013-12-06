@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 
 class RRTPlotter:
     
-    def __init__(self, figure=None, axes=None):
+    def __init__(self, figure=None, axes=None, invertY=False):
         """ An object to facilitate plotting common structures on the given 
         matplotlib figure and axes.
         """
@@ -22,6 +22,7 @@ class RRTPlotter:
         else:
             self.fig = figure
             self.ax = axes
+        self.invertY = invertY
             
     def clearPlot(self):
         """ Clear the current axes. """
@@ -40,8 +41,12 @@ class RRTPlotter:
         """ Draw the outline of a polygon object
         """
         vertices = np.array(poly[0] + [poly[0][0]])
-        self.ax.plot(vertices[:,0], vertices[:,1], 
-                 color=color, linewidth=width)
+        if self.invertY:
+            self.ax.plot(vertices[:,0], -vertices[:,1], 
+                     color=color, linewidth=width)
+        else:
+            self.ax.plot(vertices[:,0], vertices[:,1], 
+                     color=color, linewidth=width)
         plt.draw()
         
     def drawTree(self, tree, color='k', width=1):
@@ -55,8 +60,12 @@ class RRTPlotter:
     def drawEdge(self, node1, node2, color='k', width=1):
         """ Draw the edge that connects two nodes from the RRT
         """
-        self.ax.plot([node1.x, node2.x], [node1.y, node2.y], 
-                 'o-', color=color, linewidth=width)
+        if self.invertY:
+            self.ax.plot([node1.x, node2.x], [-node1.y, -node2.y], 
+                     'o-', color=color, linewidth=width)
+        else:
+            self.ax.plot([node1.x, node2.x], [node1.y, node2.y], 
+                     'o-', color=color, linewidth=width)
         plt.draw()
     
     def drawStartAndGoalPoints(self, startPoint, goalPoint):
@@ -66,8 +75,12 @@ class RRTPlotter:
         :param startPoint: numpy 2D array
         :param gialPoint: numpy 2D array
         """
-        self.ax.plot(startPoint[0], startPoint[1], 'go')
-        self.ax.plot(goalPoint[0], goalPoint[1], 'ro')
+        if self.invertY:
+            self.ax.plot(startPoint[0], -startPoint[1], 'go')
+            self.ax.plot(goalPoint[0], -goalPoint[1], 'ro')            
+        else:
+            self.ax.plot(startPoint[0], startPoint[1], 'go')
+            self.ax.plot(goalPoint[0], goalPoint[1], 'ro')
         plt.draw()
             
     def drawStartAndGoalRobotShape(self, startPose, goalPose, robot):
@@ -112,7 +125,10 @@ class RRTPlotter:
         :param path: a list of dipoles
         """
         points = np.array(path)
-        self.ax.plot(points[:,0], points[:,1], color=color, linewidth=width)
+        if self.invertY:
+            self.ax.plot(points[:,0], -points[:,1], color=color, linewidth=width)
+        else:
+            self.ax.plot(points[:,0], points[:,1], color=color, linewidth=width)
         plt.draw()
             
     def showMapAndTrees(self, fullMap, allTrees):
