@@ -36,6 +36,17 @@ TODO:
     Change diff angle to be relative to angle1
     drawPathDipoleControl should be something like path to 2d 
     fix issue with DEBUGGER mode
+    figure out when robot is within the next region
+    explain what cFree is in RRTMap
+    
+    
+QUESTIONS:
+    Does hardcoding a dT make sense?
+    if current_reg == next_reg and not last: 
+    ammount to move into region from transition face is 
+        distIntoPoly = self.robot.backLen * 1.1 + self.closeEnoughDist
+    raise error if no goal pose is found
+    
 """
 
 from __future__ import division

@@ -22,8 +22,6 @@ class RRTMap:
         
         :param boundary: shape
         :param allObstacles: list of polygons
-        :param startPose: numpy 3D array
-        :param endPose: numpy 3D array
         '''
         self.boundary = boundary
         if allObstacles == None:
@@ -38,17 +36,20 @@ class RRTMap:
             
 class RRTRobot:
     
-    def __init__(self, pose, outline, radius=None):
+    def __init__(self, pose, outline, backLen, radius=None):
         """ An object that represents the robot location and outline.
         
         :param pose: numpy 3D array
         :param outline: Polygon describing the space occupied by the robot at 
                         the current pose 
+        :param backLen: The length of the robot from it center to the furthest most
+                        back point. Used for calculating region enter distance.
         :param radius: radius of a circle encompasing the robot and centered at
                         pose. Only used for 2D RRT
         """
         self.pose = np.array(pose)
         self.shape = outline
+        self.backLen = backLen
         self.radius = radius
         
     @classmethod
@@ -61,7 +62,7 @@ class RRTRobot:
         center = (pose[0], pose[1])
         tempPoly = pShapes.Circle(radius, center)
         
-        return cls(pose, tempPoly, radius)
+        return cls(pose, tempPoly, radius, radius=radius)
         
     def moveRobotTo(self, newPose):
         """ Updates the robot pose and outline to match the new pose
