@@ -21,8 +21,8 @@ class RRTPlotter:
             self.fig, self.ax = plt.subplots()
         else:
             self.fig = figure
-            self.ax = axes
         self.invertY = invertY
+#         self.ax.set_aspect('equal')
             
     def clearPlot(self):
         """ Clear the current axes. """

@@ -12,27 +12,28 @@ import Polygon
 
 import Polygon.Shapes as pShapes
 import numpy as np
+import cPickle as pickle
+from _DipolarRRT import diffAngles 
 
 
 class RRTMap:
     
-    def __init__(self, boundary, allObstacles=None):
+    def __init__(self, mapArea, allObstacles=None):
         ''' An object with the outline of the map, a list of obstacles,
         and the poses that the robot starts and ends on.
         
-        :param boundary: shape
+        :param mapArea: Polygon representative of the area
         :param allObstacles: list of polygons
         '''
-        self.boundary = boundary
+        self.boundary = mapArea
         if allObstacles == None:
             self.allObstacles = []
         else:
             self.allObstacles = allObstacles
             
-        self.cFree = Polygon.Polygon(boundary)
+        self.cFree = Polygon.Polygon(mapArea)
         for obst in self.allObstacles:
             self.cFree -= obst
-            
             
 class RRTRobot:
     
@@ -81,9 +82,4 @@ class RRTRobot:
         return RRTRobot(np.array(self.pose), Polygon.Polygon(self.shape),
                          self.backLen)
 
-
-def diffAngles(angle1, angle2):
-    """ Returns difference between -pi and pi. Relative to angle2.
-    """
-    return (angle1 - angle2 + np.pi)%(2*np.pi) - np.pi
 

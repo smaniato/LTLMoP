@@ -22,10 +22,10 @@ class motionControlHandler:
         
         robotType (int): The robot shape to be used. Circle with radius .1 is 0. (default=0)
         nodeDistInter (float): The max euclidean distance between nodes. (default=1)
-        dipolarGain (float): The k1 gain for the dipolar closed loop controller. (default=.5)
+        dipolarGain (float): The k1 gain for the dipolar closed loop controller. (default=0.5)
         """
         # Settings
-        self.DEBUG = False           # Print statements for debugging
+        self.DEBUG = True           # Print statements for debugging
         self.DEBUGER = False        # If using a debugger. Matplotlib workaround
         self.PLOT_REG = True       # Plot the current and next region
         self.PLOT_TREE = True      # Plot the RRT live
@@ -63,8 +63,9 @@ class motionControlHandler:
         self.rrt.setConnectDist(nodeDistInter)
 
     def gotoRegion(self, current_reg, next_reg, last=False):
-        """
-        Returns ``True`` if we've reached the next region.
+        """ Returns ``True`` if we've reached the next region. Uses the generated path
+        and dipoles to go to the next waypoint. If the desired region changes or no path
+        currently excists, it will create one using the RRT
         """
 
         if current_reg == next_reg and not last:
@@ -112,15 +113,18 @@ class motionControlHandler:
         # Current and next regions
         currRegBoundary, currRegObstList = self.getRegionPolygons(current_reg)
         nextRegBoundary, nextRegObstList = self.getRegionPolygons(next_reg)
-        fullBoundary = currRegBoundary + nextRegBoundary
         allObstacles = currRegObstList + nextRegObstList
+        
+        currRegPoly = currRegBoundary
+        for obst in currRegObstList:
+            currRegPoly -= obst
         
         nextRegPoly = nextRegBoundary
         for obst in nextRegObstList:
             nextRegPoly -= obst
         
         # Prepare RRT
-        rrtMap = RRTMap(fullBoundary, allObstacles=allObstacles)
+        rrtMap = RRTMap(currRegPoly + nextRegPoly)
         
         pose = self.pose_handler.getPose()
         
@@ -150,11 +154,17 @@ class motionControlHandler:
                 self.plotter.drawPolygon(obst, color='k', width=3)
             self.plotter.drawStartAndGoalRobotShape(pose, goalPose, self.robot)
             
+        if self.DEBUG:
+            print "Getting RRTPath"
+            
         rrtPath = self.rrt.getRRTDipoleControlPath(pose, goalPose)
     
         if self.PLOT_PATH:
             pathT = self.rrt.get2DPathRepresent(rrtPath)
             self.plotter.drawDipolePath2D(pathT, color='g', width=3)
+            
+        if self.DEBUG:
+            print "Getting Short Path"
             
         shortPath = self.rrt.getShortcutPathDipole(rrtPath)
         
@@ -198,8 +208,8 @@ class motionControlHandler:
         element.
         Take a deep breath and read that over.
         """
-        distIntoPoly = self.robot.backLen * 1.1 + self.closeEnoughDist + 20
-#         distIntoPoly = self.robot.backLen * 1.1 + self.closeEnoughDist
+#         distIntoPoly = self.robot.backLen * 1.1 + self.closeEnoughDist + 20
+        distIntoPoly = self.robot.backLen * 1.1 + self.closeEnoughDist
     
         robotCopy = self.robot.copy()
         
@@ -246,6 +256,7 @@ class motionControlHandler:
             return False
         
     def getRobot(self, robotType):
+        """ Returns a predefined RRTRobot """
         if robotType == 0:
             return RRTRobot.circularRobot([0,0,0], .1)
         else:
