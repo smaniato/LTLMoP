@@ -309,14 +309,14 @@ class DipolarRRT:
                 return
     
     def getRRTDipoleControlPath(self, startPose, goalPoseList, goalBias=.2):
-        """ Returns a path from startPose to an goalPose in the form of a 
+        """ Returns a path from startPose to an goalPoseList in the form of a 
         list of Nodes. Uses a dipole controller to connect nodes in the RRT.
         """
-        goalBias = .2           # Percentage of attempt to connect to goalPose
+        goalBias = .2           # Percentage of attempt to connect to goalPoseList
         MAX_ITTER = 700         # Maximum number of tree iterations
         
         startPose = np.array(startPose).astype(float)
-        goalPose = [np.array(goalPose).astype(float) for goalPose in goalPoseList]
+        goalPoseList = [np.array(goalPose).astype(float) for goalPose in goalPoseList]
     
         tree = [self.Node(pose=startPose, parent=None)]
         
@@ -349,7 +349,9 @@ class DipolarRRT:
                     else:
                         self.plotter.drawTree(tree[-numNewNodes:], color='k', 
                                               width=2)
-                        self.plotter.drawStartAndGoalPoints(startPose, goalPose)
+                        for goalPose in goalPoseList:
+                            self.plotter.drawStartAndGoalPoints(startPose, 
+                                                                goalPose)
                     
             # Reached end
             finished = False
