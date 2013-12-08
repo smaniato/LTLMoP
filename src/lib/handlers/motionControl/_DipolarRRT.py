@@ -378,16 +378,30 @@ class DipolarRRT:
             
         return None
     
-    def getShortcutPathDipole(self, path):
+    def getShortcutPathDipole(self, path, additionalGoals=None):
         """ Use the shortcut heuristic to return a shorter path in the form of
-        a list of Nodes. Implements Dijkstras to find new connections in the 
-        given path
+        a list of Nodes. The final node could be the last node in path or one
+        of the nodes from additionalGoals Implements Dijkstras to find new 
+        connections in the given path.
         
         :param path: A list of Nodes
+        :param additionalGoals: A list of Nodes
         """
         numEdges = 0                # Keep track of number of edges calculated
         
-        numNodesTotal = len(path)
+        # Get a list of unique goals
+        allGoalNodes = [node for node in additionalGoals]
+        duplicate = False
+        nodeT = path[-1]
+        for node in allGoalNodes:
+            if norm(nodeT.pose - node.pose) == 0:
+                duplicate = True
+                break
+        if not duplicate:
+            allGoalNodes.append(nodeT)
+        allNodes = [node for node in path[:-1]] + allGoalNodes
+        
+        numNodesTotal = len(allNodes)
         
         nodeIQueue = PriorityQueue()        # Node to expand (distance, nodeIndex)
         visited = [False]*numNodesTotal
@@ -399,16 +413,15 @@ class DipolarRRT:
         path[0].parent = None
         
         while not nodeIQueue.empty():
-            currNodeI = nodeIQueue.get()
-            currNodeI = currNodeI[1]
+            currNodeI = nodeIQueue.get()[1]
             if visited[currNodeI]:
                 continue
             currDist = distances[currNodeI]
-            currNode = path[currNodeI]
+            currNode = allNodes[currNodeI]
             visited[currNodeI] = True
             
             # Check if reached Goal
-            if currNodeI == numNodesTotal-1:
+            if currNode in allGoalNodes:
                 
                 print "ShortcutDipole numEdges: " + str(numEdges)
                 
@@ -423,7 +436,7 @@ class DipolarRRT:
             for neighborI in range(numNodesTotal):
                 if visited[neighborI]:
                     continue
-                neighNode = path[neighborI]
+                neighNode = allNodes[neighborI]
                 
                 numEdges += 1
                 
@@ -457,6 +470,10 @@ class DipolarRRT:
     
     def pathNodeToDipoles(self, path):
         return [node.pose for node in path]
+    
+    def dipolesToNodes(self, dipoleList):
+        """ Takes in a list of dipoles and outputs a list of Nodes """
+        return [self.Node(pose=dipole) for dipole in dipoleList]
         
     class Node:
     
