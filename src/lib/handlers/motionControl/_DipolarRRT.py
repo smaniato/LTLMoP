@@ -468,7 +468,7 @@ class DipolarRRT:
             pathTraveled += pathDi
         return pathTraveled        
     
-    def pathNodeToDipoles(self, path):
+    def nodesToDipoles(self, path):
         return [node.pose for node in path]
     
     def dipolesToNodes(self, dipoleList):

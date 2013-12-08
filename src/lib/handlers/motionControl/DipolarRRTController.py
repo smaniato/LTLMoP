@@ -134,7 +134,7 @@ class motionControlHandler:
         self.rrt.PLOT_TREE_FAIL = self.PLOT_TREE_FAIL
         self.rrt.connectDist = self.nodeDistInter
         
-        # Goal poses (for now use single pose)
+        # Goal poses
         goalPoseList = self.getGoalPoses(current_reg, next_reg, nextRegPoly)    
         if len(goalPoseList) == 0:
             raise Exception("Error: DipolarRRTController - No goal pose found.")
@@ -166,14 +166,15 @@ class motionControlHandler:
         if self.DEBUG:
             print "Getting Short Path"
             
-        shortPath = self.rrt.getShortcutPathDipole(rrtPath)
+        allGoalNodes = self.rrt.dipolesToNodes(goalPoseList)
+        shortPath = self.rrt.getShortcutPathDipole(rrtPath, additionalGoals=allGoalNodes)
         
         if self.PLOT_PATH:
             pathT = self.rrt.get2DPathRepresent(shortPath)
             self.plotter.drawDipolePath2D(pathT, color='r', width=3)
             
         # Update instance fields
-        self.path = self.rrt.pathNodeToDipoles(shortPath)    # Convert to 3D vector
+        self.path = self.rrt.nodesToDipoles(shortPath)    # Convert to 3D vector
         self.nextWaypointIndex = 0
         self.storedNextReg = next_reg
         
