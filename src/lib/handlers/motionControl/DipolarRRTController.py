@@ -167,7 +167,8 @@ class motionControlHandler:
             print "Getting Short Path"
             
         allGoalNodes = self.rrt.dipolesToNodes(goalPoseList)
-        shortPath = self.rrt.getShortcutPathDipole(rrtPath, additionalGoals=allGoalNodes)
+#         shortPath = self.rrt.getShortcutPathDipole(rrtPath, additionalGoals=allGoalNodes)
+        shortPath = self.rrt.getThetaStarPath(rrtPath, additionalGoals=allGoalNodes)
         
         if self.PLOT_PATH:
             pathT = self.rrt.get2DPathRepresent(shortPath)
@@ -258,8 +259,9 @@ class motionControlHandler:
         
     def getRobot(self, robotType):
         """ Returns a predefined RRTRobot """
+        # Simulated Circular robot (For when lab to map matrix is the identity)
         if robotType == 0:
-            return RRTRobot.circularRobot([0,0,0], .1)
+            return RRTRobot.circularRobot([0,0,0], 10)
         else:
             msg = "ERROR: DipolarRRTController - Undefined robot type."
             raise Exception(msg)

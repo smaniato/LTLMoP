@@ -7,38 +7,31 @@
 Actions: # List of action propositions and their state (enabled = 1, disabled = 0)
 
 CompileOptions:
-convexify: False
+convexify: True
 parser: structured
 fastslow: False
 decompose: True
 use_region_bit_encoding: True
 
 CurrentConfigName:
-Untitled configuration
+Simulation
 
 Customs: # List of custom propositions
 
 RegionFile: # Relative path of region description file
-ComplexMap.regions
+CreateSimpleTest.regions
 
 Sensors: # List of sensor propositions and their state (enabled = 1, disabled = 0)
-GoToField, 1
 
 
 ======== SPECIFICATION ========
 
 RegionMapping: # Mapping between region names and their decomposed counterparts
-field = p3
-others = p1
-b1 = p7
-b2 = p6
-b3 = p5
+r1 = p2
+r2 = p1
+others = 
 
 Spec: # Specification in structured English
-
-if you are not sensing GoToField then visit b1
-if you are not sensing GoToField then visit b2
-if you are not sensing GoToField then visit b3
-
-visit field if and only if you are sensing GoToField
+visit r1
+visit r2
 
