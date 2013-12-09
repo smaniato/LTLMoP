@@ -491,6 +491,7 @@ class DipolarRRT:
         newPath = partialPath[:2]
         _, pathDipoleT = self.getDipoleToDipolePath(newPath[0].pose, 
                                                     newPath[1].pose)
+        pathDipoleT.append(newPath[1].pose)
         lengthPrev = self.get2DPathLength(pathDipoleT)
         
         # Run theta star on the partialPath
@@ -498,19 +499,19 @@ class DipolarRRT:
             # Calculate distance to new node through previous
             _, pathDipoleT = self.getDipoleToDipolePath(newPath[-1].pose, 
                                                         node.pose)
-            length1 = self.get2DPathLength(pathDipoleT)
+            length1 = self.get2DPathLength(pathDipoleT + [node.pose])
             
             # Check if find a shorter path through the prevous node's parent
-            pathFoundT, pathDipoleT = self.getDipoleToDipolePath(
+            pathFound2, pathDipoleT = self.getDipoleToDipolePath(
                                                 newPath[-2].pose, node.pose)
             
             # Could not connect to the previous node's parent
-            if not pathFoundT:
+            if not pathFound2:
                 newPath.append(node)
                 lengthPrev = length1
                 continue
             
-            length2 = self.get2DPathLength(pathDipoleT)
+            length2 = self.get2DPathLength(pathDipoleT + [node.pose])
             
             # First path is shorter
             if (lengthPrev + length1) < length2:
@@ -526,30 +527,31 @@ class DipolarRRT:
         endDistancesAndNodes = []
         for goal in allGoalNodes:
             # Calculate distance to goal node through previous
-            _, pathDipoleT = self.getDipoleToDipolePath(newPath[-1].pose, 
+            pathFound1, pathDipoleT = self.getDipoleToDipolePath(newPath[-1].pose, 
                                                         goal.pose)
-            length1 = self.get2DPathLength(pathDipoleT)
+            length1 = self.get2DPathLength(pathDipoleT + [goal.pose])
             
             # Check if find a shorter path through the prevous node's parent
-            pathFoundT, pathDipoleT = self.getDipoleToDipolePath(
-                                                newPath[-2].pose, node.pose)
+            pathFound2, pathDipoleT = self.getDipoleToDipolePath(
+                                                newPath[-2].pose, goal.pose)
+            length2 = self.get2DPathLength(pathDipoleT + [goal.pose])
             
-            # Could not connect to the previous node's parent
-            if not pathFoundT:
+            if pathFound1 and not pathFound2:
                 endNodesT = [newPath[-1], goal]
-                endDistancesAndNodes.append(lengthPrev + length1, endNodesT)
-                continue
-            
-            length2 = self.get2DPathLength(pathDipoleT)
-            
-            # First path is shorter
-            if (lengthPrev + length1) < length2:
-                endNodesT = [newPath[-1], goal]
-                endDistancesAndNodes.append(lengthPrev + length1, endNodesT)
-                continue
-            
-            # Second path is shorter
-            endDistancesAndNodes.append((length2, [goal]))
+                endDistancesAndNodes.append((lengthPrev + length1, endNodesT))
+                
+            elif not pathFound1 and pathFound2:
+                endDistancesAndNodes.append((length2, [goal]))
+                
+            elif pathFound1 and pathFound2:
+   
+                # First path is shorter
+                if (lengthPrev + length1) < length2:
+                    endNodesT = [newPath[-1], goal]
+                    endDistancesAndNodes.append((lengthPrev + length1, endNodesT))
+                # Second path is shorter
+                else:
+                    endDistancesAndNodes.append((length2, [goal]))
             
         closestGoalI = min(range(len(endDistancesAndNodes)), 
                            key=lambda x: endDistancesAndNodes[x][0])
@@ -609,7 +611,7 @@ class TestRRT:
     
     def __init__(self):
         self.DEBUGER = False            # Debugger is on
-        self.PLOT_TREE = False           # Live tree
+        self.PLOT_TREE = True           # Live tree
         self.PLOT_RRT_PATH = True
         self.PLOT_SHORT_PATH = False
         self.PLOT_SHORT_PATH = True
@@ -771,10 +773,11 @@ class TestRRT:
             pathT = planner.get2DPathRepresent(shortPath)
             plotter.drawDipolePath2D(pathT, color='r', width=3)
             
+        shortPath = planner.getThetaStarPath(rrtPath)
+            
         print "Showing Final Results"
         plt.ioff()
         plt.show()
-        print 
 
     def runRRTDipoleControlAndShortcutNoPlot(self):     
         """ Use this method to time the implementation and/or profile it
@@ -796,6 +799,33 @@ class TestRRT:
             return
             
         planner.getShortcutPathDipole(rrtPath)
+    
+    def testThetaStar(self):
+        _, _, testMap = self.getSampleMapRRT(3)
+        
+        robotOutline = Polygon.Polygon([(-.25,0), (.25,0), (0,.5)])
+        robot = RRTRobot(np.array([0,.2,np.pi/2]), robotOutline, .5)
+        
+        plotter = RRTPlotter()
+        
+        planner = DipolarRRT(testMap, robot, plotter)
+        planner.DEBUGER = self.DEBUGER
+        planner.PLOT_TREE = self.PLOT_TREE
+        planner.PLOT_TREE_FAIL = self.PLOT_TREE_FAIL
+        
+        currDipole = np.array([1, 1, 0])
+        dirV = np.array([.5, 0, 0])
+        rrtPath = []
+        for i in range(10):
+            rrtPath.append(currDipole)
+            currDipole = currDipole + dirV
+        rrtPath = planner.dipolesToNodes(rrtPath)
+        
+        shortPath = planner.getThetaStarPath(rrtPath)
+        
+        if self.PLOT_SHORT_PATH:
+            pathT = planner.get2DPathRepresent(shortPath)
+            plotter.drawDipolePath2D(pathT, color='r', width=3)
         
 pass
 if __name__ == "__main__":
@@ -807,6 +837,8 @@ if __name__ == "__main__":
     test.runRRTDipoleControlAndThetaStar()
 #     test.runRRTDipoleControlAndShortcutNoPlot()    
 #     cProfile.run("test.runRRTDipoleControlAndShortcutNoPlot()") 
+
+#     test.testThetaStar()
       
     print "Done: " + str(clock()-timeS)
 

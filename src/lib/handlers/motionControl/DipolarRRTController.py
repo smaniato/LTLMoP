@@ -16,21 +16,25 @@ from _DipolarRRT import RRTMap, RRTPlotter, RRTRobot, DipolarRRT, DipolarControl
 
 
 class motionControlHandler:
-    def __init__(self, proj, shared_data, robotType, nodeDistInter, dipolarGain):
+    def __init__(self, proj, shared_data, robotType, nodeDistInter, dipolarGain, plotTree,
+                 plotPath, plotRegion):
         """
         An RRT with dipoles for connecting nodes.
         
         robotType (int): The robot shape to be used. Circle with radius .1 is 0. (default=0)
         nodeDistInter (float): The max euclidean distance between nodes. (default=1)
         dipolarGain (float): The k1 gain for the dipolar closed loop controller. (default=0.5)
+        plotTree (bool): Plot the RRT Live
+        plotPath (bool): Plot paths after calculation 
+        plotRegion (bool): Plot the current and next region
         """
         # Settings
         self.DEBUG = False           # Print statements for debugging
         self.DEBUGER = False        # If using a debugger. Matplotlib workaround
-        self.PLOT_REG = True       # Plot the current and next region
-        self.PLOT_TREE = True      # Plot the RRT live
+        self.PLOT_REG = plotRegion       # Plot the current and next region
+        self.PLOT_TREE = plotTree      # Plot the RRT live
         self.PLOT_TREE_FAIL = True # Plot the RRT if it fails to find a path
-        self.PLOT_PATH = True       # Plot path generated
+        self.PLOT_PATH = plotPath       # Plot path generated
         self.closeEnoughDist = 1   # The max distance from waypoint
         self.closeEnoughAng = .5   # The max angle difference from pose
         
@@ -167,8 +171,8 @@ class motionControlHandler:
             print "Getting Short Path"
             
         allGoalNodes = self.rrt.dipolesToNodes(goalPoseList)
-#         shortPath = self.rrt.getShortcutPathDipole(rrtPath, additionalGoals=allGoalNodes)
-        shortPath = self.rrt.getThetaStarPath(rrtPath, additionalGoals=allGoalNodes)
+        shortPath = self.rrt.getShortcutPathDipole(rrtPath, additionalGoals=allGoalNodes)
+#         shortPath = self.rrt.getThetaStarPath(rrtPath, additionalGoals=allGoalNodes)
         
         if self.PLOT_PATH:
             pathT = self.rrt.get2DPathRepresent(shortPath)
