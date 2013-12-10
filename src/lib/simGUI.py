@@ -310,7 +310,8 @@ class SimGUI_Frame(wx.Frame):
             dc.DrawCircle(x, y, 5)
             # Draw velocity vector of robot (for debugging)
             if self.robotVel is not None:
-                dc.DrawLine(x, y, x + self.robotVel[0], y + self.robotVel[1])
+#                 dc.DrawLine(x, y, x + self.robotVel[0], y + self.robotVel[1])   # Map
+                dc.DrawLine(x, y, x + self.robotVel[0], y - self.robotVel[1])   # Lab
         if self.markerPos is not None:
             [m,n] = map(lambda m: int(self.mapScale*m), self.markerPos) 
             dc.SetBrush(wx.Brush(wx.RED))

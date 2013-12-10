@@ -20,7 +20,7 @@ DipolarRRT
 Customs: # List of custom propositions
 
 RegionFile: # Relative path of region description file
-SimpleExample.regions
+..\..\..\..\..\..\..\Downloads\fgd.regions
 
 Sensors: # List of sensor propositions and their state (enabled = 1, disabled = 0)
 Go, 1
@@ -29,15 +29,16 @@ Go, 1
 ======== SPECIFICATION ========
 
 RegionMapping: # Mapping between region names and their decomposed counterparts
-r4 = p1
-others = 
+r0 = p5
 r1 = p4
-r2 = p3
-r3 = p2
+others = p1, p6, p7, p8
 
 Spec: # Specification in structured English
-visit r1 if and only if you are not sensing Go
-visit r3 if and only if you are sensing Go
+#visit r1 if and only if you are not sensing Go
+#visit r3 if and only if you are sensing Go
 
-do NotifyReachedR1 if and only if you are in r1
+#do NotifyReachedR1 if and only if you are in r1
+
+visit r1
+visit r0
 

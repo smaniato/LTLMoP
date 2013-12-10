@@ -19,7 +19,7 @@ DipolarSimulation
 Customs: # List of custom propositions
 
 RegionFile: # Relative path of region description file
-ComplexMap.regions
+Fall13FinalDemo_adjusted.regions
 
 Sensors: # List of sensor propositions and their state (enabled = 1, disabled = 0)
 
@@ -27,15 +27,15 @@ Sensors: # List of sensor propositions and their state (enabled = 1, disabled = 
 ======== SPECIFICATION ========
 
 RegionMapping: # Mapping between region names and their decomposed counterparts
-r4 = p1, p3
-r5 = p3
-r1 = p6
-r2 = p5
-r3 = p4
+end = p6
+r1 = p4
+r2 = p2
+start = p1
+middle = p5
 others = 
 
 Spec: # Specification in structured English
-visit r1
-visit r3
-visit r5
+visit start
+visit middle
+visit end
 

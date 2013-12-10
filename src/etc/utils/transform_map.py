@@ -52,8 +52,10 @@ T = matrix([[scale_factor, 0, offset.x],
 coordmap_lab2map = lambda pt: regions.Point(*((T * mat([pt.x, pt.y, 1]).T).T.tolist()[0][0:2]))
 
 for region in mapfile.regions:
+    print "bfeore", len(region.pointArray)
     region.pointArray = map(coordmap_lab2map, region.pointArray)
     region.recalcBoundingBox()
+    print "fater", len(region.pointArray)
 
 # Save file
 output_filename = os.path.splitext(sys.argv[1])[0] + "_adjusted.regions"
