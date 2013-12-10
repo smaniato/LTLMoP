@@ -14,7 +14,7 @@ decompose: True
 use_region_bit_encoding: True
 
 CurrentConfigName:
-Create
+CreateRRT
 
 Customs: # List of custom propositions
 
@@ -27,11 +27,12 @@ Sensors: # List of sensor propositions and their state (enabled = 1, disabled = 
 ======== SPECIFICATION ========
 
 RegionMapping: # Mapping between region names and their decomposed counterparts
-r1 = p2
-r2 = p1
 others = 
+r1 = p3
+r2 = p2
+r3 = p1
 
 Spec: # Specification in structured English
 visit r1
-visit r2
+visit r3
 

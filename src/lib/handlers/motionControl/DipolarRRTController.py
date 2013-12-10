@@ -16,14 +16,15 @@ from _DipolarRRT import RRTMap, RRTPlotter, RRTRobot, DipolarRRT, DipolarControl
 
 
 class motionControlHandler:
-    def __init__(self, proj, shared_data, robotType, nodeDistInter, dipolarGain, plotTree,
-                 plotPath, plotRegion):
+    def __init__(self, proj, shared_data, robotType, nodeDistInter, linearGain, angularGain,
+                 plotTree, plotPath, plotRegion):
         """
         An RRT with dipoles for connecting nodes.
         
         robotType (int): The robot shape to be used. Circle with radius .1 is 0. (default=0)
         nodeDistInter (float): The max euclidean distance between nodes. (default=1)
-        dipolarGain (float): The k1 gain for the dipolar closed loop controller. (default=0.5)
+        linearGain (float): The k1 gain for the dipolar closed loop controller. (default=0.5)
+        angularGain (float): the k2 gain for the dipolar closed loop controller. (default=1.5)
         plotTree (bool): Plot the RRT Live
         plotPath (bool): Plot paths after calculation 
         plotRegion (bool): Plot the current and next region
@@ -35,8 +36,8 @@ class motionControlHandler:
         self.PLOT_TREE = plotTree      # Plot the RRT live
         self.PLOT_PATH = plotPath       # Plot path generated
         self.PLOT_TREE_FAIL = True # Plot the RRT if it fails to find a path
-        self.closeEnoughDist = 1   # The max distance from waypoint
-        self.closeEnoughAng = .5   # The max angle difference from pose
+        self.closeEnoughDist = .2   # The max distance from waypoint
+        self.closeEnoughAng = .3   # The max angle difference from pose
         
         # Get references to handlers we'll need to communicate with
         self.drive_handler = proj.h_instance['drive']
@@ -47,11 +48,11 @@ class motionControlHandler:
         self.coordmap_map2lab = proj.coordmap_map2lab
         
         # Plotter
-        self.plotter = RRTPlotter(invertY=True)
+        self.plotter = RRTPlotter(invertY=False)
         self.plotter.ion()                       # Turn on interactive mode
         
         # Dipolar controller
-        self.dipController = DipolarController(k1=dipolarGain)
+        self.dipController = DipolarController(k1=linearGain)
         self.prevPose = self.pose_handler.getPose()
         self.dT = 1/20.0    # The time elapsed since the call to controller
         
@@ -266,6 +267,8 @@ class motionControlHandler:
         # Simulated Circular robot (For when lab to map matrix is the identity)
         if robotType == 0:
             return RRTRobot.circularRobot([0,0,0], 10)
+        elif robotType == 1:
+            return RRTRobot.circularRobot([0,0,0], .01)            
         else:
             msg = "ERROR: DipolarRRTController - Undefined robot type."
             raise Exception(msg)
