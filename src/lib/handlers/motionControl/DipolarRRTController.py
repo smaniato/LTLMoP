@@ -33,8 +33,8 @@ class motionControlHandler:
         self.DEBUGER = False        # If using a debugger. Matplotlib workaround
         self.PLOT_REG = plotRegion       # Plot the current and next region
         self.PLOT_TREE = plotTree      # Plot the RRT live
-        self.PLOT_TREE_FAIL = True # Plot the RRT if it fails to find a path
         self.PLOT_PATH = plotPath       # Plot path generated
+        self.PLOT_TREE_FAIL = True # Plot the RRT if it fails to find a path
         self.closeEnoughDist = 1   # The max distance from waypoint
         self.closeEnoughAng = .5   # The max angle difference from pose
         

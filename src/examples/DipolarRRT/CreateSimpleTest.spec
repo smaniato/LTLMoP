@@ -14,7 +14,7 @@ decompose: True
 use_region_bit_encoding: True
 
 CurrentConfigName:
-Simulation
+Create
 
 Customs: # List of custom propositions
 
