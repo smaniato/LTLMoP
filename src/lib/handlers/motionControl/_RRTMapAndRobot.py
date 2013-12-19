@@ -36,20 +36,17 @@ class RRTMap:
             
 class RRTRobot:
     
-    def __init__(self, pose, outline, backLen, radius=None):
+    def __init__(self, pose, outline, radius):
         """ An object that represents the robot location and outline.
         
         :param pose: numpy 3D array
         :param outline: Polygon describing the space occupied by the robot at 
                         the current pose 
-        :param backLen: The length of the robot from it center to the furthest most
-                        back point. Used for calculating region enter distance.
         :param radius: radius of a circle encompasing the robot and centered at
                         pose. Only used for 2D RRT
         """
         self.pose = np.array(pose)
         self.shape = outline
-        self.backLen = backLen
         self.radius = radius
         
     @classmethod
@@ -62,24 +59,22 @@ class RRTRobot:
         center = (pose[0], pose[1])
         tempPoly = pShapes.Circle(radius, center)
         
-        return cls(pose, tempPoly, radius, radius=radius)
+        return cls(pose, tempPoly, radius)
         
     def moveRobotTo(self, newPose):
         """ Updates the robot pose and outline to match the new pose
         
         :param newPose: numpy 3D array
         """
-        # TODO: DIR V DOES NOT NEED BE A VECTOR SPLIT IT UP
         dirV = newPose[:2] - self.pose[:2]
         angleDiff = diffAngles(newPose[2], self.pose[2])
         self.shape.shift(dirV[0], dirV[1])
-        # TODO: DONT MAKE A NEW ARRAY JUST UPDATE VALUES
         self.pose = np.array(newPose)
         self.shape.rotate(angleDiff, newPose[0], newPose[1])
         
     def copy(self):
         return RRTRobot(np.array(self.pose), Polygon.Polygon(self.shape),
-                         self.backLen)
+                         self.radius)
 
 
 def diffAngles(angle1, angle2):

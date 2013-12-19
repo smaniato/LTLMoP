@@ -14,7 +14,7 @@ decompose: True
 use_region_bit_encoding: True
 
 CurrentConfigName:
-DipolarSimulation
+CreateRRT
 
 Customs: # List of custom propositions
 
@@ -27,12 +27,12 @@ Sensors: # List of sensor propositions and their state (enabled = 1, disabled = 
 ======== SPECIFICATION ========
 
 RegionMapping: # Mapping between region names and their decomposed counterparts
-end = p6
-r1 = p4
-r2 = p2
-start = p1
-middle = p5
-others = 
+end = p7
+r1 = p5
+r2 = p3
+start = p2
+middle = p6
+others = p1
 
 Spec: # Specification in structured English
 visit start

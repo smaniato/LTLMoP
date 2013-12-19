@@ -10,6 +10,7 @@ the DipolarRRT algorithm.
 
 import numpy as np
 import matplotlib.pyplot as plt
+import time
 
 class RRTPlotter:
     
@@ -40,13 +41,14 @@ class RRTPlotter:
     def drawPolygon(self, poly, color='k', width=1):
         """ Draw the outline of a polygon object
         """
-        vertices = np.array(poly[0] + [poly[0][0]])
-        if self.invertY:
-            self.ax.plot(vertices[:,0], -vertices[:,1], 
-                     color=color, linewidth=width)
-        else:
-            self.ax.plot(vertices[:,0], vertices[:,1], 
-                     color=color, linewidth=width)
+        for contour in poly:
+            vertices = np.array(contour + [contour[0]])
+            if self.invertY:
+                self.ax.plot(vertices[:,0], -vertices[:,1], 
+                         color=color, linewidth=width)
+            else:
+                self.ax.plot(vertices[:,0], vertices[:,1], 
+                         color=color, linewidth=width)
         plt.draw()
         
     def drawTree(self, tree, color='k', width=1):
@@ -116,7 +118,7 @@ class RRTPlotter:
         
         :param path: a list of nodes
         """
-        points = [node.XY for node in path]
+        points = [node.getXY() for node in path]
         self.drawDipolePath2D(points, color=color, width=width)
     
     def drawDipolePath2D(self, path, color='k', width=1):
@@ -130,6 +132,19 @@ class RRTPlotter:
         else:
             self.ax.plot(points[:,0], points[:,1], color=color, linewidth=width)
         plt.draw()
+        
+    def drawRobotOccupiedPath(self, path, robot, color='k', width=1):
+        """ Draw the space that the robot would occupy at each point in the
+        path.
+        
+        :param path: a list of dipoles
+        :param robot: an RRTRobot
+        """
+        robotCopy = robot.copy()
+        for pose in path:
+            robotCopy.moveRobotTo(pose)            
+            self.drawPolygon(robotCopy.shape, color=color, width=width)
+            time.sleep(1)
             
     def showMapAndTrees(self, fullMap, allTrees):
         """ Draw and plot the fullMap and trees. Mainly used to help debug

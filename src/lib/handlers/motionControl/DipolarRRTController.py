@@ -14,6 +14,7 @@ from Polygon import Polygon
 import numpy as np
 from _DipolarRRT import RRTMap, RRTPlotter, RRTRobot, DipolarRRT, DipolarController, diffAngles
 
+import time
 
 class motionControlHandler:
     def __init__(self, proj, shared_data, robotType, nodeDistInter, linearGain, angularGain,
@@ -21,7 +22,7 @@ class motionControlHandler:
         """
         An RRT with dipoles for connecting nodes.
         
-        robotType (int): The robot shape to be used. Circle with radius .1 is 0. (default=0)
+        robotType (int): The robot shape to be used. Default is circle with radius .1 (default=0)
         nodeDistInter (float): The max euclidean distance between nodes. (default=1)
         linearGain (float): The k1 gain for the dipolar closed loop controller. (default=0.5)
         angularGain (float): the k2 gain for the dipolar closed loop controller. (default=1.5)
@@ -36,8 +37,6 @@ class motionControlHandler:
         self.PLOT_TREE = plotTree      # Plot the RRT live
         self.PLOT_PATH = plotPath       # Plot path generated
         self.PLOT_TREE_FAIL = True # Plot the RRT if it fails to find a path
-        self.closeEnoughDist = .2   # The max distance from waypoint
-        self.closeEnoughAng = .3   # The max angle difference from pose
         
         # Get references to handlers we'll need to communicate with
         self.drive_handler = proj.h_instance['drive']
@@ -58,6 +57,8 @@ class motionControlHandler:
         
         # RRT Variables
         self.robot = self.getRobot(robotType)
+        self.closeEnoughDist = self.robot.radius   # The max distance from waypoint
+        self.closeEnoughAng = .3   # The max angle difference from pose
         self.nodeDistInter = nodeDistInter
         self.path = None
         self.nextWaypointIndex = None
@@ -66,6 +67,10 @@ class motionControlHandler:
                               dipController=self.dipController)
         self.rrt.setCloseEnoughVals(self.closeEnoughDist, self.closeEnoughAng)
         self.rrt.setConnectDist(nodeDistInter)
+        self.rrt.DEBUGER = self.DEBUGER
+        self.rrt.PLOT_TREE = self.PLOT_TREE
+        self.rrt.PLOT_TREE_FAIL = self.PLOT_TREE_FAIL
+        self.rrt.connectDist = self.nodeDistInter
 
     def gotoRegion(self, current_reg, next_reg, last=False):
         """ Returns ``True`` if we've reached the next region. Uses the generated path
@@ -104,11 +109,11 @@ class motionControlHandler:
         self.drive_handler.setVelocity(v, w)
         self.prevPose = pose  
         
-        if self.DEBUG:
-            print "-----------------"
-            print "Current pose:", pose
-            print "Next waypoint:", nextWaypoint
-            print "V:", v, "    W:", w
+#         if self.DEBUG:
+#             print "-----------------"
+#             print "Current pose:", pose
+#             print "Next waypoint:", nextWaypoint
+#             print "V:", v, "    W:", w
 
         return False  
     
@@ -134,10 +139,6 @@ class motionControlHandler:
         pose = self.pose_handler.getPose()
         
         self.rrt.updateMap(rrtMap)
-        self.rrt.DEBUGER = self.DEBUGER
-        self.rrt.PLOT_TREE = self.PLOT_TREE
-        self.rrt.PLOT_TREE_FAIL = self.PLOT_TREE_FAIL
-        self.rrt.connectDist = self.nodeDistInter
         
         # Goal poses
         goalPoseList = self.getGoalPoses(current_reg, next_reg, nextRegPoly)    
@@ -171,6 +172,29 @@ class motionControlHandler:
         if self.DEBUG:
             print "Getting Short Path"
             
+#         if self.DEBUG:
+# #             x = 5.
+# #             y = 1
+# #             robotCopy = self.robot.copy()
+# #             robotCopy.moveRobotTo([x, y, 0])
+# #             self.plotter.drawPolygon(robotCopy.shape)
+# #             self.plotter.drawPolygon(rrtMap.cFree, color='b', width=3)
+# #             self.plotter.drawPolygon(rrtMap.boundary, color='k', width=3)
+# #             print rrtMap.cFree.covers(robotCopy.shape)
+#             self.plotter.drawPolygon(currRegPoly, color='g', width=3)
+#             print "Current", currRegPoly
+#             self.plotter.drawPolygon(nextRegPoly, color='g', width=3)
+#             print "Next", nextRegPoly
+#             time.sleep(2)
+#             sumT = currRegPoly + nextRegPoly
+#             self.plotter.drawPolygon(sumT, color='r', width=3)
+#             print "Sum", sumT
+#             time.sleep(2)
+#             self.plotter.drawPolygon(rrtMap.boundary, color='k', width=3)
+#             time.sleep(2)
+#             Polygon
+            
+            
         allGoalNodes = self.rrt.dipolesToNodes(goalPoseList)
         shortPath = self.rrt.getShortcutPathDipole(rrtPath, additionalGoals=allGoalNodes)
 #         shortPath = self.rrt.getThetaStarPath(rrtPath, additionalGoals=allGoalNodes)
@@ -178,6 +202,11 @@ class motionControlHandler:
         if self.PLOT_PATH:
             pathT = self.rrt.get2DPathRepresent(shortPath)
             self.plotter.drawDipolePath2D(pathT, color='r', width=3)
+            
+        if self.DEBUG:
+            pathT = self.rrt.get2DPathRepresent(shortPath)
+            print "Length of pathT=", len(pathT)
+            self.plotter.drawRobotOccupiedPath(pathT, self.robot, color='b', width=1)
             
         # Update instance fields
         self.path = self.rrt.nodesToDipoles(shortPath)    # Convert to 3D vector
@@ -216,7 +245,7 @@ class motionControlHandler:
         Take a deep breath and read that over.
         """
 #         distIntoPoly = self.robot.backLen * 1.1 + self.closeEnoughDist + 20
-        distIntoPoly = self.robot.backLen * 1.1 + self.closeEnoughDist
+        distIntoPoly = self.robot.radius * 1.1 + self.closeEnoughDist
     
         robotCopy = self.robot.copy()
         
@@ -267,8 +296,11 @@ class motionControlHandler:
         # Simulated Circular robot (For when lab to map matrix is the identity)
         if robotType == 0:
             return RRTRobot.circularRobot([0,0,0], 10)
+        
+        # Create
         elif robotType == 1:
-            return RRTRobot.circularRobot([0,0,0], .01)            
+            return RRTRobot.circularRobot([0,0,0], .1)            
+        
         else:
             msg = "ERROR: DipolarRRTController - Undefined robot type."
             raise Exception(msg)
