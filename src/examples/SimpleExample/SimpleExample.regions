@@ -6,9 +6,6 @@ Background: # Relative path of background image file
 None
 
 CalibrationPoints: # Vertices to use for map calibration: (vertex_region_name, vertex_index)
-boundary	1
-boundary	5
-boundary	7
 
 Obstacles: # Names of regions to treat as obstacles
 
@@ -17,7 +14,7 @@ Regions: # Stored as JSON string
     {
         "name": "boundary", 
         "color": [
-            176, 
+            255, 
             0, 
             255
         ], 
@@ -25,129 +22,80 @@ Regions: # Stored as JSON string
         "height": 0, 
         "points": [
             [
+                247.0, 
+                100.0
+            ], 
+            [
+                124.0, 
+                100.0
+            ], 
+            [
                 0.0, 
-                117.0
+                100.0
             ], 
             [
                 0.0, 
                 0.0
             ], 
             [
-                162.0, 
+                124.0, 
                 0.0
             ], 
             [
-                326.0, 
+                247.0, 
                 0.0
-            ], 
-            [
-                326.0, 
-                117.0
-            ], 
-            [
-                326.0, 
-                239.0
-            ], 
-            [
-                162.0, 
-                239.0
-            ], 
-            [
-                0.0, 
-                239.0
             ]
         ], 
         "position": [
-            363.0, 
-            118.0
+            189.0, 
+            131.0
         ], 
         "type": "poly", 
         "size": [
-            326.0, 
-            239.0
+            247.0, 
+            100.0
         ]
     }, 
     {
         "name": "r2", 
         "color": [
             255, 
-            255, 
-            0
-        ], 
-        "height": 0, 
-        "position": [
-            363.0, 
-            118.0
-        ], 
-        "type": "rect", 
-        "size": [
-            162.0, 
-            117.0
-        ]
-    }, 
-    {
-        "name": "r4", 
-        "color": [
-            255, 
-            255, 
-            0
-        ], 
-        "height": 0, 
-        "position": [
-            525.0, 
-            235.0
-        ], 
-        "type": "rect", 
-        "size": [
-            164.0, 
-            122.0
-        ]
-    }, 
-    {
-        "name": "r3", 
-        "color": [
-            255, 
             0, 
             0
         ], 
-        "height": 0, 
+        "height": 0.0, 
         "position": [
-            525.0, 
-            118.0
+            313.0, 
+            131.0
         ], 
         "type": "rect", 
         "size": [
-            164.0, 
-            117.0
+            123.0, 
+            100.0
         ]
     }, 
     {
         "name": "r1", 
         "color": [
-            0, 
             255, 
-            0
+            0, 
+            255
         ], 
         "height": 0, 
         "position": [
-            363.0, 
-            235.0
+            189.0, 
+            131.0
         ], 
         "type": "rect", 
         "size": [
-            162.0, 
-            122.0
+            124.0, 
+            100.0
         ]
     }
 ]
 
 Transitions: # Region 1 Name, Region 2 Name, Bidirectional transition faces (face1_x1, face1_y1, face1_x2, face1_y2, face2_x1, ...)
-boundary	r2	363.0	235.0	363.0	118.0	525.0	118.0	363.0	118.0
-boundary	r4	689.0	357.0	689.0	235.0	689.0	357.0	525.0	357.0
-boundary	r3	689.0	235.0	689.0	118.0	525.0	118.0	689.0	118.0
-boundary	r1	363.0	235.0	363.0	357.0	525.0	357.0	363.0	357.0
-r2	r3	525.0	118.0	525.0	235.0
-r2	r1	363.0	235.0	525.0	235.0
-r4	r3	689.0	235.0	525.0	235.0
-r4	r1	525.0	357.0	525.0	235.0
+boundary	r2	436.0	231.0	313.0	231.0	313.0	131.0	436.0	131.0	436.0	231.0	436.0	131.0
+boundary	r1	313.0	131.0	189.0	131.0	189.0	231.0	189.0	131.0	189.0	231.0	313.0	231.0
+r2	r1	313.0	131.0	313.0	231.0
 
