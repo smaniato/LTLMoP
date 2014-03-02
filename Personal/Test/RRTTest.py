@@ -160,7 +160,7 @@ if __name__ == "__main__":
        
     test = TestRRT()
 #     test.testRRTStar() 
-    test.testDipolarRRTStar(True)  
+#     test.testDipolarRRTStar(True)  
 #     Profile.run("test.testDipolarRRTStar(False)")   
 #     Profile.run("test.testController()")
       

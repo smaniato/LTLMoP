@@ -85,15 +85,15 @@ class DipolarController:
         poseN = np.array(posePrev, dtype=float)
         
         delAng = w*delT
-        dist = u*delT
+        dist2 = u*delT
         
         if abs(delAng) < .0000001:
-            poseN[0] += dist*cos(posePrev[2])   
-            poseN[1] += dist*sin(posePrev[2])
+            poseN[0] += dist2*cos(posePrev[2])   
+            poseN[1] += dist2*sin(posePrev[2])
         else:
             # Radius of circle and length of displacement vector
-            rad = dist/delAng;
-            vecL = sqrt( (rad*sin(delAng))**2 + (rad - rad*cos(delAng))**2) * sign(dist)
+            rad = dist2/delAng;
+            vecL = sqrt( (rad*sin(delAng))**2 + (rad - rad*cos(delAng))**2) * sign(dist2)
             
             poseN[0] += vecL*cos(delAng/2 + poseN[2])
             poseN[1] += vecL*sin(delAng/2 + poseN[2])

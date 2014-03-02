@@ -283,10 +283,10 @@ class motionControlHandler:
         """ Returns true if pose1 and pose2 are within a threshold distance
         and angle difference.
         """       
-        dist = np.linalg.norm(pose1[:2] - pose2[:2])
+        dist2 = np.linalg.norm(pose1[:2] - pose2[:2])
         angDiff = abs(diffAngles(pose1[2], pose2[2]))
         
-        if dist < self.closeEnoughDist and angDiff < self.closeEnoughAng:
+        if dist2 < self.closeEnoughDist and angDiff < self.closeEnoughAng:
             return True
         else:
             return False
