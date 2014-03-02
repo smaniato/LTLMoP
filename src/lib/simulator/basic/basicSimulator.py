@@ -57,13 +57,13 @@ class basicSimulator:
                 #self.pose[0:2] = self.pose[0:2]+vel
                 
                 delAng = vel[1]
-                dist = vel[0]
+                dist2 = vel[0]
                 if abs(delAng) < .0000001:
-                    self.pose[0] += dist*cos(self.pose[2])   
-                    self.pose[1] += dist*sin(self.pose[2])
+                    self.pose[0] += dist2*cos(self.pose[2])   
+                    self.pose[1] += dist2*sin(self.pose[2])
                 else:            
-                    rad = dist/delAng;
-                    vecL = sqrt( (rad*sin(delAng))**2 + (rad - rad*cos(delAng))**2) * sign(dist)
+                    rad = dist2/delAng;
+                    vecL = sqrt( (rad*sin(delAng))**2 + (rad - rad*cos(delAng))**2) * sign(dist2)
                     
                     self.pose[0] += vecL*cos(delAng/2 + self.pose[2])
                     self.pose[1] += vecL*sin(delAng/2 + self.pose[2])

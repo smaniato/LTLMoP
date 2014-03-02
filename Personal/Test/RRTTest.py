@@ -6,7 +6,6 @@ import Polygon.Shapes as pShapes
 from _RRTMapAndRobot import RRTMap, RRTRobot
 import matplotlib.pyplot as plt
 import numpy as np
-import DipoleRRTStar, RRTStar
 import _DipolarCLoopControl
 
 import cProfile as Profile

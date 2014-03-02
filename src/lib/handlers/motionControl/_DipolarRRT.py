@@ -115,15 +115,15 @@ class DipolarRRT:
     def updateMap(self, newMap):
         self.fullMap = newMap
         
-    def setCloseEnoughVals(self, dist=None, ang=None):
+    def setCloseEnoughVals(self, dist2=None, ang=None):
         """ Set the values that are checked when closeEnoughDipole is called. """
-        if dist is not None:
-            self.closeEnoughDist = dist
+        if dist2 is not None:
+            self.closeEnoughDist = dist2
         if ang is not None:
             self.closeEnoughAng = ang
             
-    def setConnectDist(self, dist):
-        self.connectDist = dist
+    def setConnectDist(self, dist2):
+        self.connectDist = dist2
             
     def get2DPathLength(self, path):
         """ Get the length of a path along the set of 2D waypoints.
@@ -218,10 +218,10 @@ class DipolarRRT:
         """ Returns true if the euclidean and angular distances between currPose
         and endPose is below the set threshold.
         """        
-        dist = norm(currPose[:2] - endPose[:2])
+        dist2 = norm(currPose[:2] - endPose[:2])
         angDiff = np.abs(diffAngles(currPose[2], endPose[2]))
         
-        if dist < self.closeEnoughDist and angDiff < self.closeEnoughAng:
+        if dist2 < self.closeEnoughDist and angDiff < self.closeEnoughAng:
             return True
         else:
             return False
@@ -238,10 +238,10 @@ class DipolarRRT:
         closestNode = tree[closestNodeIndex]
         
         dirV = dipole[:2] - closestNode.getXY()
-        dist = norm(dirV)
-        if dist > MAX_DIST:
+        dist2 = norm(dirV)
+        if dist2 > MAX_DIST:
             dipole = np.array(dipole)
-            dipole[:2] = closestNode.getXY() + (dirV/dist)*MAX_DIST
+            dipole[:2] = closestNode.getXY() + (dirV/dist2)*MAX_DIST
         
         pathFound, _ = self.getDipoleToDipolePath(closestNode.getPose(), dipole)
         
@@ -273,9 +273,9 @@ class DipolarRRT:
         
             dirV = dipole[:2] - closestNode.getXY()
             dirAng = np.arctan2(dirV[1], dirV[0])
-            dist = norm(dirV)
-            numIntervals = int(dist/MAX_DIST)
-            dirV = dirV/dist*MAX_DIST               # Normalize to step size
+            dist2 = norm(dirV)
+            numIntervals = int(dist2/MAX_DIST)
+            dirV = dirV/dist2*MAX_DIST               # Normalize to step size
             
             # Try to connect to dipole in intervals
             collided = False
@@ -316,7 +316,7 @@ class DipolarRRT:
         MAX_ITTER = 700         # Maximum number of tree iterations
         
         startPose = np.array(startPose).astype(float)
-        goalPoseList = [np.array(goalPose).astype(float) for goalPose in goalPoseList]
+        goalPoseList = [np.array(goalNode).astype(float) for goalPose in goalPoseList]
     
         tree = [self.Node(pose=startPose, parent=None)]
         
