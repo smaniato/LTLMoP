@@ -316,7 +316,7 @@ class DipolarRRT:
         MAX_ITTER = 700         # Maximum number of tree iterations
         
         startPose = np.array(startPose).astype(float)
-        goalPoseList = [np.array(goalNode).astype(float) for goalPose in goalPoseList]
+        goalPoseList = [np.array(goalPose).astype(float) for goalPose in goalPoseList]
     
         tree = [self.Node(pose=startPose, parent=None)]
         

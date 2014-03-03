@@ -60,15 +60,15 @@ class DipolarRRT:
     def updateMap(self, newMap):
         self.fullMap = newMap
         
-    def setCloseEnoughVals(self, dist2=None, ang=None):
-        """ Set the values that are checked when closeEnough is called. """
-        if dist2 is not None:
-            self.closeEnoughDist = dist2
+    def setCloseEnoughVals(self, distancePointE2=None, ang=None):
+        """ Set the values that are checked when closeEnoughNode is called. """
+        if distancePointE2 is not None:
+            self.closeEnoughDist = distancePointE2
         if ang is not None:
             self.closeEnoughAng = ang
             
-    def setConnectDist(self, dist2):
-        self.connectDist = dist2
+    def setConnectDist(self, distancePointE2):
+        self.connectDist = distancePointE2
             
     def get2DPathLength(self, path):
         """ Get the length of a path along the set of 2D waypoints.
@@ -151,7 +151,7 @@ class DipolarRRT:
                 return (False, path)
             
             # If reached goal return the final state
-            if self.closeEnough(poseCurr, dipoleEnd):
+            if self.closeEnoughNode(poseCurr, dipoleEnd):
                 return (True, path)
             
         # Timed out. This warning can be removed if bothersome.
@@ -159,14 +159,14 @@ class DipolarRRT:
         
         return (False, path)
     
-    def closeEnough(self, currPose, endPose):
+    def closeEnoughNode(self, currPose, endPose):
         """ Returns true if the euclidean and angular distances between currPose
         and endPose is below the set threshold.
         """        
-        dist2 = norm(currPose[:2] - endPose[:2])
+        distancePointE2 = norm(currPose[:2] - endPose[:2])
         angDiff = np.abs(diffAngles(currPose[2], endPose[2]))
         
-        if dist2 < self.closeEnoughDist and angDiff < self.closeEnoughAng:
+        if distancePointE2 < self.closeEnoughDist and angDiff < self.closeEnoughAng:
             return True
         else:
             return False
@@ -183,10 +183,10 @@ class DipolarRRT:
         closestNode = tree[closestNodeIndex]
         
         dirV = dipole[:2] - closestNode.getPosition()
-        dist2 = norm(dirV)
-        if dist2 > MAX_DIST:
+        distancePointE2 = norm(dirV)
+        if distancePointE2 > MAX_DIST:
             dipole = np.array(dipole)
-            dipole[:2] = closestNode.getPosition() + (dirV/dist2)*MAX_DIST
+            dipole[:2] = closestNode.getPosition() + (dirV/distancePointE2)*MAX_DIST
         
         pathFound, _ = self.getDipoleToDipolePath(closestNode.getPose(), dipole)
         
@@ -218,9 +218,9 @@ class DipolarRRT:
         
             dirV = dipole[:2] - closestNode.getPosition()
             dirAng = np.arctan2(dirV[1], dirV[0])
-            dist2 = norm(dirV)
-            numIntervals = int(dist2/MAX_DIST)
-            dirV = dirV/dist2*MAX_DIST               # Normalize to step size
+            distancePointE2 = norm(dirV)
+            numIntervals = int(distancePointE2/MAX_DIST)
+            dirV = dirV/distancePointE2*MAX_DIST               # Normalize to step size
             
             # Try to connect to dipole in intervals
             collided = False
@@ -301,7 +301,7 @@ class DipolarRRT:
             # Reached end
             finished = False
             for goalPose in goalPoseList:
-                if self.closeEnough(tree[-1].getPose(), goalPose):
+                if self.closeEnoughNode(tree[-1].getPose(), goalPose):
                     finished = True
                     break
             

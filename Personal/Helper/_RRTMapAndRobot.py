@@ -12,6 +12,8 @@ import Polygon
 
 import Polygon.Shapes as pShapes
 import numpy as np
+from math import pi
+from random import random, sample
 
 
 class RRTMap:
@@ -32,6 +34,60 @@ class RRTMap:
         self.cFree = Polygon.Polygon(mapArea)
         for obst in self.allObstacles:
             self.cFree -= obst
+            
+class RRTMapConst:
+    
+    def __init__(self, polygons, thetaConstraints=None, areGoals=None):
+        """ thetaConstraints is a list of constraints where each
+        constraint has the form (angle, maxOffset)
+        """
+        numPoly = len(polygons)
+        
+        if thetaConstraints is None:
+            thetaConstraints = [(0, pi)]*numPoly
+            
+#         print "Remove this"
+#         thetaConstraints = [(0, pi)]*len(polygons)
+
+        self.regions = zip(polygons, thetaConstraints)
+        self.polySum = reduce(lambda x, y: x+y, polygons)
+        
+        if areGoals is not None:
+            goalPolygons = [polygons[i] for i in range(len(polygons))
+                            if areGoals[i]]
+            goalConst = [thetaConstraints[i] for i in range(len(polygons))
+                            if areGoals[i]]
+            self.goalRegions = zip(goalPolygons, goalConst)
+            self.goalPolySum = reduce(lambda x, y: x+y, goalPolygons)
+        else: 
+            self.goalRegions = None
+            self.goalPolySum = None
+        
+    def isCollisionFree(self, robot):
+        x, y, thetaR = robot.pose
+        
+        if self.polySum.covers(robot.shape):
+            for poly, (theta, off) in self.regions:
+                if (abs(diffAngles(theta, thetaR)) < off and 
+                    poly.isInside(x, y)):
+                    return True
+        
+        return False
+    
+    def sample(self, polySum, regions):
+        x, y = polySum.sample(random)
+        randAngles = []
+        for poly, (theta, off) in regions:
+                if poly.isInside(x, y):
+                    randAngles.append(random() * 2 * off - off + theta)
+        randAng = sample(randAngles, 1)[0]
+        return (x, y, randAng)
+    
+    def samplePose(self):
+        self.sample(self.polySum, self.regions)
+        
+    def sampleGoal(self):
+        self.sample(self.goalPolySum, self.goalRegions)
             
 class RRTRobot:
     
@@ -89,5 +145,5 @@ class RRTRobot:
 def diffAngles(angle1, angle2):
     """ Returns difference between -pi and pi. Relative to angle2.
     """
-    return (angle1 - angle2 + np.pi)%(2*np.pi) - np.pi
+    return (angle1 - angle2 + pi)%(2*pi) - pi
 

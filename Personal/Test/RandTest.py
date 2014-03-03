@@ -46,9 +46,34 @@ from math import pi
 # 
 # Profile.run("test2()")
 
-a = np.array([[1,2], [1,2], [0,0]])
-b = np.array((1,2,3))
-c = np.sqrt(b)
-d = np.sum(c)
-print b, c,d
+def f(x, y):
+    return x + y 
+    
+def g():
+    g = f(1, 5)
+    
+print f(1,2)
+print g() 
+print g()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

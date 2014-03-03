@@ -219,7 +219,7 @@ class DipolarRRTStar:
     def distance(self, fromNode, toNode):
         return norm(toNode.getPosition() - fromNode.getPosition())
     
-    def closeEnough(self, currPose, desPose):
+    def closeEnoughNode(self, currPose, desPose):
         diffAngle = abs((currPose[2] - desPose[2] + np.pi)%(2*np.pi) - np.pi)
         if (diffAngle < self.closeEnoughAng and 
             norm(desPose[:2] - currPose[:2]) < self.closeEnoughEucl):
@@ -297,7 +297,7 @@ class DipolarRRTStar:
                 return None
             
             # If reached goal return the final state
-            if self.closeEnough(poseCurr, poseDes):
+            if self.closeEnoughNode(poseCurr, poseDes):
                 return path
             
         # Timed out. This warning can be removed if bothersome.
@@ -401,7 +401,7 @@ class DipolarRRTStar:
             
         # Note if we have reached the goalPose
         # TODO: Change to allow multiple goals and smarter approach
-        if self.closeEnough(newNode.getPose(), self.goalPose):
+        if self.closeEnoughNode(newNode.getPose(), self.goalPose):
             self.goalList.append(newNode)
             
         # Plot

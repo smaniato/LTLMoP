@@ -93,7 +93,7 @@ class motionControlHandler:
         pose = self.pose_handler.getPose()
             
         # Check if reached waypoint
-        while self.closeEnough(pose, self.path[self.nextWaypointIndex]):
+        while self.closeEnoughNode(pose, self.path[self.nextWaypointIndex]):
             self.nextWaypointIndex += 1
             
             # Check end of path
@@ -279,14 +279,14 @@ class motionControlHandler:
             
         return goalPoses    
         
-    def closeEnough(self, pose1, pose2):
+    def closeEnoughNode(self, pose1, pose2):
         """ Returns true if pose1 and pose2 are within a threshold distance
         and angle difference.
         """       
-        dist2 = np.linalg.norm(pose1[:2] - pose2[:2])
+        distancePointE2 = np.linalg.norm(pose1[:2] - pose2[:2])
         angDiff = abs(diffAngles(pose1[2], pose2[2]))
         
-        if dist2 < self.closeEnoughDist and angDiff < self.closeEnoughAng:
+        if distancePointE2 < self.closeEnoughDist and angDiff < self.closeEnoughAng:
             return True
         else:
             return False

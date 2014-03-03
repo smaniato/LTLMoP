@@ -61,7 +61,7 @@ class DipolarController:
         ang = poseCurr[2]
         u = -self.k1 * sign(rX*cos(ang) + rY*sin(ang)) * \
             tanh(rX*rX + rY*rY)
-#         u = -self.k1 * np.sign(rX*cos(ang) + rY*sin(ang))
+#         u = -self.k1 * sign(rX*cos(ang) + rY*sin(ang))
            
         dipoleField = self.getFieldAt(poseCurr, poseDes)
         dipoleFieldPrev = self.getFieldAt(posePrev, poseDes)
@@ -85,15 +85,15 @@ class DipolarController:
         poseN = np.array(posePrev, dtype=float)
         
         delAng = w*delT
-        dist2 = u*delT
+        distancePointE2 = u*delT
         
         if abs(delAng) < .0000001:
-            poseN[0] += dist2*cos(posePrev[2])   
-            poseN[1] += dist2*sin(posePrev[2])
+            poseN[0] += distancePointE2*cos(posePrev[2])   
+            poseN[1] += distancePointE2*sin(posePrev[2])
         else:
             # Radius of circle and length of displacement vector
-            rad = dist2/delAng;
-            vecL = sqrt( (rad*sin(delAng))**2 + (rad - rad*cos(delAng))**2) * sign(dist2)
+            rad = distancePointE2/delAng;
+            vecL = sqrt( (rad*sin(delAng))**2 + (rad - rad*cos(delAng))**2) * sign(distancePointE2)
             
             poseN[0] += vecL*cos(delAng/2 + poseN[2])
             poseN[1] += vecL*sin(delAng/2 + poseN[2])
@@ -102,7 +102,7 @@ class DipolarController:
         return poseN
 
 def sign(x):
-    return (x > 0) - (x < 0)
+    return int(x > 0) - int(x < 0)
   
 def diffAngles(angle1, angle2):
     """ Returns difference between -pi and pi. Relative to angle2.

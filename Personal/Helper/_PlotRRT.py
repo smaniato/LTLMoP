@@ -129,6 +129,17 @@ class RRTPlotter:
         
         if draw:
             plt.draw()
+
+    def drawMapConst(self, polyMap, draw=True):
+        """ Draw the map with boundary and obstacles
+        
+        :param polyMap: a RRTMapConst object
+        """
+        for poly, _ in polyMap.regions:
+            self.drawPolygon(poly, color='k', width=3, draw=False)
+        
+        if draw:
+            plt.draw()
         
     def drawNodePath2D(self, path, color='k', width=1):
         """ Draw the path assuming that nodes are connected by straight lines
@@ -136,7 +147,7 @@ class RRTPlotter:
         :param path: a list of nodes
         """
         points = [node.getPosition() for node in path]
-        self.drawDipolePath2D(points, color=color, width=width)
+        self.drawPath2D(points, color=color, width=width)
     
     def drawPath2D(self, path, color='k', width=1, draw=True):
         """ Draw the path assuming that points are connected by straight lines

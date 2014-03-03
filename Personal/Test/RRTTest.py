@@ -3,12 +3,12 @@ from time import clock
 
 from _PlotRRT import RRTPlotter
 import Polygon.Shapes as pShapes
-from _RRTMapAndRobot import RRTMap, RRTRobot
+from _RRTMapAndRobot import RRTMap, RRTMapConst, RRTRobot
 import matplotlib.pyplot as plt
 import numpy as np
 import _DipolarCLoopControl
-
-import cProfile as Profile
+# import DipoleRRTStar, RRTStar
+import RRTStar, DipoleRRTStar, _DipolarRRT
 
 class TestRRT:    
     
@@ -90,6 +90,67 @@ class TestRRT:
         testMap = RRTMap(boundary, allObstacles)    
         return startPose, endPose, testMap
 
+    def getSampleConstMap(self, index):
+        from math import pi
+        
+        polygons = []
+        restrictions = [] 
+        startPose = None
+        endPose = None
+        
+        if index == 1:
+            
+            p = pShapes.Rectangle(4, 4)
+            p.shift(0, 0)
+            r = (0, pi)
+            polygons.append(p)
+            restrictions.append(r)
+            
+            p = pShapes.Rectangle(8, 2)
+            p.shift(4, 0)
+            r = (-pi/2, pi/4)
+            polygons.append(p)
+            restrictions.append(r)
+            
+            p = pShapes.Rectangle(8, 2)
+            p.shift(4, 2)
+            r = (0, pi/4)
+            polygons.append(p)
+            restrictions.append(r)
+            
+            p = pShapes.Rectangle(4, 4)
+            p.shift(12, 0)
+            r = (0, pi)
+            polygons.append(p)
+            restrictions.append(r)
+            
+            p = pShapes.Rectangle(4, 4)
+            p.shift(12, -4)
+            r = (0, pi/4)
+            polygons.append(p)
+            restrictions.append(r)
+            
+            p = pShapes.Rectangle(4, 4)
+            p.shift(16, -4)
+            r = (0, pi)
+            polygons.append(p)
+            restrictions.append(r)
+            
+            p = pShapes.Rectangle(8, 4)
+            p.shift(12, -8)
+            r = (-pi, pi/4)
+            polygons.append(p)
+            restrictions.append(r)
+            
+            startPose = np.array((2, 2, 0))
+            endPose = np.array((14, -6, pi))
+        
+        else:
+            return None
+        
+        polyMap = RRTMapConst(polygons, restrictions)
+        return startPose, endPose, polyMap
+
     def testRRTStar(self):
         RRTStar.DEBUG = False
         
@@ -134,6 +195,43 @@ class TestRRT:
         if plotting:
             print "Showing Final Results"
             plt.ioff()
+            plt.show()    
+    
+    def testDipolarRRT(self, plotting=True):
+        _DipolarRRT.DEBUG = True
+        _DipolarRRT.DEBUG_PLT = False
+        
+        if plotting:
+            plt.ion()
+            
+        startPose, endPose, polyMap = self.getSampleConstMap(1)
+
+        robot = RRTRobot.circularRobot((0,0,0), .5)
+        controller = _DipolarCLoopControl.DipolarController()
+        
+        plotter = RRTPlotter()
+        if plotting:
+            plotter.drawMapConst(polyMap)
+            plotter.drawStartAndGoalRobotShape(startPose, endPose, robot)
+
+        planner = _DipolarRRT.DipolarRRT(robot, polyMap, controller, 
+                                               plotter=plotter, 
+                                               plotting=plotting)
+        
+        nodePath = planner.getNodePath(startPose, endPose, 1000)
+        if plotting and nodePath is not None:
+            dipPath = planner.nodesToTrajectory(nodePath)
+            plotter.drawPath2D(dipPath, color='g', width=2)
+        
+        if nodePath is not None:
+            dijkNodePaht = planner.getDijkSmooth(nodePath)
+            if plotting and dijkNodePaht is not None:
+                dipPath = planner.nodesToTrajectory(dijkNodePaht)
+                plotter.drawPath2D(dipPath, color='r', width=2)
+            
+        if plotting:
+            print "Showing Final Results"
+            plt.ioff()
             plt.show()
             
     def testController(self):
@@ -160,6 +258,9 @@ if __name__ == "__main__":
     test = TestRRT()
 #     test.testRRTStar() 
 #     test.testDipolarRRTStar(True)  
+    test.testDipolarRRT(plotting=True)
+    
+#     import cProfile as Profile
 #     Profile.run("test.testDipolarRRTStar(False)")   
 #     Profile.run("test.testController()")
       
