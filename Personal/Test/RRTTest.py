@@ -167,7 +167,7 @@ class TestRRT:
             startPose = np.array((2, 2, 0))
             endPose = np.array((14, -6, pi))
             
-        if index == 2:
+        elif index == 2:
             
             p = pShapes.Rectangle(16, 4)
             p.shift(0, 0)
@@ -252,8 +252,8 @@ class TestRRT:
         if plotting:
             plt.ion()
             
-#         startPose, endPose, polyMap = self.getSampleConstMap(1)
-        startPose, endPose, polyMap = self.getSampleConstMap(2)
+        startPose, endPose, polyMap = self.getSampleConstMap(1)
+#         startPose, endPose, polyMap = self.getSampleConstMap(2)
 
         robot = RRTRobot.circularRobot((0,0,0), .5)
         robot.moveTo(startPose)
