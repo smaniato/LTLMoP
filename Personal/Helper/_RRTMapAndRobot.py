@@ -63,16 +63,22 @@ class RRTMapConst:
             self.goalRegions = None
             self.goalPolySum = None
         
-    def isCollisionFree(self, robot):
+    def meetsRegionConstraints(self, robot, polySum, regions):
         x, y, thetaR = robot.pose
-        
-        if self.polySum.covers(robot.shape):
-            for poly, (theta, off) in self.regions:
+        if polySum.covers(robot.shape):
+            for poly, (theta, off) in regions:
                 if (abs(diffAngles(theta, thetaR)) < off and 
                     poly.isInside(x, y)):
                     return True
-        
         return False
+    
+    def isCollisionFree(self, robot):
+        isIn = self.meetsRegionConstraints
+        return isIn(robot, self.polySum, self.regions)
+    
+    def isInGoal(self, robot):
+        isIn = self.meetsRegionConstraints
+        return isIn(robot, self.goalPolySum, self.goalRegions)
     
     def sample(self, polySum, regions):
         x, y = polySum.sample(random)
@@ -84,10 +90,10 @@ class RRTMapConst:
         return (x, y, randAng)
     
     def samplePose(self):
-        self.sample(self.polySum, self.regions)
+        return self.sample(self.polySum, self.regions)
         
     def sampleGoal(self):
-        self.sample(self.goalPolySum, self.goalRegions)
+        return self.sample(self.goalPolySum, self.goalRegions)
             
 class RRTRobot:
     
