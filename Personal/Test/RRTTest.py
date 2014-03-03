@@ -95,6 +95,7 @@ class TestRRT:
         
         polygons = []
         restrictions = [] 
+        areGoals = []
         startPose = None
         endPose = None
         
@@ -105,50 +106,97 @@ class TestRRT:
             r = (0, pi)
             polygons.append(p)
             restrictions.append(r)
+            areGoals.append(False)
             
             p = pShapes.Rectangle(8, 2)
             p.shift(4, 0)
             r = (-pi/2, pi/4)
             polygons.append(p)
             restrictions.append(r)
+            areGoals.append(False)
             
             p = pShapes.Rectangle(8, 2)
             p.shift(4, 2)
             r = (0, pi/4)
             polygons.append(p)
             restrictions.append(r)
+            areGoals.append(False)
             
             p = pShapes.Rectangle(4, 4)
             p.shift(12, 0)
             r = (0, pi)
             polygons.append(p)
             restrictions.append(r)
+            areGoals.append(False)
             
             p = pShapes.Rectangle(4, 4)
             p.shift(12, -4)
             r = (0, pi/4)
             polygons.append(p)
             restrictions.append(r)
+            areGoals.append(False)
             
             p = pShapes.Rectangle(4, 4)
             p.shift(16, -4)
             r = (0, pi)
             polygons.append(p)
             restrictions.append(r)
+            areGoals.append(False)
             
             p = pShapes.Rectangle(8, 4)
             p.shift(12, -8)
             r = (-pi, pi/4)
             polygons.append(p)
             restrictions.append(r)
+            areGoals.append(False)
+            
+            p = pShapes.Rectangle(3, 3)
+            p.shift(10, -7.5)
+            r = (-pi, pi/4)
+            polygons.append(p)
+            restrictions.append(r)
+            areGoals.append(True)
+            
+#             p = pShapes.Rectangle(3, 3)
+#             p.shift(13, -3.5)
+#             r = (0, pi)
+#             polygons.append(p)
+#             restrictions.append(r)
+#             areGoals.append(True)            
             
             startPose = np.array((2, 2, 0))
             endPose = np.array((14, -6, pi))
+            
+        if index == 2:
+            
+            p = pShapes.Rectangle(16, 4)
+            p.shift(0, 0)
+            r = (0, pi)
+            polygons.append(p)
+            restrictions.append(r)
+            areGoals.append(False)
+            
+            p = pShapes.Rectangle(4, 16)
+            p.shift(12, -12)
+            r = (0, pi)
+            polygons.append(p)
+            restrictions.append(r)
+            areGoals.append(False)
+            
+            p = pShapes.Rectangle(2, 2)
+            p.shift(14, -8)
+            r = (0, pi/8)
+            polygons.append(p)
+            restrictions.append(r)
+            areGoals.append(True)                       
+            
+            startPose = np.array((2, 2, 0))
+            endPose = None
         
         else:
             return None
         
-        polyMap = RRTMapConst(polygons, restrictions)
+        polyMap = RRTMapConst(polygons, restrictions, areGoals)
         return startPose, endPose, polyMap
 
     def testRRTStar(self):
@@ -204,21 +252,28 @@ class TestRRT:
         if plotting:
             plt.ion()
             
-        startPose, endPose, polyMap = self.getSampleConstMap(1)
+#         startPose, endPose, polyMap = self.getSampleConstMap(1)
+        startPose, endPose, polyMap = self.getSampleConstMap(2)
 
         robot = RRTRobot.circularRobot((0,0,0), .5)
+        robot.moveTo(startPose)
         controller = _DipolarCLoopControl.DipolarController()
         
         plotter = RRTPlotter()
         if plotting:
             plotter.drawMapConst(polyMap)
-            plotter.drawStartAndGoalRobotShape(startPose, endPose, robot)
+            plotter.drawPolygon(robot.shape, color='r', width=2)
+#             plotter.drawStartAndGoalRobotShape(startPose, endPose, robot)
 
         planner = _DipolarRRT.DipolarRRT(robot, polyMap, controller, 
                                                plotter=plotter, 
                                                plotting=plotting)
+        planner.sampleGoalProb = .1
         
-        nodePath = planner.getNodePath(startPose, endPose, 1000)
+#         nodePath = planner.getNodePath(startPose, goalReg=False, 
+#                                        toPose=endPose, K=1000)
+        nodePath = planner.getNodePath(startPose, goalReg=True, K=1000)
+        
         if plotting and nodePath is not None:
             dipPath = planner.nodesToTrajectory(nodePath)
             plotter.drawPath2D(dipPath, color='g', width=2)

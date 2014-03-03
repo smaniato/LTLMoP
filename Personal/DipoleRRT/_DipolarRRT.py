@@ -103,9 +103,13 @@ class DipolarRRT:
         self.closeEnoughEucl2 = self.closeEnoughEucl * self.closeEnoughEucl
         self.closeEnoughAng = angle        
        
-    def sampleFree(self):
+    def sampleFree(self, isGoalReg=False):
         if random() < self.sampleGoalProb:
-            return self.goalNode
+            if isGoalReg:
+                goalPose = self.polyMap.sampleGoal()
+                return self.Node.nodeFromPose(goalPose)
+            else:
+                return self.goalNode
         else:
             randPose = self.polyMap.samplePose()
             return self.Node.nodeFromPose(randPose)
@@ -269,8 +273,33 @@ class DipolarRRT:
         
         # Sample a new state and try to extend
         randNode = self.sampleFree()
-#         # TODO: REMOVE
-#         randNode = self.Node((5,1), 0, None)
+        self.extendTree(self.nodeList, randNode)
+        
+        # Plot or debug
+        numNew = len(self.nodeList) - prevLen
+        if self.plotting and numNew > 0:
+            self.plotter.drawTree(self.nodeList[-numNew:])
+            if DEBUG_PLT:
+                self.plotter.pause(.0001)
+                
+        
+        if numNew > 0:
+            if self.closeEnoughNode(self.nodeList[-1], self.goalNode):
+                return self.nodeList[-1]
+            else:
+                return None
+        else:
+            return None
+        
+    
+    def iterateGoalReg(self):
+        """ Go through one iteration of the RRT algorithm. Return true if 
+        the goal regions was found.
+        """
+        prevLen = len(self.nodeList)
+        
+        # Sample a new state and try to extend
+        randNode = self.sampleFree(isGoalReg=True)
         self.extendTree(self.nodeList, randNode)
         
         # Plot or debug
@@ -280,8 +309,14 @@ class DipolarRRT:
             if DEBUG_PLT:
                 self.plotter.pause(.0001)
         
-        
-        return self.closeEnoughNode(self.nodeList[-1], self.goalNode)
+        if numNew > 0:
+            for node in self.nodeList[-numNew:]:
+                self.robot.moveTo(node.getPose())
+                if self.polyMap.isInGoal(self.robot):
+                    return node
+                return None            
+        else:
+            return None
     
     def getNodePathFromLastNode(self, node):
         path = []
@@ -291,24 +326,26 @@ class DipolarRRT:
         path.reverse()
         return path
 
-    def getNodePath(self, fromPose, toPose, K=500):
+    def getNodePath(self, fromPose, goalReg=False, toPose=None, K=500):
         startNode = self.Node.nodeFromPose(fromPose, None)
         self.nodeList = [startNode]
-        self.goalNode = self.Node.nodeFromPose(toPose, None)
+        if goalReg:
+            self.goalNode = None
+            iterate = self.iterateGoalReg
+        else:
+            self.goalNode = self.Node.nodeFromPose(toPose, None)
+            iterate = self.iterate
         
         # Iterate until path is found
         foundPath = False
         for i in range(K):
             if DEBUG:
                 print "Iteration: ", i
-            foundPath = self.iterate()
-            if foundPath:
-                break
+            foundGoal = iterate()
+            if foundGoal is not None:
+                return self.getNodePathFromLastNode(foundGoal)
         
-        if foundPath:
-            return self.getNodePathFromLastNode(self.nodeList[-1])
-        else:
-            return None
+        return None
         
         
     def getDijkSmooth(self, path):

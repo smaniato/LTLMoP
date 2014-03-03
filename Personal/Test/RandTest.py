@@ -46,17 +46,8 @@ from math import pi
 # 
 # Profile.run("test2()")
 
-def f(x, y):
-    return x + y 
-    
-def g():
-    g = f(1, 5)
-    
-print f(1,2)
-print g() 
-print g()
-
-
+a = [1,2,3,4,5]
+print a[-2:]
 
 
 
