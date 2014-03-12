@@ -104,7 +104,7 @@ class motionControlHandler:
 
         # Calculate the linear and angular velocities
         nextWaypoint = self.path[self.nextWaypointIndex]
-        v, w = self.dipController.getControlls(pose, nextWaypoint, 
+        v, w = self.dipController.getControls(pose, nextWaypoint, 
                                                self.prevPose, self.dT)
         self.drive_handler.setVelocity(v, w)
         self.prevPose = pose  

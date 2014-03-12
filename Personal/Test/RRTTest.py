@@ -9,6 +9,7 @@ import numpy as np
 import _DipolarCLoopControl
 # import DipoleRRTStar, RRTStar
 import RRTStar, DipoleRRTStar, _DipolarRRT
+from _DipolarRRT import Node
 
 class TestRRT:    
     
@@ -19,6 +20,16 @@ class TestRRT:
         self.PLOT_SHORT_PATH = False
         self.PLOT_SHORT_PATH = True
         self.PLOT_TREE_FAIL = True      # Plot final tree if it times out
+        
+    def saveObject(self, name, obj):
+        import cPickle
+        with open(name, "wb") as f:
+            cPickle.dump(obj, f)
+    
+    def loadObject(self, name):
+        import cPickle
+        with open(name, "rb") as f:
+            return cPickle.load(f)
         
     def getSampleMapRRT(self, mapIndex):
         """ Return a (startPose, endPose, map) .Map index defines which of the 
@@ -192,6 +203,79 @@ class TestRRT:
             
             startPose = np.array((2, 2, 0))
             endPose = None
+            
+            
+        elif index == 3:
+            
+            p = pShapes.Rectangle(8, 4)
+            p.shift(0, 0)
+            r = (pi/2, pi/4)
+            polygons.append(p)
+            restrictions.append(r)
+            areGoals.append(False)
+            
+            p = pShapes.Rectangle(4, 4)
+            p.shift(8, 0)
+            r = (pi/2, pi/4)
+            polygons.append(p)
+            restrictions.append(r)
+            areGoals.append(False)
+            
+            p = pShapes.Rectangle(2, 2)
+            p.shift(9, 1)
+            r = (pi/2, pi/4)
+            polygons.append(p)
+            restrictions.append(r)
+            areGoals.append(True)
+                                   
+            startPose = np.array((2, 2, pi/2))
+            endPose = None
+            
+        elif index == 4:
+            
+            p = pShapes.Rectangle(4, 4)
+            p.shift(0, 0)
+            r = (pi/2, pi/4)
+            polygons.append(p)
+            restrictions.append(r)
+            areGoals.append(False)
+            
+            p = pShapes.Rectangle(4, 4)
+            p.shift(4, 0)
+            r = (pi/2, pi/4)
+            polygons.append(p)
+            restrictions.append(r)
+            areGoals.append(False)
+            
+            p = pShapes.Rectangle(2, 2)
+            p.shift(5, 1)
+            r = (pi/2, pi/4)
+            polygons.append(p)
+            restrictions.append(r)
+            areGoals.append(True)
+                                   
+            startPose = np.array((2, 2, pi/2))
+            endPose = None
+            
+        elif index == 5:
+            
+            p = pShapes.Rectangle(6, 6)
+            p.shift(0, 0)
+            r = (0, pi)
+            polygons.append(p)
+            restrictions.append(r)
+            areGoals.append(False)
+            
+            p = pShapes.Rectangle(2, 2)
+            p.shift(6, 2)
+            r = (pi, pi/4)
+            polygons.append(p)
+            restrictions.append(r)
+            areGoals.append(True)
+                                   
+            startPose = np.array((3, 3, 0))
+            endPose = None            
+        
         
         else:
             return None
@@ -252,8 +336,12 @@ class TestRRT:
         if plotting:
             plt.ion()
             
-        startPose, endPose, polyMap = self.getSampleConstMap(1)
-#         startPose, endPose, polyMap = self.getSampleConstMap(2)
+#         startPose, endPose, polyMap = self.getSampleConstMap(1)     # Complex regions
+#         startPose, endPose, polyMap = self.getSampleConstMap(2)     # Simple regions
+#         startPose, endPose, polyMap = self.getSampleConstMap(3)     # Long zig zag
+        startPose, endPose, polyMap = self.getSampleConstMap(4)     # Short zig zag
+#         startPose, endPose, polyMap = self.getSampleConstMap(5)     # Parking
+        
 
         robot = RRTRobot.circularRobot((0,0,0), .5)
         robot.moveTo(startPose)
@@ -272,7 +360,7 @@ class TestRRT:
         
 #         nodePath = planner.getNodePath(startPose, goalReg=False, 
 #                                        toPose=endPose, K=1000)
-        nodePath = planner.getNodePath(startPose, goalReg=True, K=1000)
+        nodePath = planner.getNodePath(startPose, goalReg=True, K=3000)
         
         if plotting and nodePath is not None:
             dipPath = planner.nodesToTrajectory(nodePath)
@@ -283,11 +371,49 @@ class TestRRT:
             if plotting and dijkNodePaht is not None:
                 dipPath = planner.nodesToTrajectory(dijkNodePaht)
                 plotter.drawPath2D(dipPath, color='r', width=2)
+                
+        self.saveObject("tree", planner.nodeList)
+        self.saveObject("path", nodePath)
             
         if plotting:
             print "Showing Final Results"
             plt.ioff()
             plt.show()
+            
+    def oldResults(self):
+        treeFileName = "treeBackup"
+        pathFileName = "pathBackup"
+        
+#         startPose, endPose, polyMap = self.getSampleConstMap(3)     # ZigZagLong
+#         startPose, endPose, polyMap = self.getSampleConstMap(4)     # ZigZagShort
+        startPose, endPose, polyMap = self.getSampleConstMap(5)     # Backup
+               
+
+        robot = RRTRobot.circularRobot((0,0,0), .5)
+        robot.moveTo(startPose)
+        controller = _DipolarCLoopControl.DipolarController()
+        
+        plotter = RRTPlotter()
+        plotter.drawMapConst(polyMap)
+        plotter.drawPolygon(robot.shape, color='r', width=2)
+
+        planner = _DipolarRRT.DipolarRRT(robot, polyMap, controller, 
+                                               plotter=plotter)
+        
+        tree = self.loadObject(treeFileName)
+        path = self.loadObject(pathFileName)
+        
+        plotter.drawTree(tree, color='k', width=1, draw=True)
+        
+        dipPath = planner.nodesToTrajectory(path)
+        plotter.drawPath2D(dipPath, color='g', width=2)
+        
+        dijkNodePaht = planner.getDijkSmooth(path)
+        dipPath = planner.nodesToTrajectory(dijkNodePaht)
+        plotter.drawPath2D(dipPath, color='r', width=2)
+        
+        plt.show()
+        
             
     def testController(self):
         poseCurr = (1,2,3)
@@ -313,7 +439,9 @@ if __name__ == "__main__":
     test = TestRRT()
 #     test.testRRTStar() 
 #     test.testDipolarRRTStar(True)  
-    test.testDipolarRRT(plotting=True)
+#     test.testDipolarRRT(plotting=True)
+
+    test.oldResults()
     
 #     import cProfile as Profile
 #     Profile.run("test.testDipolarRRTStar(False)")   

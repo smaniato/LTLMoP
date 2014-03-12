@@ -20,52 +20,52 @@ try:
 except:
     print "Plotter disabled."
     plotter_avail = False
-
-class DipolarRRT:
     
-    class Node:
-        def __init__(self, position, orientation=None, parent=None):
-            self.position = np.array(position, dtype=float)
-            self.orientation = orientation
-            if orientation is not None:
-                xyT = (self.position[0], self.position[1], self.orientation)
-                self.xyTheta = np.array(xyT, dtype=float)
-            else:
-                self.xyTheta = None
-                
-            self.parent = parent
-            self.costFromParent = None          
-            self.costFromRoot = None
+class Node:
+    def __init__(self, position, orientation=None, parent=None):
+        self.position = np.array(position, dtype=float)
+        self.orientation = orientation
+        if orientation is not None:
+            xyT = (self.position[0], self.position[1], self.orientation)
+            self.xyTheta = np.array(xyT, dtype=float)
+        else:
+            self.xyTheta = None
             
-        @classmethod
-        def nodeFromPose(cls, pose, parent=None):
-            return cls(pose[:2], pose[2], parent)
+        self.parent = parent
+        self.costFromParent = None          
+        self.costFromRoot = None
         
-        def copy(self):
-            newNode = self.Node(self.position, self.orientation, self.parent)
-            newNode.costFromParent = self.costFromParent
-            newNode.costFromRoot = self.costFromRoot
-            
-        def setPosition(self, xy):
-            self.position = xy[:2]
-            if self.xyTheta is not None:
-                self.xyTheta[:2] = xy[:2]
-                        
-        def getPosition(self):
-            return np.array(self.position)
-            
-        def setPose(self, xyTheta):
-            if self.xyTheta is None:
-                self.xyTheta = np.array(xyTheta, dtype=float)
-            else:
-                self.xyTheta = xyTheta[:3]
-            
-        def getPose(self):
-            return np.array(self.xyTheta)
+    @classmethod
+    def nodeFromPose(cls, pose, parent=None):
+        return cls(pose[:2], pose[2], parent)
+    
+    def copy(self):
+        newNode = Node(self.position, self.orientation, self.parent)
+        newNode.costFromParent = self.costFromParent
+        newNode.costFromRoot = self.costFromRoot
         
-        def dirVectFrom(self, fromNode):
-            return self.position - fromNode.getPosition()
-            
+    def setPosition(self, xy):
+        self.position = xy[:2]
+        if self.xyTheta is not None:
+            self.xyTheta[:2] = xy[:2]
+                    
+    def getPosition(self):
+        return np.array(self.position)
+        
+    def setPose(self, xyTheta):
+        if self.xyTheta is None:
+            self.xyTheta = np.array(xyTheta, dtype=float)
+        else:
+            self.xyTheta = xyTheta[:3]
+        
+    def getPose(self):
+        return np.array(self.xyTheta)
+    
+    def dirVectFrom(self, fromNode):
+        return self.position - fromNode.getPosition()
+
+
+class DipolarRRT:            
     
     def __init__(self, robot, polyMap, controller, plotter=None, plotting=True):
         """ An RRT* path planner that takes into account orientation requirements.
@@ -98,6 +98,16 @@ class DipolarRRT:
         self.goalNode = None
         self.nodeList = []
         
+    def saveObject(self, name, obj):
+        import cPickle
+        with open(name, "wb") as f:
+            cPickle.dump(obj, f)
+    
+    def loadObject(self, name):
+        import cPickle
+        with open(name, "rb") as f:
+            return cPickle.load(f)
+        
     def setCloseEnough(self, euclidean, angle):
         self.closeEnoughEucl = euclidean
         self.closeEnoughEucl2 = self.closeEnoughEucl * self.closeEnoughEucl
@@ -107,12 +117,12 @@ class DipolarRRT:
         if random() < self.sampleGoalProb:
             if isGoalReg:
                 goalPose = self.polyMap.sampleGoal()
-                return self.Node.nodeFromPose(goalPose)
+                return Node.nodeFromPose(goalPose)
             else:
                 return self.goalNode
         else:
             randPose = self.polyMap.samplePose()
-            return self.Node.nodeFromPose(randPose)
+            return Node.nodeFromPose(randPose)
      
     def distancePointE2(self, p1, p2):
         """ Returns distance squared for efficiency
@@ -161,7 +171,7 @@ class DipolarRRT:
         path = [poseCurr]
         
         # Rename functions
-        getControlls = self.controller.getControlls
+        getControls = self.controller.getControls
         integrateForwards = self.controller.integrateForwards
         isCollisionFree = self.polyMap.isCollisionFree
         moveRobotTo = self.robot.moveRobotTo
@@ -173,7 +183,7 @@ class DipolarRRT:
         
         timeStart = clock()
         while (clock() - timeStart) < timeout:
-            u, w = getControlls(poseCurr, poseDes, posePrev, DT)
+            u, w = getControls(poseCurr, poseDes, posePrev, DT)
             posePrev = poseCurr
             poseCurr = integrateForwards(posePrev, u, w, DT)
             path.append(poseCurr)
@@ -247,7 +257,7 @@ class DipolarRRT:
             currP = currNode.getPosition()
             for _ in range(numIntervals):
                 currP += dirV
-                nextNode = self.Node(currP, dirAng, currNode)
+                nextNode = Node(currP, dirAng, currNode)
                 
                 if self.hasCollision(currNode, nextNode):
                     collided = True
@@ -327,13 +337,13 @@ class DipolarRRT:
         return path
 
     def getNodePath(self, fromPose, goalReg=False, toPose=None, K=500):
-        startNode = self.Node.nodeFromPose(fromPose, None)
+        startNode = Node.nodeFromPose(fromPose, None)
         self.nodeList = [startNode]
         if goalReg:
             self.goalNode = None
             iterate = self.iterateGoalReg
         else:
-            self.goalNode = self.Node.nodeFromPose(toPose, None)
+            self.goalNode = Node.nodeFromPose(toPose, None)
             iterate = self.iterate
         
         # Iterate until path is found

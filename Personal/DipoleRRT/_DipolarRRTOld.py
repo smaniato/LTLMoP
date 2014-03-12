@@ -140,7 +140,7 @@ class DipolarRRT:
         
         timeStart = clock()
         while (clock() - timeStart) < timeout:
-            u, w = self.dipControl.getControlls(poseCurr, dipoleEnd, posePrev, DT)
+            u, w = self.dipControl.getControls(poseCurr, dipoleEnd, posePrev, DT)
             posePrev = poseCurr
             poseCurr = self.dipControl.integrateForwards(posePrev, u, w, DT)
             path.append(poseCurr)

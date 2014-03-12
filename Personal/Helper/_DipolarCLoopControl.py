@@ -46,7 +46,7 @@ class DipolarController:
         return (a1*rX - a2*pX, a1*rY - a2*pY)
     
         
-    def getControlls(self, poseCurr, poseDes, posePrev, delT):                         # No Backup
+    def getControls(self, poseCurr, poseDes, posePrev, delT):                         # No Backup
         """ Get the dipolar controls that will take the robot from poseCurr to
         poseDes.
         

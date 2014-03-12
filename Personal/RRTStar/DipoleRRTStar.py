@@ -279,14 +279,14 @@ class DipolarRRTStar:
         path = [poseCurr]
         
         # Rename functions
-        getControlls = self.controller.getControlls
+        getControls = self.controller.getControls
         integrateForwards = self.controller.integrateForwards
         isCollisionFree = self.polyMap.cFree.covers
         DT = self.colCheckInter
         
         timeStart = clock()
         while (clock() - timeStart) < timeout:
-            u, w = getControlls(poseCurr, poseDes, posePrev, DT)
+            u, w = getControls(poseCurr, poseDes, posePrev, DT)
             posePrev = poseCurr
             poseCurr = integrateForwards(posePrev, u, w, DT)
             path.append(poseCurr)
