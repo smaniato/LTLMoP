@@ -9,6 +9,7 @@ the DipolarRRT algorithm.
 """
 
 import numpy as np
+from math import sin, cos, tanh, atan2, pi, sqrt
 
 class DipolarController:
     
@@ -36,41 +37,42 @@ class DipolarController:
         """
         rX = poseCurr[0] - poseDes[0]
         rY = poseCurr[1] - poseDes[1]
-        pX = np.cos(poseDes[2])
-        pY = np.sin(poseDes[2])
+        pX = cos(poseDes[2])
+        pY = sin(poseDes[2])
         
         a1 = self.lam*(pX*rX + pY*rY)
         a2 = rX*rX + rY*rY
         
         return (a1*rX - a2*pX, a1*rY - a2*pY)
+    
         
-    def getControlls(self, poseCurr, poseDes, posePrev, delT):                         # No Backup
+    def getControls(self, poseCurr, poseDes, posePrev, delT):                         # No Backup
         """ Get the dipolar controls that will take the robot from poseCurr to
         poseDes.
         
         :param poseCurr: numpy 3D array. The current pose
         :param poseDes: numpy 3D array. The desired pose
-        :param poseDes: numpy 3D array. The previous pose
+        :param posePrev: numpy 3D array. The previous pose
         :param delT: The time elapsed since posePrev
         :return: linearVelocity, angularVelocity
-        """
+        """        
         rX = poseCurr[0] - poseDes[0]
         rY = poseCurr[1] - poseDes[1]    
         ang = poseCurr[2]
-        u = -self.k1 * np.sign(rX*np.cos(ang) + rY*np.sin(ang)) + \
-            np.tanh(rX*rX + rY*rY)
+        u = -self.k1 * sign(rX*cos(ang) + rY*sin(ang)) * \
+            tanh(rX*rX + rY*rY)
+#         u = -self.k1 * sign(rX*cos(ang) + rY*sin(ang))
            
         dipoleField = self.getFieldAt(poseCurr, poseDes)
         dipoleFieldPrev = self.getFieldAt(posePrev, poseDes)
-        phi = np.arctan2(dipoleField[1], dipoleField[0])
-        phiPrev = np.arctan2(dipoleFieldPrev[1], dipoleFieldPrev[0])
+        phi = atan2(dipoleField[1], dipoleField[0])
+        phiPrev = atan2(dipoleFieldPrev[1], dipoleFieldPrev[0])
            
         w = -self.k2*diffAngles(ang, phi) + diffAngles(phi, phiPrev)/delT
     
         return u, w  
     
     def integrateForwards(self, posePrev, u, w, delT):
-
         """ Calculate the robots new position based on the previous position,
         controls, and time elapsed.
         
@@ -80,27 +82,29 @@ class DipolarController:
         :param delT: time elapsed
         :return: poseN: the new pose of the robot
         """
-        poseN = np.array(posePrev)
+        poseN = np.array(posePrev, dtype=float)
         
         delAng = w*delT
-        dist2 = u*delT
+        distancePointE2 = u*delT
         
-        if np.abs(delAng) < .0000001:
-            poseN[0] += dist2*np.cos(posePrev[2])   
-            poseN[1] += dist2*np.sin(posePrev[2])
+        if abs(delAng) < .0000001:
+            poseN[0] += distancePointE2*cos(posePrev[2])   
+            poseN[1] += distancePointE2*sin(posePrev[2])
         else:
             # Radius of circle and length of displacement vector
-            rad = dist2/delAng;
-            vecL = np.sqrt( (rad*np.sin(delAng))**2 + (rad - rad*np.cos(delAng))**2) * np.sign(dist2)
+            rad = distancePointE2/delAng;
+            vecL = sqrt( (rad*sin(delAng))**2 + (rad - rad*cos(delAng))**2) * sign(distancePointE2)
             
-            poseN[0] += vecL*np.cos(delAng/2 + poseN[2])
-            poseN[1] += vecL*np.sin(delAng/2 + poseN[2])
-            poseN[2] = (poseN[2] + delAng)%(2*np.pi)
+            poseN[0] += vecL*cos(delAng/2 + poseN[2])
+            poseN[1] += vecL*sin(delAng/2 + poseN[2])
+            poseN[2] = (poseN[2] + delAng)%(2*pi)
             
         return poseN
-  
+
+def sign(x):
+    return int(x > 0) - int(x < 0)
   
 def diffAngles(angle1, angle2):
     """ Returns difference between -pi and pi. Relative to angle2.
     """
-    return (angle1 - angle2 + np.pi)%(2*np.pi) - np.pi
+    return (angle1 - angle2 + pi)%(2*pi) - pi

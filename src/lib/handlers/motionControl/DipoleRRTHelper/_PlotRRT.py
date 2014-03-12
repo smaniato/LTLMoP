@@ -30,6 +30,10 @@ class RRTPlotter:
         plt.close()
         self.fig, self.ax = plt.subplots()
         
+    def pause(self, t):
+        """ Used when debugging. """
+        plt.pause(t)
+        
     def ion(self):
         """ Interactive on. """
         plt.ion()
@@ -38,7 +42,7 @@ class RRTPlotter:
         """ Interactive off. """
         plt.ioff()
 
-    def drawPolygon(self, poly, color='k', width=1):
+    def drawPolygon(self, poly, color='k', width=1, draw=True):
         """ Draw the outline of a polygon object
         """
         for contour in poly:
@@ -49,26 +53,35 @@ class RRTPlotter:
             else:
                 self.ax.plot(vertices[:,0], vertices[:,1], 
                          color=color, linewidth=width)
-        plt.draw()
+        if draw:
+            plt.draw()
         
-    def drawTree(self, tree, color='k', width=1):
+    def drawTree(self, tree, color='k', width=1, draw=True):
         """ For drawing trees created in RRT
         """
         for node in tree:
             parent = node.parent
             if parent != None:
-                self.drawEdge(node, parent, color, width)
+                self.drawEdge(node, parent, color=color, width=width, draw=False)
+        if draw:
+            plt.draw()
                 
-    def drawEdge(self, node1, node2, color='k', width=1):
+    def drawEdge(self, node1, node2, color='k', width=1, draw=True):
         """ Draw the edge that connects two nodes from the RRT
         """
+        n1x, n1y = node1.getPosition()
+        n2x, n2y = node2.getPosition()
+        
         if self.invertY:
-            self.ax.plot([node1.x, node2.x], [-node1.y, -node2.y], 
-                     'o-', color=color, linewidth=width)
+            self.ax.plot([n1x, n2x], [-n1y, -n2y], color=color, linewidth=width)
+#             self.ax.plot([n1x, n2x], [-n1y, -n2y], 
+#                      'o-', color=color, linewidth=width)
         else:
-            self.ax.plot([node1.x, node2.x], [node1.y, node2.y], 
-                     'o-', color=color, linewidth=width)
-        plt.draw()
+            self.ax.plot([n1x, n2x], [n1y, n2y], color=color, linewidth=width)
+#             self.ax.plot([n1x, n2x], [n1y, n2y], 
+#                      'o-', color=color, linewidth=width)
+        if draw:
+            plt.draw()
     
     def drawStartAndGoalPoints(self, startPoint, goalPoint):
         """ Places a green marker at the start point and a red one at the end
@@ -85,7 +98,7 @@ class RRTPlotter:
             self.ax.plot(goalPoint[0], goalPoint[1], 'ro')
         plt.draw()
             
-    def drawStartAndGoalRobotShape(self, startPose, goalPose, robot):
+    def drawStartAndGoalRobotShape(self, startPose, goalPose, robot, draw=True):
         """ Plot the robots outline at the start and end pose
         
         :param startPose: numpy 3D array
@@ -95,43 +108,60 @@ class RRTPlotter:
         robotTemp = robot.copy()
         
         robotTemp.moveRobotTo(startPose)   
-        self.drawPolygon(robotTemp.shape, color='g', width=2)
+        self.drawPolygon(robotTemp.shape, color='g', width=2, draw=False)
         
         robotTemp.moveRobotTo(goalPose)   
-        self.drawPolygon(robotTemp.shape, color='r', width=2)
+        self.drawPolygon(robotTemp.shape, color='r', width=2, draw=False)
+        
+        if draw:
+            plt.draw()
 
-    def drawMap(self, fullMap):
+    def drawMap(self, fullMap, draw=True):
         """ Draw the map with boundary and obstacles
         
         :param fullMap: a RRTMap object
         """
-        self.drawPolygon(fullMap.boundary, color='k', width=3)
+        self.drawPolygon(fullMap.boundary, color='k', width=3, draw=False)
          
         # Obstacles
         for obst in fullMap.allObstacles:
-            self.drawPolygon(obst, color='b', width=3)
+            self.drawPolygon(obst, color='b', width=3, draw=False)
         
-        plt.draw()
+        if draw:
+            plt.draw()
+
+    def drawMapConst(self, polyMap, draw=True):
+        """ Draw the map with boundary and obstacles
+        
+        :param polyMap: a RRTMapConst object
+        """
+        for poly, _ in polyMap.regions:
+            self.drawPolygon(poly, color='k', width=3, draw=False)
+        
+        if draw:
+            plt.draw()
         
     def drawNodePath2D(self, path, color='k', width=1):
         """ Draw the path assuming that nodes are connected by straight lines
         
         :param path: a list of nodes
         """
-        points = [node.getXY() for node in path]
-        self.drawDipolePath2D(points, color=color, width=width)
+        points = [node.getPosition() for node in path]
+        self.drawPath2D(points, color=color, width=width)
     
-    def drawDipolePath2D(self, path, color='k', width=1):
-        """ Draw the path assuming that dipoles are connected by straight lines
+    def drawPath2D(self, path, color='k', width=1, draw=True):
+        """ Draw the path assuming that points are connected by straight lines
         
-        :param path: a list of dipoles
+        :param path: a list 1x2 arrays
         """
         points = np.array(path)
         if self.invertY:
             self.ax.plot(points[:,0], -points[:,1], color=color, linewidth=width)
         else:
             self.ax.plot(points[:,0], points[:,1], color=color, linewidth=width)
-        plt.draw()
+        if draw:
+            plt.draw()
+    drawDipolePath2D = drawPath2D   # Depricated
         
     def drawRobotOccupiedPath(self, path, robot, color='k', width=1):
         """ Draw the space that the robot would occupy at each point in the
