@@ -116,12 +116,12 @@ class DipolarRRT:
     def sampleFree(self, isGoalReg=False):
         if random() < self.sampleGoalProb:
             if isGoalReg:
-                goalPose = self.polyMap.sampleGoal()
+                goalPose = self.polyMap.sampleGoal(self.robot)
                 return Node.nodeFromPose(goalPose)
             else:
                 return self.goalNode
         else:
-            randPose = self.polyMap.samplePose()
+            randPose = self.polyMap.samplePose(self.robot)
             return Node.nodeFromPose(randPose)
      
     def distancePointE2(self, p1, p2):

@@ -87,13 +87,32 @@ class RRTMapConst:
                 if poly.isInside(x, y):
                     randAngles.append(random() * 2 * off - off + theta)
         randAng = sample(randAngles, 1)[0]
+        
         return (x, y, randAng)
     
-    def samplePose(self):
-        return self.sample(self.polySum, self.regions)
+    def samplePose(self, robot):
+        MAX_ITER = 500      # Maximum number of attempts
         
-    def sampleGoal(self):
-        return self.sample(self.goalPolySum, self.goalRegions)
+        for i in range(MAX_ITER):
+            pose = self.sample(self.polySum, self.regions)
+            robot.moveTo(pose)
+            if self.isCollisionFree(robot):
+#                 print "RegIter: ", i
+                return pose
+            
+        raise Exception("Could not sample a pose...")
+        
+    def sampleGoal(self, robot):
+        MAX_ITER = 500      # Maximum number of attempts
+        
+        for i in range(MAX_ITER):
+            pose = self.sample(self.goalPolySum, self.goalRegions)
+            robot.moveTo(pose)
+            if self.isInGoal(robot):
+#                 print "GoalIter: ", i
+                return pose
+            
+        raise Exception("Could not sample goal...")
             
 class RRTRobot:
     

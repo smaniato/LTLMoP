@@ -439,9 +439,9 @@ if __name__ == "__main__":
     test = TestRRT()
 #     test.testRRTStar() 
 #     test.testDipolarRRTStar(True)  
-#     test.testDipolarRRT(plotting=True)
+    test.testDipolarRRT(plotting=True)
 
-    test.oldResults()
+#     test.oldResults()
     
 #     import cProfile as Profile
 #     Profile.run("test.testDipolarRRTStar(False)")   
