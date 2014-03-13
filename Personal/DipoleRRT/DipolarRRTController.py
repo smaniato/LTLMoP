@@ -32,7 +32,7 @@ class motionControlHandler:
         """
         # Settings
         self.DEBUG = False           # Print statements for debugging
-        self.DEBUGER = False        # If using a debugger. Matplotlib workaround
+        self.DEBUG_PLT = False        # If using a debugger. Matplotlib workaround
         self.PLOT_REG = plotRegion       # Plot the current and next region
         self.PLOT_TREE = plotTree      # Plot the RRT live
         self.PLOT_PATH = plotPath       # Plot path generated
@@ -61,13 +61,13 @@ class motionControlHandler:
         self.closeEnoughAng = .3   # The max angle difference from pose
         self.nodeDistInter = nodeDistInter
         self.path = None
-        self.nextWaypointIndex = None
+        self.nextDipoleIndex = None
         self.storedNextReg = None
         self.rrt = DipolarRRT(None, self.robot, plotter=self.plotter, 
                               dipController=self.dipController)
         self.rrt.setCloseEnoughVals(self.closeEnoughDist, self.closeEnoughAng)
         self.rrt.setConnectDist(nodeDistInter)
-        self.rrt.DEBUGER = self.DEBUGER
+        self.rrt.DEBUG_PLT = self.DEBUG_PLT
         self.rrt.PLOT_TREE = self.PLOT_TREE
         self.rrt.PLOT_TREE_FAIL = self.PLOT_TREE_FAIL
         self.rrt.connectDist = self.nodeDistInter
@@ -93,17 +93,17 @@ class motionControlHandler:
         pose = self.pose_handler.getPose()
             
         # Check if reached waypoint
-        while self.closeEnoughNode(pose, self.path[self.nextWaypointIndex]):
-            self.nextWaypointIndex += 1
+        while self.closeEnoughNode(pose, self.path[self.nextDipoleIndex]):
+            self.nextDipoleIndex += 1
             
             # Check end of path
-            if self.nextWaypointIndex >= len(self.path):
+            if self.nextDipoleIndex >= len(self.path):
                 self.path = None
                 self.drive_handler.setVelocity(0, 0)
                 return True  # Already there
 
         # Calculate the linear and angular velocities
-        nextWaypoint = self.path[self.nextWaypointIndex]
+        nextWaypoint = self.path[self.nextDipoleIndex]
         v, w = self.dipController.getControls(pose, nextWaypoint, 
                                                self.prevPose, self.dT)
         self.drive_handler.setVelocity(v, w)
@@ -210,7 +210,7 @@ class motionControlHandler:
             
         # Update instance fields
         self.path = self.rrt.nodesToDipoles(shortPath)    # Convert to 3D vector
-        self.nextWaypointIndex = 0
+        self.nextDipoleIndex = 0
         self.storedNextReg = next_reg
         
     def getRegionPolygons(self, targetReg):

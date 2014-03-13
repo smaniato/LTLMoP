@@ -15,7 +15,7 @@ import time
 class RRTPlotter:
     
     def __init__(self, figure=None, axes=None, invertY=False):
-        """ An object to facilitate plotting common structures on the given 
+        """ An object to facilitate plottTree common structures on the given 
         matplotlib figure and axes.
         """
         if figure is None or axes is None:
@@ -41,6 +41,10 @@ class RRTPlotter:
     def ioff(self):
         """ Interactive off. """
         plt.ioff()
+        
+    def show(self):
+        """ Show what's drawn """
+        plt.show()
 
     def drawPolygon(self, poly, color='k', width=1, draw=True):
         """ Draw the outline of a polygon object

@@ -9,17 +9,18 @@ from _DipolarCLoopControl import diffAngles
 from math import atan2
 from Queue import PriorityQueue
 
-# TODO: CHANGE TANH IN CONTROLLER
-
 DEBUG = False
-DEBUG_PLT = False
+DEBUG_PLT = False       # Matplotlib workaround when using debugger
+PLOT_TREE_FAIL = True   # Plot tree if it failed to find a path
     
 try:
     import _PlotRRT
     plotter_avail = True
 except:
-    print "Plotter disabled."
     plotter_avail = False
+    
+# TODO: METHODS FOR GETTING TO GOAL REGION AND POINT
+# TODO: PASS MAP TO THE GET PATH FUNCTION OR PUT IN A FULL MAP AND PASS BOOL LIST
     
 class Node:
     def __init__(self, position, orientation=None, parent=None):
@@ -67,7 +68,7 @@ class Node:
 
 class DipolarRRT:            
     
-    def __init__(self, robot, polyMap, controller, plotter=None, plotting=True):
+    def __init__(self, robot, rrtMap, controller, plotter=None, plottTree=True):
         """ An RRT* path planner that takes into account orientation requirements.
 
         """
@@ -82,13 +83,13 @@ class DipolarRRT:
         
         # Store parameters
         self.robot = robot.copy()
-        self.polyMap = polyMap          # TODO: MAKE A MAP COPY
+        self.rrtMap = rrtMap          # TODO: MAKE A MAP COPY
         self.controller = controller    # Dipolar controller
         
-        if plotting and plotter is not None:
+        if plottTree and plotter is not None:
             self.plotting = True
             self.plotter = plotter
-        elif plotting and plotter is None and plotter_avail:
+        elif plottTree and plotter is None and plotter_avail:
             self.plotting = True
             self.plotter = _PlotRRT.RRTPlotter()
         else:
@@ -116,12 +117,12 @@ class DipolarRRT:
     def sampleFree(self, isGoalReg=False):
         if random() < self.sampleGoalProb:
             if isGoalReg:
-                goalPose = self.polyMap.sampleGoal(self.robot)
+                goalPose = self.rrtMap.sampleGoal(self.robot)
                 return Node.nodeFromPose(goalPose)
             else:
                 return self.goalNode
         else:
-            randPose = self.polyMap.samplePose(self.robot)
+            randPose = self.rrtMap.samplePose(self.robot)
             return Node.nodeFromPose(randPose)
      
     def distancePointE2(self, p1, p2):
@@ -173,13 +174,10 @@ class DipolarRRT:
         # Rename functions
         getControls = self.controller.getControls
         integrateForwards = self.controller.integrateForwards
-        isCollisionFree = self.polyMap.isCollisionFree
+        isCollisionFree = self.rrtMap.isCollisionFree
         moveRobotTo = self.robot.moveRobotTo
         robot = self.robot
         DT = self.colCheckInter
-        
-        # TODO: REMOVE
-        timeout=100
         
         timeStart = clock()
         while (clock() - timeStart) < timeout:
@@ -248,10 +246,6 @@ class DipolarRRT:
             dist = norm(dirV)
             numIntervals = int(dist/self.stepSize)
             dirV *= self.stepSize/dist
-            
-            # TODO: REMOVE
-            if dist == 0:
-                print "Here"
             
             currNode = node
             currP = currNode.getPosition()
@@ -322,7 +316,7 @@ class DipolarRRT:
         if numNew > 0:
             for node in self.nodeList[-numNew:]:
                 self.robot.moveTo(node.getPose())
-                if self.polyMap.isInGoal(self.robot):
+                if self.rrtMap.isInGoal(self.robot):
                     return node
                 return None            
         else:
@@ -347,7 +341,6 @@ class DipolarRRT:
             iterate = self.iterate
         
         # Iterate until path is found
-        foundPath = False
         for i in range(K):
             if DEBUG:
                 print "Iteration: ", i
@@ -355,6 +348,13 @@ class DipolarRRT:
             if foundGoal is not None:
                 return self.getNodePathFromLastNode(foundGoal)
         
+        # Show failing tree
+        if plotter_avail and PLOT_TREE_FAIL:
+            self.plotter.drawTree(self.nodeList)
+            self.plotter.ioff()
+            print "Showing failed result..."
+            self.plotter.show()
+            
         return None
         
         

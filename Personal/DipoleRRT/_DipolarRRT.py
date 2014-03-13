@@ -67,7 +67,7 @@ class Node:
 
 class DipolarRRT:            
     
-    def __init__(self, robot, polyMap, controller, plotter=None, plotting=True):
+    def __init__(self, robot, rrtMap, controller, plotter=None, plottTree=True):
         """ An RRT* path planner that takes into account orientation requirements.
 
         """
@@ -82,13 +82,13 @@ class DipolarRRT:
         
         # Store parameters
         self.robot = robot.copy()
-        self.polyMap = polyMap          # TODO: MAKE A MAP COPY
+        self.rrtMap = rrtMap          # TODO: MAKE A MAP COPY
         self.controller = controller    # Dipolar controller
         
-        if plotting and plotter is not None:
+        if plottTree and plotter is not None:
             self.plotting = True
             self.plotter = plotter
-        elif plotting and plotter is None and plotter_avail:
+        elif plottTree and plotter is None and plotter_avail:
             self.plotting = True
             self.plotter = _PlotRRT.RRTPlotter()
         else:
@@ -116,12 +116,12 @@ class DipolarRRT:
     def sampleFree(self, isGoalReg=False):
         if random() < self.sampleGoalProb:
             if isGoalReg:
-                goalPose = self.polyMap.sampleGoal(self.robot)
+                goalPose = self.rrtMap.sampleGoal(self.robot)
                 return Node.nodeFromPose(goalPose)
             else:
                 return self.goalNode
         else:
-            randPose = self.polyMap.samplePose(self.robot)
+            randPose = self.rrtMap.samplePose(self.robot)
             return Node.nodeFromPose(randPose)
      
     def distancePointE2(self, p1, p2):
@@ -173,7 +173,7 @@ class DipolarRRT:
         # Rename functions
         getControls = self.controller.getControls
         integrateForwards = self.controller.integrateForwards
-        isCollisionFree = self.polyMap.isCollisionFree
+        isCollisionFree = self.rrtMap.isCollisionFree
         moveRobotTo = self.robot.moveRobotTo
         robot = self.robot
         DT = self.colCheckInter
@@ -322,7 +322,7 @@ class DipolarRRT:
         if numNew > 0:
             for node in self.nodeList[-numNew:]:
                 self.robot.moveTo(node.getPose())
-                if self.polyMap.isInGoal(self.robot):
+                if self.rrtMap.isInGoal(self.robot):
                     return node
                 return None            
         else:

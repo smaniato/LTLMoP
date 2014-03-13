@@ -64,15 +64,15 @@ class DipolarRRTStar:
             return self.position - fromNode.getPosition()
             
     
-    def __init__(self, robot, polyMap, controller, gama=1.5, plotter=None, plotting=True):
+    def __init__(self, robot, rrtMap, controller, gama=1.5, plotter=None, plottTree=True):
         """ An RRT* path planner that takes into account orientation requirements.
 
         :param robot: An RRTRobot object
-        :param polyMap: An RRTMap object
+        :param rrtMap: An RRTMap object
         :param controller: A DipolarController object
         :param gama: The gama used for calculating neighbor radius
-        :param plotter: An RRTPlotter object. If plotting is desired
-        :param plotting: Enable and disable plotting
+        :param plotter: An RRTPlotter object. If plottTree is desired
+        :param plottTree: Enable and disable plottTree
         """
         
         # Settings
@@ -85,14 +85,14 @@ class DipolarRRTStar:
         
         # Store parameters
         self.robot = robot.copy()
-        self.polyMap = polyMap          # TODO: MAKE A MAP COPY
+        self.rrtMap = rrtMap          # TODO: MAKE A MAP COPY
         self.gama = gama
         self.controller = controller    # Dipolar controller
         
-        if plotting and plotter is not None:
+        if plottTree and plotter is not None:
             self.plotting = True
             self.plotter = plotter
-        elif plotting and plotter is None and plotter_avail:
+        elif plottTree and plotter is None and plotter_avail:
             self.plotting = True
             self.plotter = _PlotRRT.RRTPlotter()
         else:
@@ -137,7 +137,7 @@ class DipolarRRTStar:
             return
         if self.plotting:            
             self.plotter.clearPlot()
-            self.plotter.drawMap(self.polyMap)
+            self.plotter.drawMap(self.rrtMap)
             self.plotter.drawTree(self.nodeList)
             
             trajectory = self.nodesToTrajectory(nodePath)
@@ -193,7 +193,7 @@ class DipolarRRTStar:
             randPose = self.goalPose
         else:
             # TODO: Change the way in which map is used
-            randPoint = self.polyMap.cFree.sample(random)
+            randPoint = self.rrtMap.cFree.sample(random)
             randAng = random() * 2 * np.pi 
             randPose = (randPoint[0], randPoint[1], randAng)
             
@@ -209,7 +209,7 @@ class DipolarRRTStar:
             dirVect = dirVect/distance * self.stepSize
             newNode.setPosition(fromNode.getPosition() + dirVect)
             
-        isCollisionFree = self.polyMap.cFree.covers
+        isCollisionFree = self.rrtMap.cFree.covers
         self.robot.moveTo(newNode.getPose())
         if isCollisionFree(self.robot.shape):
             return newNode
@@ -281,7 +281,7 @@ class DipolarRRTStar:
         # Rename functions
         getControls = self.controller.getControls
         integrateForwards = self.controller.integrateForwards
-        isCollisionFree = self.polyMap.cFree.covers
+        isCollisionFree = self.rrtMap.cFree.covers
         DT = self.colCheckInter
         
         timeStart = clock()
@@ -407,7 +407,7 @@ class DipolarRRTStar:
         # Plot
         if self.plotting and len(self.nodeList) % self.plotEvery == 0:
             self.plotter.clearPlot()
-            self.plotter.drawMap(self.polyMap)
+            self.plotter.drawMap(self.rrtMap)
             self.plotter.drawTree(self.nodeList)
         if DEBUG:
 #             self.plotter.pause(.01)

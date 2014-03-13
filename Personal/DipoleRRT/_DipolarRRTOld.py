@@ -34,13 +34,13 @@ class DipolarRRT:
 
         :param fullMap: A RRTMap object
         :param robot: A robotRRT object
-        :param plotter: A RRTPlotter object. If plotting is desired
+        :param plotter: A RRTPlotter object. If plottTree is desired
         :param dipController: A DipolarController object
         """
                 
         # TODO: CHECK TO SEE WHICH SHOULD BE KEPT HERE
         # DEBUGING TOOLS
-        self.DEBUGER = False        # Debugger is on
+        self.DEBUG_PLT = False        # Debugger is on
         self.PLOT_TREE = False      # Plot RRT tree as it is grown
         self.PLOT_TREE_FAIL = False # Plot RRT tree in case of timeout
         
@@ -287,7 +287,7 @@ class DipolarRRT:
             if self.PLOT_TREE and self.plotter != None:
 #                 print "Tree: iteration: " + str(currIter)
                 if numNewNodes > 0:
-                    if self.DEBUGER:
+                    if self.DEBUG_PLT:
                         self.plotter.drawMap(self.fullMap)
                         self.plotter.drawTree(tree, color='k', width=1)
                         plt.show()
@@ -559,7 +559,7 @@ class DipolarRRT:
 class TestRRT:    
     
     def __init__(self):
-        self.DEBUGER = False            # Debugger is on
+        self.DEBUG_PLT = False            # Debugger is on
         self.PLOT_TREE = True           # Live tree
         self.PLOT_RRT_PATH = True
         self.PLOT_SHORT_PATH = False
@@ -640,7 +640,7 @@ class TestRRT:
         """ Run the dipolar RRT/shortcut and plot according to parameters 
         specified in this class' init function.
         """
-        if not self.DEBUGER:
+        if not self.DEBUG_PLT:
             plt.ion()
             
         startPose, endPose, testMap = self.getSampleMapRRT(3)
@@ -653,7 +653,7 @@ class TestRRT:
         plotter.drawStartAndGoalRobotShape(startPose, endPose, robot)
         
         planner = DipolarRRT(testMap, robot, plotter=plotter)
-        planner.DEBUGER = self.DEBUGER
+        planner.DEBUG_PLT = self.DEBUG_PLT
         planner.PLOT_TREE = self.PLOT_TREE
         planner.PLOT_TREE_FAIL = self.PLOT_TREE_FAIL
         
@@ -685,7 +685,7 @@ class TestRRT:
         """ Run the dipolar RRT/shortcut and plot according to parameters 
         specified in this class' init function.
         """
-        if not self.DEBUGER:
+        if not self.DEBUG_PLT:
             plt.ion()
             
         startPose, endPose, testMap = self.getSampleMapRRT(3)
@@ -698,7 +698,7 @@ class TestRRT:
         plotter.drawStartAndGoalRobotShape(startPose, endPose, robot)
         
         planner = DipolarRRT(testMap, robot, plotter=plotter)
-        planner.DEBUGER = self.DEBUGER
+        planner.DEBUG_PLT = self.DEBUG_PLT
         planner.PLOT_TREE = self.PLOT_TREE
         planner.PLOT_TREE_FAIL = self.PLOT_TREE_FAIL
         
@@ -735,7 +735,7 @@ class TestRRT:
         plotter = RRTPlotter()
         
         planner = DipolarRRT(testMap, robot, plotter)
-        planner.DEBUGER = self.DEBUGER
+        planner.DEBUG_PLT = self.DEBUG_PLT
         planner.PLOT_TREE = self.PLOT_TREE
         planner.PLOT_TREE_FAIL = self.PLOT_TREE_FAIL
         

@@ -15,7 +15,7 @@ import time
 class RRTPlotter:
     
     def __init__(self, figure=None, axes=None, invertY=False):
-        """ An object to facilitate plotting common structures on the given 
+        """ An object to facilitate plottTree common structures on the given 
         matplotlib figure and axes.
         """
         if figure is None or axes is None:

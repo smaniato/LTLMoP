@@ -14,7 +14,7 @@ from _DipolarRRT import Node
 class TestRRT:    
     
     def __init__(self):
-        self.DEBUGER = False            # Debugger is on
+        self.DEBUG_PLT = False            # Debugger is on
         self.PLOT_TREE = True           # Live tree
         self.PLOT_RRT_PATH = True
         self.PLOT_SHORT_PATH = False
