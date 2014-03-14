@@ -8,6 +8,7 @@ from time import clock
 from _DipolarCLoopControl import diffAngles
 from math import atan2
 from Queue import PriorityQueue
+import logging
 
 DEBUG = False
 DEBUG_PLT = False       # Matplotlib workaround when using debugger
@@ -20,7 +21,9 @@ except:
     plotter_avail = False
     
 # TODO: METHODS FOR GETTING TO GOAL REGION AND POINT
+# TODO: MAP SHOULD HAVE ITS OWN ROBOT COPY
 # TODO: PASS MAP TO THE GET PATH FUNCTION OR PUT IN A FULL MAP AND PASS BOOL LIST
+# TODO: Robot should have a "buffer zone" when entering regions or do shape padding
     
 class Node:
     def __init__(self, position, orientation=None, parent=None):
@@ -68,11 +71,9 @@ class Node:
 
 class DipolarRRT:            
     
-    def __init__(self, robot, rrtMap, controller, plotter=None, plottTree=True):
+    def __init__(self, robot, rrtMap, controller, plotter=None, plotTree=True):
         """ An RRT* path planner that takes into account orientation requirements.
-
-        """
-        
+        """        
         # Settings
         self.colCheckInter = .05        # Interval for checking collisions (time)
         self.stepSize = 1               # Step size for growing tree (distanceNodeE2)
@@ -83,13 +84,13 @@ class DipolarRRT:
         
         # Store parameters
         self.robot = robot.copy()
-        self.rrtMap = rrtMap          # TODO: MAKE A MAP COPY
-        self.controller = controller    # Dipolar controller
+        self.rrtMap = rrtMap
+        self.controller = controller    # Dipolar controller 
         
-        if plottTree and plotter is not None:
+        if plotTree and plotter is not None:
             self.plotting = True
             self.plotter = plotter
-        elif plottTree and plotter is None and plotter_avail:
+        elif plotTree and plotter is None and plotter_avail:
             self.plotting = True
             self.plotter = _PlotRRT.RRTPlotter()
         else:
@@ -199,6 +200,9 @@ class DipolarRRT:
         print "DEBUG: Warning getDipoleToDipolePath timed out."
         
         return None
+    
+    def nodesToPoses(self, nodeList):
+        return [node.getPose() for node in nodeList]
 
     def nodesToTrajectory(self, nodePath):
         paths = [self.getDipolarPath(nodePath[i], nodePath[i+1])
@@ -318,7 +322,7 @@ class DipolarRRT:
                 self.robot.moveTo(node.getPose())
                 if self.rrtMap.isInGoal(self.robot):
                     return node
-                return None            
+            return None            
         else:
             return None
     
@@ -339,6 +343,9 @@ class DipolarRRT:
         else:
             self.goalNode = Node.nodeFromPose(toPose, None)
             iterate = self.iterate
+            
+        # TODO: FIND A BETTER WAY TO GET SPACE
+        self.rrtMap.addRobotBuffer(self.robot)
         
         # Iterate until path is found
         for i in range(K):
@@ -390,7 +397,7 @@ class DipolarRRT:
             # Check if reached Goal
             if currNode == goalNode:
                 
-                print "ShortcutDipole numEdges: " + str(numEdges)
+#                 print "ShortcutDipole numEdges: " + str(numEdges)
                 
                 shortPath = []
                 while currNode is not None:

@@ -195,8 +195,8 @@ class LTLMoPExecutor(ExecutorStrategyExtensions,ExecutorResynthesisExtensions, o
         # Redirect all output to the log
         redir = RedirectText(self.externalEventTarget.handleEvent)
 
-        sys.stdout = redir
-        sys.stderr = redir
+#         sys.stdout = redir
+#         sys.stderr = redir
 
         self.externalEventTargetRegistered.set()
 

@@ -11,6 +11,7 @@ import __vectorControllerHelper as vectorControllerHelper
 from numpy import *
 from __is_inside import *
 import time, math
+import logging
 
 import lib.handlers.handlerTemplates as handlerTemplates
 
@@ -93,6 +94,7 @@ class VectorControllerHandler(handlerTemplates.MotionControlHandler):
         vertices = mat(pointArray).T
         # Figure out whether we've reached the destination region
         arrived = is_inside([pose[0], pose[1]], vertices)
+#         logging.info("Arrived: {}. Pose: {}.".format(arrived, pose))
 
         if departed and (not arrived) and (time.time()-self.last_warning) > 0.5:
             #print "WARNING: Left current region but not in expected destination region"

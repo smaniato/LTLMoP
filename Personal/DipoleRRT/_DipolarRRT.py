@@ -201,6 +201,9 @@ class DipolarRRT:
         print "DEBUG: Warning getDipoleToDipolePath timed out."
         
         return None
+    
+    def nodesToPoses(self, nodeList):
+        return [node.getPose() for node in nodeList]
 
     def nodesToTrajectory(self, nodePath):
         paths = [self.getDipolarPath(nodePath[i], nodePath[i+1])

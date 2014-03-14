@@ -13,6 +13,9 @@ fastslow: False
 decompose: True
 use_region_bit_encoding: True
 
+CurrentConfigName:
+SimulatedDipolar
+
 Customs: # List of custom propositions
 
 RegionFile: # Relative path of region description file

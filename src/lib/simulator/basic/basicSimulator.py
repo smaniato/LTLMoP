@@ -4,8 +4,8 @@
 basicSimulator.py -- A simple robot simulator provides pose by integrating given locomotion cmd
 ================================================================
 """
-from numpy import array,sqrt,dot, cos, sin, abs, pi, sign
-from math import atan2,log10,ceil
+from numpy import array,sqrt, cos, sin, abs, pi, sign
+from math import log10,ceil
 import time, sys
 import thread
 

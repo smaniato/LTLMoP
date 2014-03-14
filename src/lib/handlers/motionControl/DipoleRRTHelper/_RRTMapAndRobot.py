@@ -113,6 +113,23 @@ class RRTMapConst:
                 return pose
             
         raise Exception("Could not sample goal...")
+    
+    def addRobotBuffer(self, robot):
+        """ Increase the space of all regions that contain the robot. Used
+        to loosen constraints on initial movements due to "close enough" 
+        parameters.   
+        """
+        scale = 1.3
+        robotT = robot.copy()
+        xT, yT, thetaR = robot.pose
+        robotT.shape.scale(scale, scale, xT, yT)
+        
+        for poly, (theta, off) in self.regions:
+            if (abs(diffAngles(theta, thetaR)) < off and 
+                poly.isInside(xT, yT)):
+                poly += robotT.shape
+        
+        self.polySum += robotT.shape
             
 class RRTRobot:
     
