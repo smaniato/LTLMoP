@@ -11,6 +11,7 @@ import re
 import os
 import copy
 import nltk
+from ambiguity import showParseDiffs
 
 def writeSpec(text, sensorList, regionList, robotPropList):
     ''' This function creates the Spec dictionary that contains the parsed LTL
@@ -63,29 +64,12 @@ def writeSpec(text, sensorList, regionList, robotPropList):
     grammarFile = open('lib/structuredEnglish.fcfg','rb')
     grammarText = grammarFile.read()
     
-    #Generate regular expression to match sentences defining region groups
-    #Resultant expression is: 'group (?P<name>\w+) is (?P<items>(?:region1,? ?|region2,? ?|region3,? ?|empty)+)'
-    groupDefPattern = r'\s*group (?P<name>\w+) is (?P<items>(?:'
-    groupDefPattern += ',? ?|'.join(regionList)
-    groupDefPattern += ',? ?|empty)+)'
+    #Generate regular expression to match sentences defining groups
+    groupDefPattern = r'\s*group (?P<name>\w+) is (?P<items>(?:\w+)(?:,[ \w]+)*)'
     r_groupDef = re.compile(groupDefPattern, re.I)
     
-    #Generate regular expression to match sentences defining sensor groups
-    #Resultant expression is: 'sensor group (?P<name>\w+) is (?P<items>(?:sensor1,? ?|sensor2,? ?|sensor3,? ?|empty)+)'
-    sensorGroupDefPattern = r'\s*group (?P<name>\w+) is (?P<items>(?:'
-    sensorGroupDefPattern += ',? ?|'.join(sensorList)
-    sensorGroupDefPattern += ',? ?|empty)+)'
-    r_sensorGroupDef = re.compile(sensorGroupDefPattern, re.I)
-    
-    #Generate regular expression to match sentences defining action groups
-    #Resultant expression is: 'group (?P<names>\w+) is (?P<items>(?:action1,? ?|action2,? ?|action3,? ?|empty)+)'
-    actionGroupDefPattern = r'\s*group (?P<name>\w+) is (?P<items>(?:'
-    actionGroupDefPattern += ',? ?|'.join(robotPropList)
-    actionGroupDefPattern += ',? ?|empty)+)'
-    r_actionGroupDef = re.compile(actionGroupDefPattern, re.I)
-    
     #Generate regular expression to match sentences defining correlations
-    correlationDefPattern = r'((?:[_\w]+,? )+)correspond(?:s)? to((?:,? [_\w]+)+)'
+    correlationDefPattern = r'((?:\w+,? )+)correspond(?:s)? to((?:,? \w+)+)'
     r_correlationDef = re.compile(correlationDefPattern, re.I)
 
     #Generate regular expression to match group operation sentences
@@ -115,45 +99,51 @@ def writeSpec(text, sensorList, regionList, robotPropList):
 
         #If there is a newline at the end, remove it
         if re.search('\n$',line):
-            line = re.sub('\n$','',line)
+            line = re.sub('\n$',' ',line)
         
-        #Find any region group definitons
+        #print line
+        
+        #Find any group definitons
         m_groupDef = r_groupDef.match(line)
         if m_groupDef:
-            #Add semantics of group to our grammar string
+            #Add an entry to the grammar for the group defined in this line
+
             groupName = m_groupDef.group('name')
-            #We want to recognize the group name with or without a trailing 's'
-            grammarText += '\nGROUP[SEM=<' + groupName + '>] -> \'' + groupName + '\' | \''+groupName+'s\' | \''+re.sub(r'(\w+)s',r'\1',groupName)+'\''
-            #Add specified regions to our dictionary of region groups
-            regionGroups[groupName] = filter(lambda x: x!='empty',re.split(r', *', m_groupDef.group('items')))
-            allGroups[groupName] = regionGroups[groupName]
-            #print '\tGroups updated: ' + str(regionGroups)
+            groupItems = filter(lambda x: x != None and x!='empty', m_groupDef.group('items').replace(' or ',' | ').split(', '))
+            groupItems = [item.strip() for item in groupItems]
 
-        #Find any sensor group definitions
-        m_sensorGroupDef = r_sensorGroupDef.match(line)
-        if m_sensorGroupDef:
-            #Add semantics of group to our grammar string
-            groupName = m_sensorGroupDef.group('name')
-            #We want to recognize the group name with or without a trailing 's'
-            grammarText += '\nSENSORGROUP[SEM=<' + groupName + '>] -> \'' + groupName + '\' | \''+groupName+'s\' | \''+re.sub(r'(\w+)s',r'\1',groupName)+'\''
-            #Add specified sensors to out dictionary of sensor groups
-            sensorGroups[groupName] = filter(lambda x: x!='empty',re.split(r', *', m_sensorGroupDef.group('items')))
-            allGroups[groupName] = sensorGroups[groupName]
-            #print '\tSensor groups updated: ' + str(sensorGroups)
+            #Determine which kind of group this could be defining
+            regionGroup = True
+            sensorGroup = True
+            actionGroup = True
+            for item in groupItems:
+                if item not in regionList and item != 'empty' and not all(x in regionList for x in item.split(' | ')):
+                    regionGroup = False
+                if item not in sensorList and item != 'empty'and not all(x in sensorList for x in item.split(' | ')):
+                    sensorGroup = False
+                if item not in robotPropList and item != 'empty'and not all(x in robotPropList for x in item.split(' | ')):
+                    actionGroup = False
 
-        #Find any action group definitions
-        m_actionGroupDef = r_actionGroupDef.match(line)
-        if m_actionGroupDef:
-            #Add semantics of group to our grammar string
-            groupName = m_actionGroupDef.group('name')
-            #We want to recognize the group name with or without a trailing 's'
-            grammarText += '\nACTIONGROUP[SEM=<' + groupName + '>] -> \'' + groupName + '\' | \''+groupName+'s\' | \''+re.sub(r'(\w+)s',r'\1',groupName)+'\''
-            #Add specified sensors to out dictionary of sensor groups
-            actionGroups[groupName] = filter(lambda x: x!='empty',re.split(r', *', m_actionGroupDef.group('items')))
-            allGroups[groupName] = actionGroups[groupName]
-            #print '\tAction groups updated: ' + str(actionGroups)
+            #Extend grammar for all possible group types
+            if regionGroup:
+                grammarText += '\nGROUP[SEM=<' + groupName + '>] -> \'' + groupName + '\' | \''+groupName+'s\' | \''+re.sub(r'(\w+)s',r'\1',groupName)+'\''
+                regionGroups[groupName] = groupItems
+                #print '\tRegion groups updated: ' + str(regionGroups)
+            if sensorGroup:
+                grammarText += '\nSENSORGROUP[SEM=<' + groupName + '>] -> \'' + groupName + '\' | \''+groupName+'s\' | \''+re.sub(r'(\w+)s',r'\1',groupName)+'\''     
+                sensorGroups[groupName] = groupItems
+                #print '\tSensor groups updated: ' + str(sensorGroups)
+            if actionGroup:
+                grammarText += '\nACTIONGROUP[SEM=<' + groupName + '>] -> \'' + groupName + '\' | \''+groupName+'s\' | \''+re.sub(r'(\w+)s',r'\1',groupName)+'\''
+                actionGroups[groupName] = groupItems
+                #print '\tAction groups updated: ' + str(actionGroups)
 
-        if m_groupDef or m_sensorGroupDef or m_actionGroupDef: continue
+            if regionGroup or sensorGroup or actionGroup:
+                allGroups[groupName] = groupItems
+            else:
+                print('ERROR: Could not create group out of items ' + groupItems)
+
+        if m_groupDef: continue
 
         #Find any correlation definitions
         m_correlationDef = r_correlationDef.match(line)
@@ -197,18 +187,23 @@ def writeSpec(text, sensorList, regionList, robotPropList):
         #If sentence doesn't match any of these, we can parse it with the grammar
         linesToParse.append(lineInd)
 
+    #For generating our terminals from propositions, we add an extra '$' that will be stripped
+    # after parsing because the NLTK semantics module will consider terms like 'r1' and 'r3' to
+    # be alpha-equivalent and perform undesired alpha-substitution ('$r1' and '$r3' are left alone)
+
     #Add production rules for region names to our grammar string
     for region in regionList:
-        grammarText += '\nREGION[SEM=<'+region+'>] -> \''+region+'\''
+        grammarText += '\nREGION[SEM=<$'+region+'>] -> \''+region+'\''
     
     #Add production rules for action names to our grammar string
     for action in robotPropList:
-        grammarText += '\nACTION[SEM=<'+action+'>] -> \''+action+'\''
+        grammarText += '\nACTION[SEM=<$'+action+'>] -> \''+action+'\''
     
     #Add production rules for sensor names to our grammar string
     for sensor in sensorList:
-        grammarText += '\nSENSOR[SEM=<'+sensor+'>] -> \''+sensor+'\''
+        grammarText += '\nSENSOR[SEM=<$'+sensor+'>] -> \''+sensor+'\''
 
+    #print(grammarText)
     #Generate NLTK feature grammar object from grammar string
     grammar = nltk.grammar.parse_fcfg(grammarText.encode('ASCII','ignore'))
 
@@ -216,58 +211,69 @@ def writeSpec(text, sensorList, regionList, robotPropList):
     for lineNo in linesToParse:
         
         line = textLines[lineNo].lower()
+        #Put exactly one space before and after parentheses
+        line = re.sub(r'\s*?(\(|\))\s*?',r' \1 ',line)  
         #print line
         
         #Parse input line using grammar; the result here is a collection
         # of pairs of syntax trees and semantic representations in a
         # prefix first-order-logic syntax
-        result = nltk.sem.batch_interpret([line], grammar, 'SEM', 2)[0]
-        
-        nTrees = 0;
-        formulaeFound = []
+        parses = nltk.sem.batch_interpret([line], grammar, 'SEM')[0]
+
+        if len(parses) == 0:
+            print('Error: No valid parse found for: ' + line)
+            failed = True
+
+        uniqueParses = []
+
         #Iterate over all parse trees found
-        for (syntree, semrep) in result:
+        for (syntree, semrep) in parses:
+            
             semstring = str(semrep)
             
             #We are not interested multiple parse trees that
             # produce the same LTL formula, so skip them
-            if semstring in formulaeFound:
-                continue
-            formulaeFound.append(semstring)
-            nTrees += 1
-            #print '\t' + semstring
-            #Expand initial conditions
-            semstring = parseInit(semstring, sensorList, robotPropList)
-            #Expand 'corresponding' phrases
-            semstring = parseCorresponding(semstring, correlations, allGroups)
-            #Expand 'stay' phrases
-            semstring = parseStay(semstring, regionList)
-            #Expand groups, 'each', 'any', and 'all'
-            semstring = parseGroupEach(semstring, allGroups)
-            semstring = parseGroupAny(semstring, allGroups)
-            semstring = parseGroupAll(semstring, allGroups)
-            #Liveness sentences should not contain 'next'
-            if syntree.node['SPEC'] == 'SysGoals' or syntree.node['SPEC'] == 'EnvGoals':
-                semstring = semstring.replace('Next','')
+            if semstring in uniqueParses: continue
 
-            #TODO: In environment safeties, all robot propositions must be PAST TENSE
+            uniqueParses.append((syntree, semstring))
 
-            #Convert formula from prefix FOL to infix LTL and add it to
-            # the appropriate section of the specification
-            stringLTL = prefix2infix(semstring)
-            
-            if stringLTL != '':
-                spec[syntree.node['SPEC']] += stringLTL + ' & \n'
-            linemap[syntree.node['SPEC']].append(lineNo)
-            LTL2LineNo[stringLTL] = lineNo
-            
-            break #For now we'll only look at the first result
-            #TODO: Need to display and resolve ambiguity in the future
+        if len(uniqueParses) > 1:
+            showParseDiffs(uniqueParses)
         
-        if nTrees == 0:
-            print('Error: No valid parse found for: ' + line)
-            failed = True
-    
+        semstring = uniqueParses[0][1]
+        
+        #Expand initial conditions
+        semstring = parseInit(semstring, sensorList, robotPropList)
+        
+        #Expand 'corresponding' phrases
+        semstring = parseCorresponding(semstring, correlations, allGroups)
+        
+        #Expand 'stay' phrases
+        semstring = parseStay(semstring, regionList)
+        
+        #Expand groups, 'each', 'any', and 'all'
+        semstring = parseGroupEach(semstring, allGroups)
+        semstring = parseGroupAny(semstring, allGroups)
+        semstring = parseGroupAll(semstring, allGroups)
+        
+        #Trim any extra $'s attached to proposition names
+        semstring = semstring.replace('$','')
+        
+        #Liveness sentences should not contain 'next'
+        if syntree.node['SPEC'] == 'SysGoals' or syntree.node['SPEC'] == 'EnvGoals':
+            semstring = semstring.replace('Next','')
+
+        #TODO: In environment safeties, all robot propositions must be PAST TENSE
+
+        #Convert formula from prefix FOL to infix LTL and add it to
+        # the appropriate section of the specification
+        stringLTL = prefix2infix(semstring)
+        
+        if stringLTL != '':
+            spec[syntree.node['SPEC']] += stringLTL + ' & \n'
+        linemap[syntree.node['SPEC']].append(lineNo)
+        LTL2LineNo[stringLTL] = lineNo
+
     #Set all empty subformulas to TRUE, and removing last & in 'EnvGoals' and 'SysGoals'
     if spec['EnvInit'] == '':
         spec['EnvInit'] = 'TRUE & \n'
@@ -310,21 +316,21 @@ def parseStay(semstring, regions):
         stay = appendStayClause(0)
         #return semstring.replace('$Stay',stay)
         # Just insert the "STAY_THERE" macro to be dealt with by specCompiler
-        return semstring.replace('Next($Stay)', "STAY_THERE")
+        return semstring.replace('Next($Stay)','STAY_THERE').replace('$Stay','STAY_THERE')
     else:
         return semstring
 
 def parseGroupAll(semstring, allGroups):
-    def appendAllClause(semstring, ind, groupItems):
-        if ind == len(groupItems) - 1:
-            return re.sub(r'\$All\(\w+\)',groupItems[ind],semstring)
-        else:
-            return 'And('+re.sub(r'\$All\(\w+\)',groupItems[ind],semstring)+','+appendAllClause(semstring, ind+1, groupItems)+')'
     while semstring.find('$All') != -1:
         groupName = re.search(r'\$All\((\w+)\)',semstring).groups()[0]
         if groupName in allGroups:
-            if len(allGroups[groupName]) == 0: return re.sub(r'\$All\('+groupName+'\)','TRUE',semstring)
-            semstring = appendAllClause(semstring, 0, allGroups[groupName])
+            group = allGroups[groupName]
+            if len(group) == 0: return re.sub(r'\$All\('+groupName+'\)', 'TRUE', semstring)
+            if len(group) == 1: return re.sub(r'\$All\('+groupName+'\)', group[0], semstring)
+            allClause = 'And(' + ',And('.join(group[0:-1]) + ',' + group[-1] + ')'*(len(group)-1)
+            semstring = re.sub(r'\$All\(' + groupName + '\)', allClause, semstring)
+            #print('Group '+groupName+': '+str(group))
+            #print('Expanded into: '+allClause)
         else:
             print('Error: Could not resolve group '+groupName)
     return semstring
@@ -333,9 +339,9 @@ def parseGroupAny(semstring, allGroups):
     while semstring.find('$Any') != -1:
         groupName = re.search(r'\$Any\((\w+)\)',semstring).groups()[0]
         if groupName in allGroups:
-            if len(allGroups[groupName]) == 0: return re.sub(r'\$Any\('+groupName+'\)','FALSE',semstring)
-            if len(allGroups[groupName]) == 1: return re.sub(r'\$Any\('+groupName+'\)',allGroups[groupName][0],semstring)
             group = allGroups[groupName]
+            if len(group) == 0: return re.sub(r'\$Any\('+groupName+'\)', 'FALSE', semstring)
+            if len(group) == 1: return re.sub(r'\$Any\('+groupName+'\)', group[0], semstring)
             anyClause = 'Or(' + ',Or('.join(group[0:-1]) + ',' + group[-1] + ')'*(len(group)-1)
             semstring = re.sub(r'\$Any\('+groupName+'\)', anyClause, semstring)
         else:
