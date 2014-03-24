@@ -8,10 +8,13 @@ This class uses a dipolar field along with an RRT to generate paths for the
 robot as well as the linear and angular velocities to drive them.
 """
 
+# TODO: REMOVE SCALLED ROBOT ADDITION
+# TODO: CLOSE ENOUGH CAUSES ISSUES WITH REACHING REGION WITHOUT PROPPER POSES
+
 from __future__ import division
 
 import logging
-from Polygon import Polygon
+from Polygon import Polygon, Shapes as pShapes
 
 # Import helpers
 import sys, os
@@ -57,17 +60,22 @@ class motionControlHandler:
         self.drive_handler = proj.h_instance['drive']
         self.pose_handler = proj.h_instance['pose']
         
-        # Get a list of (polygon, constraint) pairs
-        self.regions = self.getConstrainedRegions(proj)
-        
         # Plotter
         if plotter_avail:
+            # TODO: MAKE PARAMETER?
             self.plotter = RRTPlotter(invertY=True)
+#             self.plotter = RRTPlotter(invertY=False)
             self.plotter.ion()    
             self.plotting = plotTree or plotPath or plotRegion 
         else: 
             self.plotter = None         
-            self.plotting = False    
+            self.plotting = False   
+            
+#         # TODO: REMOVE 
+#         self.showEachRegion(proj)
+        
+        # Get a list of (polygon, constraint) pairs
+        self.regions = self.getConstrainedRegions(proj) 
         
         # Dipolar controller
         self.dipController = DipolarController(k1=linearGain, k2=angularGain)
@@ -79,7 +87,7 @@ class motionControlHandler:
         # TODO: MAP IS NONE. FINISH TODO IN _DipolarRRT
         self.rrt = DipolarRRT(self.robot, None, self.dipController, 
                               plotter=self.plotter, plotTree=plotTree)
-        self.rrt.setCloseEnough(self.robot.radius, .3)
+        self.rrt.setCloseEnough(self.robot.radius*2, .2)
         self.rrt.stepSize = nodeDistInter
         self.rrt.colCheckInter = self.dT
         
@@ -91,9 +99,6 @@ class motionControlHandler:
         self.path = None
         self.nextDipoleIndex = None
         self.storedNextReg = None
-        
-#         # TODO: REMOVE 
-#         self.showEachRegion(self.regions)
 
     def gotoRegion(self, current_reg, next_reg, last=False):
         """ Returns ``True`` if we've reached the next region. 
@@ -101,6 +106,8 @@ class motionControlHandler:
         dipole. If the desired region changes or no path
         currently exists, it will create one using the RRT
         """
+#         return False
+        
         if current_reg == next_reg and not last:
             # No need to move!
             self.drive_handler.setVelocity(0, 0)  # So let's stop
@@ -200,8 +207,17 @@ class motionControlHandler:
         # TODO: THIS INFO SHOULD COME FROM REGIONS
         # Pair with theta constraints
         from math import pi
+        # No constraints
 #         return [(r, (0, pi)) for r in regions]
-        thetaConstraints = [(0, pi/4), (0, pi), (0, pi), (pi/2, pi/4)]
+        # Z Shape map
+#         thetaConstraints = [(0, pi/4), (0, pi), (0, pi), (pi/2, pi/4)]
+        # Take footage map
+        thetaConstraints = [(pi/2, pi/4),       # r2 
+                            (0, pi),            # r1 
+                            (0, pi),            # r3
+                            (0, pi/10),         # Upload
+                            (-pi/2, pi/10)      # Charge
+                            ]
         return zip(regions, thetaConstraints)
         
     def getRegionPolygon(self, region, mapFun):
@@ -221,12 +237,16 @@ class motionControlHandler:
             
         return regionPoly        
     
-    def showEachRegion(self, regions):
+    def showEachRegion(self, proj):
         """ For debugging purposes. Will plot each region one by one in the
         order in which they apear in the list.
         """
+        mapFun = proj.coordmap_map2lab
+        regions = [self.getRegionPolygon(region, mapFun) 
+                   for region in proj.rfi.regions]
+        
         self.plotter.ioff()
-        for r, _ in regions:
+        for r in regions:
             self.plotter.clearPlot()
             self.plotter.drawPolygon(r)
             self.plotter.show()
@@ -242,7 +262,14 @@ class motionControlHandler:
         
         # Create
         elif robotType == 1:
-            return RRTRobot.circularRobot([0,0,0], .1)            
+            return RRTRobot.circularRobot([0,0,0], .01)  
+#             return RRTRobot.circularRobot([0,0,0], .1)    
+        
+        # Create
+        elif robotType == 2: 
+            shape = pShapes.Rectangle(.28, .28)
+            shape.shift(-.14, -.14)
+            return RRTRobot((0, 0, 0), shape, radius=.14)
         
         else:
             msg = "ERROR: DipolarRRTController - Undefined robot type."

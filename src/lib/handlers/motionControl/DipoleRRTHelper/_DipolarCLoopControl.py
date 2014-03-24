@@ -56,11 +56,15 @@ class DipolarController:
         :param delT: The time elapsed since posePrev
         :return: linearVelocity, angularVelocity
         """        
+        influenceGain = 100
+        
         rX = poseCurr[0] - poseDes[0]
         rY = poseCurr[1] - poseDes[1]    
         ang = poseCurr[2]
         u = -self.k1 * sign(rX*cos(ang) + rY*sin(ang)) * \
-            tanh(rX*rX + rY*rY)
+            tanh((rX*rX + rY*rY) * influenceGain)
+#         u = -self.k1 * sign(rX*cos(ang) + rY*sin(ang)) * \
+#             tanh(rX*rX + rY*rY)
 #         u = -self.k1 * sign(rX*cos(ang) + rY*sin(ang))
            
         dipoleField = self.getFieldAt(poseCurr, poseDes)
@@ -68,7 +72,8 @@ class DipolarController:
         phi = atan2(dipoleField[1], dipoleField[0])
         phiPrev = atan2(dipoleFieldPrev[1], dipoleFieldPrev[0])
            
-        w = -self.k2*diffAngles(ang, phi) + diffAngles(phi, phiPrev)/delT
+#         w = -self.k2*diffAngles(ang, phi) + diffAngles(phi, phiPrev)/delT
+        w = -self.k2*diffAngles(ang, phi)
     
         return u, w  
     

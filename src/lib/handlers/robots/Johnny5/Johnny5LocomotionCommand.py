@@ -30,27 +30,38 @@ class Johnny5LocomotionCommandHandler:
         velGain = 1000
         angGain = 1000
         
-        # Angular velocity value, set minimum to 0.1 and maximum to 0.5
-        if cmd[1]!=0 and math.fabs(cmd[1])<0.1:
-            cmd[1] = 0.1
-        if cmd[1]>0.5:
-            cmd[1] = 0.5
-        if cmd[1]<-0.5:
-            cmd[1] = -0.5
+#         # Angular velocity value, set minimum to 0.1 and maximum to 0.5
+#         if cmd[1]!=0 and math.fabs(cmd[1])<0.1:
+#             cmd[1] = 0.1
+#         if cmd[1]>0.5:
+#             cmd[1] = 0.5
+#         if cmd[1]<-0.5:
+#             cmd[1] = -0.5
+#         
+#         # Velocity value, set minimum to 0.1 and maximum to 0.3
+#         if cmd[0]!=0 and math.fabs(cmd[0])<0.1:
+#             cmd[0] = 0.1
+#         if cmd[0]>0.3:
+#             cmd[0] = 0.3
+#         if cmd[0]<-0.3:
+#             cmd[0] = -0.3
+            
+        v, w = cmd[:2]
+        vScale, wScale = 1,1
+        if abs(v) > .3:
+            vScale = abs(.3/v) 
+        if abs(w) > .5:
+            wScale = abs(.5/w)
+        scale = min(vScale, wScale)
+        v *= scale
+        w *= scale
         
-        # Velocity value, set minimum to 0.1 and maximum to 0.3
-        if cmd[0]!=0 and math.fabs(cmd[0])<0.1:
-            cmd[0] = 0.1
-        if cmd[0]>0.3:
-            cmd[0] = 0.3
-        if cmd[0]<-0.3:
-            cmd[0] = -0.3
                         
         # print debugging message
-        logging.debug(cmd[1])
-        logging.debug(cmd[0])
+        logging.debug("\nLinearInitial: {}. LinearScaled: {}".format(cmd[0], v))
+        logging.debug("\nAngularInitial: {}. AngularScaled: {}".format(cmd[1], w))
                 
         # Neutral servo value for #14 and #15 is 1475 and 1500 from .cfg file
-        self.johnny5Serial.write('#15 P%d\r' % (1500-angGain*cmd[1]))
-        self.johnny5Serial.write('#14 P%d\r' % (1475-velGain*cmd[0]))
+        self.johnny5Serial.write('#15 P%d\r' % (1500-angGain*w))
+        self.johnny5Serial.write('#14 P%d\r' % (1475-velGain*v))
        

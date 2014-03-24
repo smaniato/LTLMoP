@@ -37,31 +37,44 @@ class RRTMap:
             
 class RRTMapConst:
     
-    def __init__(self, polygons, thetaConstraints=None, areGoals=None):
+    def __init__(self, robot, polygons, thetaConstraints=None, areGoals=None):
         """ thetaConstraints is a list of constraints where each
-        constraint has the form (angle, maxOffset)
+        constraint has the form (angle, maxOffset). 
+        
+        :param robot: An RRTRobot to use for collision checks
+        :param polygons: A list of polygons representing regions.
+        :param thetaConstraints: A list of (angle, maxOffsets) for each region.
+            None if no constraints.
+        :param areGoals: A list of booleans marking regions as goals or not.
+            None if no region is a goal.
         """
         numPoly = len(polygons)
         
-        if thetaConstraints is None:
+        # Make personal copies of the parameters
+        self.robot = robot.copy()
+        polygons = [Polygon.Polygon(p) for p in polygons]
+        if thetaConstraints is not None:
+            thetaConstraints = list(thetaConstraints)
+        else:
             thetaConstraints = [(0, pi)]*numPoly
-            
-#         print "Remove this"
-#         thetaConstraints = [(0, pi)]*len(polygons)
-
-        self.regions = zip(polygons, thetaConstraints)
-        self.polySum = reduce(lambda x, y: x+y, polygons)
-        
         if areGoals is not None:
-            goalPolygons = [polygons[i] for i in range(len(polygons))
-                            if areGoals[i]]
-            goalConst = [thetaConstraints[i] for i in range(len(polygons))
-                            if areGoals[i]]
-            self.goalRegions = zip(goalPolygons, goalConst)
-            self.goalPolySum = reduce(lambda x, y: x+y, goalPolygons)
-        else: 
-            self.goalRegions = None
-            self.goalPolySum = None
+            areGoals = list(areGoals)
+        else:
+            areGoals = [False]*numPoly
+            
+        # To use for copy()
+        self.polygons = polygons
+        self.thetaConstraints = thetaConstraints
+        self.areGoals = areGoals
+
+        # Regions are (polygon, constraint) pairs
+        self.regions = zip(polygons, thetaConstraints)
+        self.goalRegions = [self.regions[i] for i in range(numPoly) if areGoals[i]]
+        
+        # Poly sums are cumulative free spaces
+        goalPolygons = (polygons[i] for i in range(numPoly) if areGoals[i])
+        self.polySum = reduce(lambda x, y: x + y, polygons)
+        self.goalPolySum = reduce(lambda x, y: x + y, goalPolygons)
         
     def meetsRegionConstraints(self, robot, polySum, regions):
         x, y, thetaR = robot.pose
@@ -81,58 +94,75 @@ class RRTMapConst:
         return isIn(robot, self.goalPolySum, self.goalRegions)
     
     def sample(self, polySum, regions):
+        """ Samples a pose inside of regions, but does not perform
+        collision checks. 
+        """
         x, y = polySum.sample(random)
+        
+        # Generate random angles for all regions that x, y is in 
         randAngles = []
         for poly, (theta, off) in regions:
                 if poly.isInside(x, y):
                     randAngles.append(random() * 2 * off - off + theta)
-        randAng = sample(randAngles, 1)[0]
+                    
+        # Choose one of the angles
+        if len(randAngles) > 0:
+            randAng = sample(randAngles, 1)[0]
+        else:
+            randAng = 0
         
         return (x, y, randAng)
     
-    def samplePose(self, robot):
-        MAX_ITER = 500      # Maximum number of attempts
+    def samplePose(self):
+        """ Sample a collision free pose for robot within any region.
+        """
+        MAX_ITER = 1000      # Maximum number of attempts
         
-        for i in range(MAX_ITER):
+        robot = self.robot
+        for _ in range(MAX_ITER):
             pose = self.sample(self.polySum, self.regions)
             robot.moveTo(pose)
             if self.isCollisionFree(robot):
-#                 print "RegIter: ", i
                 return pose
             
         raise Exception("Could not sample a pose...")
         
-    def sampleGoal(self, robot):
-        MAX_ITER = 500      # Maximum number of attempts
+    def sampleGoal(self):
+        MAX_ITER = 1000      # Maximum number of attempts
         
-        for i in range(MAX_ITER):
+        robot = self.robot
+        for _ in range(MAX_ITER):
             pose = self.sample(self.goalPolySum, self.goalRegions)
             robot.moveTo(pose)
             if self.isInGoal(robot):
-#                 print "GoalIter: ", i
                 return pose
             
         raise Exception("Could not sample goal...")
     
     def addRobotBuffer(self, robot):
-        """ Increase the space of all regions that contain the robot. Used
-        to loosen constraints on initial movements due to "close enough" 
-        parameters.   
+        """ Use if robot may start sampling and is not completely
+        within any of the regions. Increases the size of poly sums by
+        a scaled robot shape. 
+        Note: Polygons are changed. Consider making a copy of the map
+        to restore back to the original.
         """
         scale = 1.3
-        robotT = robot.copy()
-        xT, yT, thetaR = robot.pose
-        robotT.shape.scale(scale, scale, xT, yT)
+        xT, yT, _ = robot.pose
+        robotP = Polygon.Polygon(robot.shape)
+        robotP.scale(scale, scale, xT, yT)
         
-        for poly, (theta, off) in self.regions:
-            if (abs(diffAngles(theta, thetaR)) < off and 
-                poly.isInside(xT, yT)):
-                poly += robotT.shape
-        
-        self.polySum += robotT.shape
+        if self.polySum.overlaps(robotP):
+            self.polySum += robotP
+        if self.goalPolySum.overlaps(robotP):
+            self.goalPolySum += robotP
+            
+    def copy(self):
+        return RRTMapConst(self.robot, self.polygons, self.thetaConstraints, 
+                           self.areGoals)
             
 class RRTRobot:
     
+    # TODO: REMOVE RADIUS AS INPUT (CALCULATE IN CODE IF NEEDED)
     def __init__(self, pose, outline, radius):
         """ An object that represents the robot location and outline.
         

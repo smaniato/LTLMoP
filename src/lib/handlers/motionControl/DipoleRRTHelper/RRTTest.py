@@ -10,6 +10,7 @@ import _DipolarCLoopControl
 # import DipoleRRTStar, RRTStar
 import RRTStar, DipoleRRTStar, _DipolarRRT
 from _DipolarRRT import Node
+from math import pi
 
 class TestRRT:    
     
@@ -280,8 +281,7 @@ class TestRRT:
         else:
             return None
         
-        polyMap = RRTMapConst(polygons, restrictions, areGoals)
-        return startPose, endPose, polyMap
+        return startPose, endPose, polygons, restrictions, areGoals
 
     def testRRTStar(self):
         RRTStar.DEBUG = False
@@ -331,45 +331,46 @@ class TestRRT:
     
     def testDipolarRRT(self, plotting=True):
         _DipolarRRT.DEBUG = True
-        _DipolarRRT.DEBUG_PLT = False
+        _DipolarRRT.DEBUG_PLT = True
         
         if plotting:
             plt.ion()
             
-#         startPose, endPose, polyMap = self.getSampleConstMap(1)     # Complex regions
-#         startPose, endPose, polyMap = self.getSampleConstMap(2)     # Simple regions
-#         startPose, endPose, polyMap = self.getSampleConstMap(3)     # Long zig zag
-        startPose, endPose, polyMap = self.getSampleConstMap(4)     # Short zig zag
-#         startPose, endPose, polyMap = self.getSampleConstMap(5)     # Parking
-        
+        startPose, endPose, polys, consts, goals = self.getSampleConstMap(1)     # Complex regions
+#         startPose, endPose, polys, consts, goals = self.getSampleConstMap(2)     # Simple regions
+#         startPose, endPose, polys, consts, goals = self.getSampleConstMap(3)     # Long zig zag
+#         startPose, endPose, polys, consts, goals = self.getSampleConstMap(4)     # Short zig zag
+#         startPose, endPose, polys, consts, goals = self.getSampleConstMap(5)     # Parking
 
         robot = RRTRobot.circularRobot((0,0,0), .5)
         robot.moveTo(startPose)
         controller = _DipolarCLoopControl.DipolarController()
         
+        rrtMap = RRTMapConst(robot, polys, consts, goals)
+        
         plotter = RRTPlotter()
         if plotting:
-            plotter.drawMapConst(polyMap)
+            plotter.drawMapConst(rrtMap)
             plotter.drawPolygon(robot.shape, color='r', width=2)
 #             plotter.drawStartAndGoalRobotShape(startPose, endPose, robot)
 
-        planner = _DipolarRRT.DipolarRRT(robot, polyMap, controller, 
+        planner = _DipolarRRT.DipolarRRT(robot, rrtMap, controller, 
                                                plotter=plotter, 
-                                               plotting=plotting)
+                                               plotTree=plotting)
         planner.sampleGoalProb = .1
         
 #         nodePath = planner.getNodePath(startPose, goalReg=False, 
 #                                        toPose=endPose, K=1000)
-        nodePath = planner.getNodePath(startPose, goalReg=True, K=3000)
+        nodePath = planner.getNodePath(startPose, toPose=None, K=3000)
         
         if plotting and nodePath is not None:
             dipPath = planner.nodesToTrajectory(nodePath)
             plotter.drawPath2D(dipPath, color='g', width=2)
         
         if nodePath is not None:
-            dijkNodePaht = planner.getDijkSmooth(nodePath)
-            if plotting and dijkNodePaht is not None:
-                dipPath = planner.nodesToTrajectory(dijkNodePaht)
+            dijkNodePath = planner.getDijkSmooth(nodePath)
+            if plotting and dijkNodePath is not None:
+                dipPath = planner.nodesToTrajectory(dijkNodePath)
                 plotter.drawPath2D(dipPath, color='r', width=2)
                 
         self.saveObject("tree", planner.nodeList)
@@ -381,12 +382,12 @@ class TestRRT:
             plt.show()
             
     def oldResults(self):
-        treeFileName = "treeBackup"
-        pathFileName = "pathBackup"
+        treeFileName = "treeZlong"
+        pathFileName = "pathZlong"
         
-#         startPose, endPose, polyMap = self.getSampleConstMap(3)     # ZigZagLong
+        startPose, endPose, polyMap = self.getSampleConstMap(3)     # ZigZagLong
 #         startPose, endPose, polyMap = self.getSampleConstMap(4)     # ZigZagShort
-        startPose, endPose, polyMap = self.getSampleConstMap(5)     # Backup
+#         startPose, endPose, polyMap = self.getSampleConstMap(5)     # Backup
                
 
         robot = RRTRobot.circularRobot((0,0,0), .5)
@@ -395,7 +396,7 @@ class TestRRT:
         
         plotter = RRTPlotter()
         plotter.drawMapConst(polyMap)
-        plotter.drawPolygon(robot.shape, color='r', width=2)
+        plotter.drawPolygon(robot.shape, color='b', width=2)
 
         planner = _DipolarRRT.DipolarRRT(robot, polyMap, controller, 
                                                plotter=plotter)
@@ -403,16 +404,66 @@ class TestRRT:
         tree = self.loadObject(treeFileName)
         path = self.loadObject(pathFileName)
         
-        plotter.drawTree(tree, color='k', width=1, draw=True)
+        def steerFun(n1, n2): 
+            t = planner.getDipolarPath(n1, n2, timeout=5)
+            return [pose[:2] for pose in t]
+#         plotter.drawTreeSteer(tree, steerFun, color='k', width=1, draw=True)
+#         plotter.drawTree(tree, color='k', width=1, draw=True)
         
         dipPath = planner.nodesToTrajectory(path)
-        plotter.drawPath2D(dipPath, color='g', width=2)
-        
+        plotter.drawPath2D(dipPath, color='b', ls='--', width=3)
+#         
         dijkNodePaht = planner.getDijkSmooth(path)
         dipPath = planner.nodesToTrajectory(dijkNodePaht)
-        plotter.drawPath2D(dipPath, color='r', width=2)
+        plotter.drawPath2D(dipPath, color='r', width=3)
         
         plt.show()
+        
+        
+    def plotForPaper1(self):
+        region = pShapes.Rectangle(10, 10)
+        obs = pShapes.Rectangle(2, 4)
+        obs.shift(5.5, 2)
+        obs.rotate(2.3)
+#         region -= obs
+        
+        startPose = (2, 7, pi/2)
+        endPose = (8, 2, pi/3)
+        polyMap = RRTMapConst([region], [(0, pi)])
+        
+        plotter = RRTPlotter()
+        robot = RRTRobot.circularRobot((0,0,0), .5)
+        controller = _DipolarCLoopControl.DipolarController()
+
+        planner = _DipolarRRT.DipolarRRT(robot, polyMap, controller, 
+                                               plotter=plotter)
+        
+        tree = [Node.nodeFromPose(startPose)]
+        goalNode = Node.nodeFromPose(endPose)
+        planner.extendTree(tree, goalNode)
+        
+        print "extended"
+        
+        trajectory = planner.nodesToTrajectory(tree)
+        
+        # Start and end
+        plotter.drawMapConst(polyMap)
+        robot.moveTo(startPose)
+        plotter.drawPolygon(robot.shape, color='b', width=2)
+        robot.moveTo(endPose)
+        plotter.drawPolygon(robot.shape, color='b', width=2)
+        
+        # path
+        plotter.drawPath2D(trajectory, color='b', ls='--', width=2, draw=True)
+        
+        # Dipoles
+        robot.shape.scale(.2, .2, robot.pose[0], robot.pose[1])
+        for node in tree:
+            robot.moveTo(node.getPose())
+            plotter.drawPolygon(robot.shape, color='b', width=2)
+                
+        
+        plotter.show()
         
             
     def testController(self):
@@ -442,6 +493,8 @@ if __name__ == "__main__":
     test.testDipolarRRT(plotting=True)
 
 #     test.oldResults()
+    
+#     test.plotForPaper1()
     
 #     import cProfile as Profile
 #     Profile.run("test.testDipolarRRTStar(False)")   

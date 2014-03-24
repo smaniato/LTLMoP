@@ -21,9 +21,9 @@ except:
     plotter_avail = False
     
 # TODO: METHODS FOR GETTING TO GOAL REGION AND POINT
-# TODO: MAP SHOULD HAVE ITS OWN ROBOT COPY
 # TODO: PASS MAP TO THE GET PATH FUNCTION OR PUT IN A FULL MAP AND PASS BOOL LIST
 # TODO: Robot should have a "buffer zone" when entering regions or do shape padding
+# TODO: IT IS WEIRD THAT MAP IS EDDITED (ROBOT OFFSET ADDITION) TALK TO SPYROS
     
 class Node:
     def __init__(self, position, orientation=None, parent=None):
@@ -115,15 +115,15 @@ class DipolarRRT:
         self.closeEnoughEucl2 = self.closeEnoughEucl * self.closeEnoughEucl
         self.closeEnoughAng = angle        
        
-    def sampleFree(self, isGoalReg=False):
+    def sampleFree(self, region=False):
         if random() < self.sampleGoalProb:
-            if isGoalReg:
-                goalPose = self.rrtMap.sampleGoal(self.robot)
+            if region:
+                goalPose = self.rrtMap.sampleGoal()
                 return Node.nodeFromPose(goalPose)
             else:
                 return self.goalNode
         else:
-            randPose = self.rrtMap.samplePose(self.robot)
+            randPose = self.rrtMap.samplePose()
             return Node.nodeFromPose(randPose)
      
     def distancePointE2(self, p1, p2):
@@ -163,7 +163,7 @@ class DipolarRRT:
             return False
              
     # TODO: PICK GOOD TIMEOUT. REMOVE WARNING
-    def getDipolarPath(self, fromNode, toNode, timeout=.5):
+    def getDipolarPath(self, fromNode, toNode, timeout=5):
         """ Returns the path traveled as a list of 1x3 arrays or None if a 
         collision or timeout occurs. 
         """        
@@ -211,6 +211,7 @@ class DipolarRRT:
         # Concatenate all of the paths
         trajectory = []
         map(trajectory.extend, paths)
+        trajectory.append(nodePath[-1].getPose())
         return trajectory     
     
     def get2DPathLengthE2(self, path):
@@ -301,13 +302,13 @@ class DipolarRRT:
         
     
     def iterateGoalReg(self):
-        """ Go through one iteration of the RRT algorithm. Return true if 
-        the goal regions was found.
+        """ Go through one iteration of the RRT algorithm. Return node at
+        goal region if found.
         """
         prevLen = len(self.nodeList)
         
         # Sample a new state and try to extend
-        randNode = self.sampleFree(isGoalReg=True)
+        randNode = self.sampleFree(region=True)
         self.extendTree(self.nodeList, randNode)
         
         # Plot or debug
@@ -317,6 +318,7 @@ class DipolarRRT:
             if DEBUG_PLT:
                 self.plotter.pause(.0001)
         
+        # Check if goal was reached
         if numNew > 0:
             for node in self.nodeList[-numNew:]:
                 self.robot.moveTo(node.getPose())
@@ -326,7 +328,7 @@ class DipolarRRT:
         else:
             return None
     
-    def getNodePathFromLastNode(self, node):
+    def getParentList(self, node):
         path = []
         while node is not None:
             path.append(node)
@@ -334,18 +336,25 @@ class DipolarRRT:
         path.reverse()
         return path
 
-    def getNodePath(self, fromPose, goalReg=False, toPose=None, K=500):
+    # TOPOSE LIKELY NOT WORKING ANYMORE
+    def getNodePath(self, fromPose, toPose=None, K=500):
         startNode = Node.nodeFromPose(fromPose, None)
         self.nodeList = [startNode]
-        if goalReg:
-            self.goalNode = None
+        if toPose is None:
             iterate = self.iterateGoalReg
         else:
             self.goalNode = Node.nodeFromPose(toPose, None)
             iterate = self.iterate
             
         # TODO: FIND A BETTER WAY TO GET SPACE
-        self.rrtMap.addRobotBuffer(self.robot)
+        # In case robot is not fully inside of regions initially 
+        self.robot.moveTo(fromPose)
+        rrtMapOrig = self.rrtMap
+        rrtMapTemp = rrtMapOrig.copy()
+        rrtMapTemp.addRobotBuffer(self.robot)
+        self.rrtMap = rrtMapTemp
+        
+        path = None
         
         # Iterate until path is found
         for i in range(K):
@@ -353,17 +362,19 @@ class DipolarRRT:
                 print "Iteration: ", i
             foundGoal = iterate()
             if foundGoal is not None:
-                return self.getNodePathFromLastNode(foundGoal)
+                path = self.getParentList(foundGoal)
+                break
         
         # Show failing tree
-        if plotter_avail and PLOT_TREE_FAIL:
+        if plotter_avail and PLOT_TREE_FAIL and path is None:
             self.plotter.drawTree(self.nodeList)
             self.plotter.ioff()
             print "Showing failed result..."
             self.plotter.show()
             
-        return None
+        self.rrtMap = rrtMapOrig
         
+        return path        
         
     def getDijkSmooth(self, path):
         """ Use the shortcut Dijkstra to return a shorter path in the form of
@@ -371,6 +382,15 @@ class DipolarRRT:
         
         :param path: A list of Nodes
         """
+        
+        # TODO: FIND A BETTER WAY TO GET SPACE
+        # In case robot is not fully inside of regions initially 
+        self.robot.moveTo(path[0].getPose())
+        rrtMapOrig = self.rrtMap
+        rrtMapTemp = rrtMapOrig.copy()
+        rrtMapTemp.addRobotBuffer(self.robot)
+        self.rrtMap = rrtMapTemp
+        
         numEdges = 0                # Keep track of number of edges calculated
                 
         # Setup
@@ -386,6 +406,7 @@ class DipolarRRT:
         distances[0] = 0
         path[0].parent = None
         
+        shortPath = None
         while not nodeIQueue.empty():
             currNodeI = nodeIQueue.get()[1]
             if visited[currNodeI]:
@@ -404,7 +425,7 @@ class DipolarRRT:
                     shortPath.append(currNode)
                     currNode = currNode.parent
                 shortPath.reverse()
-                return shortPath
+                break
             
             # Go through all the non visited nodes
             for neighborI in range(numNodesTotal):
@@ -427,8 +448,8 @@ class DipolarRRT:
                     distances[neighborI] = distAlternative
                     neighNode.parent = currNode
                    
-        # No path was found 
-        return None 
+        self.rrtMap = rrtMapOrig
+        return shortPath
         
         
         

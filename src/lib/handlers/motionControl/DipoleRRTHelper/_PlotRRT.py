@@ -52,23 +52,43 @@ class RRTPlotter:
         for contour in poly:
             vertices = np.array(contour + [contour[0]])
             if self.invertY:
-                self.ax.plot(vertices[:,0], -vertices[:,1], 
+                vertices[:,1] *= -1
+            self.ax.plot(vertices[:,0], vertices[:,1], 
                          color=color, linewidth=width)
-            else:
-                self.ax.plot(vertices[:,0], vertices[:,1], 
-                         color=color, linewidth=width)
-        if draw:
-            plt.draw()
+        if draw: plt.draw()
         
     def drawTree(self, tree, color='k', width=1, draw=True):
-        """ For drawing trees created in RRT
+        """ For drawing trees created in RRT. Nodes are connected by straight
+        lines.
+        
+        :param tree: A list of nodes with parents properly set
         """
         for node in tree:
             parent = node.parent
-            if parent != None:
+            if parent is not None:
                 self.drawEdge(node, parent, color=color, width=width, draw=False)
-        if draw:
-            plt.draw()
+        
+        if draw: plt.draw()
+            
+    def drawTreeSteer(self, tree, steerFun, color='k', width=1, draw=True):
+        """ Draw a tree by plotting the path between nodes based on the given
+        steerFun function. 
+        
+        :param tree: A list of nodes with parents properly set
+        :param steerFun: A function that takes in two nodes and outputs
+            the path between them as a list of (x, y) iterables
+        """
+        for node in tree:
+            parent = node.parent
+            if parent is not None:
+                trajectory = steerFun(parent, node)
+                if trajectory is None:
+                    print "Invalid trajectory..."
+                    continue
+                trajectory.append(node.getPosition())
+                self.drawPath2D(trajectory, color=color, width=width, draw=False)
+        
+        if draw: plt.draw()
                 
     def drawEdge(self, node1, node2, color='k', width=1, draw=True):
         """ Draw the edge that connects two nodes from the RRT
@@ -77,15 +97,13 @@ class RRTPlotter:
         n2x, n2y = node2.getPosition()
         
         if self.invertY:
-            self.ax.plot([n1x, n2x], [-n1y, -n2y], color=color, linewidth=width)
-#             self.ax.plot([n1x, n2x], [-n1y, -n2y], 
-#                      'o-', color=color, linewidth=width)
-        else:
-            self.ax.plot([n1x, n2x], [n1y, n2y], color=color, linewidth=width)
-#             self.ax.plot([n1x, n2x], [n1y, n2y], 
-#                      'o-', color=color, linewidth=width)
-        if draw:
-            plt.draw()
+            n1y *= -1
+            n2y *= -1
+            
+        self.ax.plot([n1x, n2x], [n1y, n2y], color=color, linewidth=width)
+#         self.ax.plot([n1x, n2x], [n1y, n2y], 'o-', color=color, linewidth=width)   
+            
+        if draw: plt.draw()
     
     def drawStartAndGoalPoints(self, startPoint, goalPoint):
         """ Places a green marker at the start point and a red one at the end
@@ -153,32 +171,32 @@ class RRTPlotter:
         points = [node.getPosition() for node in path]
         self.drawPath2D(points, color=color, width=width)
     
-    def drawPath2D(self, path, color='k', width=1, draw=True):
+    def drawPath2D(self, path, color='k', ls='-', width=1, draw=True):
         """ Draw the path assuming that points are connected by straight lines
         
         :param path: a list 1x2 arrays
         """
         points = np.array(path)
         if self.invertY:
-            self.ax.plot(points[:,0], -points[:,1], color=color, linewidth=width)
-        else:
-            self.ax.plot(points[:,0], points[:,1], color=color, linewidth=width)
-        if draw:
-            plt.draw()
+            points[:,1] *= -1
+        self.ax.plot(points[:,0], points[:,1], color=color, ls=ls, 
+                         linewidth=width)
+        
+        if draw: plt.draw()
+        
     drawDipolePath2D = drawPath2D   # Depricated
         
-    def drawRobotOccupiedPath(self, path, robot, color='k', width=1):
+    def drawPath2DRobot(self, path, robot, color='k', width=1):
         """ Draw the space that the robot would occupy at each point in the
         path.
         
-        :param path: a list of dipoles
+        :param path: a list 1x2 arrays
         :param robot: an RRTRobot
         """
         robotCopy = robot.copy()
         for pose in path:
             robotCopy.moveRobotTo(pose)            
             self.drawPolygon(robotCopy.shape, color=color, width=width)
-            time.sleep(1)
             
     def showMapAndTrees(self, fullMap, allTrees):
         """ Draw and plot the fullMap and trees. Mainly used to help debug

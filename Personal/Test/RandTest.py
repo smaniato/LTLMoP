@@ -46,13 +46,12 @@ from math import pi
 # 
 # Profile.run("test2()")
 
-print "A %f number." % (3.2223)
-
-
-
-
-
-
+a = [(1,2), (3,4)]
+b = list(a) 
+b[0] = (7,8)
+print a 
+print b
+print list(None)
 
 
 
