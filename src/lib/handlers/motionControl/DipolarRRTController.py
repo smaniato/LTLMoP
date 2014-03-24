@@ -32,7 +32,13 @@ except:
     logging.info("Plotter disabled.")
     plotter_avail = False
 
-# TODO: I think the dipolar controller should be in the drive handler
+"""
+TODO: I think the dipolar controller should be in the drive handler
+TODO: Close enough parameter can cause problems if path planner stops but
+    is not actually inside of the region... Position and or theta wise. 
+    At some point may have to make distinction between the point we are 
+    driving towards and the point that was "close enough" to that point. 
+"""
 
 class motionControlHandler:
     def __init__(self, proj, shared_data, robotType, nodeDistInter, linearGain, angularGain,
@@ -87,7 +93,7 @@ class motionControlHandler:
         # TODO: MAP IS NONE. FINISH TODO IN _DipolarRRT
         self.rrt = DipolarRRT(self.robot, None, self.dipController, 
                               plotter=self.plotter, plotTree=plotTree)
-        self.rrt.setCloseEnough(self.robot.radius*2, .2)
+        self.rrt.setCloseEnough(self.robot.radius*2, .5)
         self.rrt.stepSize = nodeDistInter
         self.rrt.colCheckInter = self.dT
         
@@ -136,6 +142,10 @@ class motionControlHandler:
         nextDipole = self.path[self.nextDipoleIndex]
         v, w = self.dipController.getControls(pose, nextDipole, 
                                                self.prevPose, self.dT)
+        
+        logging.debug("\nPose: {} \nNext: {} \nVel: {}".format(pose, 
+                      self.path[self.nextDipoleIndex], (v, w)))
+        
         self.drive_handler.setVelocity(v, w)
         self.prevPose = pose  
         
@@ -155,7 +165,9 @@ class motionControlHandler:
         nextPoly, nextConst = self.regions[next_reg]
         
         # Prepare RRT
-        constMap = RRTMapConst([currPoly, nextPoly], [currConst, nextConst], [False, True])
+        constMap = RRTMapConst(self.robot, [currPoly, nextPoly], 
+                               [currConst, nextConst], 
+                               [False, True])
         
         pose = self.pose_handler.getPose()
         
@@ -174,7 +186,13 @@ class motionControlHandler:
         if self.DEBUG:
             print "Getting RRTPath"
             
-        nodePath = self.rrt.getNodePath(pose, goalReg=True, K=2000)
+        nodePath = self.rrt.getNodePath(pose, K=2000)
+        
+        if nodePath is None:
+            logging.info("NO PATH FOUND!")
+            raise Exception("Could not find path in given iterations")
+        else:
+            logging.info("FOUND PATH!")
     
         if self.PLOT_PATH:
             trajectory = self.rrt.nodesToTrajectory(nodePath)
@@ -262,8 +280,8 @@ class motionControlHandler:
         
         # Create
         elif robotType == 1:
-            return RRTRobot.circularRobot([0,0,0], .01)  
-#             return RRTRobot.circularRobot([0,0,0], .1)    
+#             return RRTRobot.circularRobot([0,0,0], .01)  
+            return RRTRobot.circularRobot([0,0,0], .1)    
         
         # Create
         elif robotType == 2: 

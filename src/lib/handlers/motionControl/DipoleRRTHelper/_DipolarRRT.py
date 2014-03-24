@@ -24,6 +24,8 @@ except:
 # TODO: PASS MAP TO THE GET PATH FUNCTION OR PUT IN A FULL MAP AND PASS BOOL LIST
 # TODO: Robot should have a "buffer zone" when entering regions or do shape padding
 # TODO: IT IS WEIRD THAT MAP IS EDDITED (ROBOT OFFSET ADDITION) TALK TO SPYROS
+# TODO: MAP COPY IS DONE QUITE A LOT. (PATH, TRAJECTORY, DIJK)
+    
     
 class Node:
     def __init__(self, position, orientation=None, parent=None):
@@ -205,8 +207,19 @@ class DipolarRRT:
         return [node.getPose() for node in nodeList]
 
     def nodesToTrajectory(self, nodePath):
+        # TODO: FIND A BETTER WAY TO GET SPACE
+        # In case robot is not fully inside of regions initially 
+        self.robot.moveTo(nodePath[0].getPose())
+        rrtMapOrig = self.rrtMap
+        rrtMapTemp = rrtMapOrig.copy()
+        rrtMapTemp.addRobotBuffer(self.robot)
+        self.rrtMap = rrtMapTemp
+        
         paths = [self.getDipolarPath(nodePath[i], nodePath[i+1])
                  for i in range(len(nodePath) - 1)]
+        
+        # Restore map
+        self.rrtMap = rrtMapOrig
         
         # Concatenate all of the paths
         trajectory = []

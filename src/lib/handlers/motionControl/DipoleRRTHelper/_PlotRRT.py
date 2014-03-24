@@ -23,12 +23,13 @@ class RRTPlotter:
         else:
             self.fig = figure
         self.invertY = invertY
-#         self.ax.set_aspect('equal')
+        plt.axis('equal')
             
     def clearPlot(self):
         """ Clear the current axes. """
         plt.close()
         self.fig, self.ax = plt.subplots()
+        plt.axis('equal')
         
     def pause(self, t):
         """ Used when debugging. """

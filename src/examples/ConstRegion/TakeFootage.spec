@@ -15,7 +15,7 @@ decompose: True
 use_region_bit_encoding: True
 
 CurrentConfigName:
-SimulatedDipolar
+Create
 
 Customs: # List of custom propositions
 
