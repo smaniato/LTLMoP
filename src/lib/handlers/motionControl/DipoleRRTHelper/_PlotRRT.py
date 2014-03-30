@@ -58,6 +58,17 @@ class RRTPlotter:
                          color=color, linewidth=width)
         if draw: plt.draw()
         
+    def drawPolygonFill(self, poly, color='k', width=1, draw=True):
+        """ Draw a polygon object
+        """
+        for contour in poly:
+            vertices = np.array(contour + [contour[0]])
+            if self.invertY:
+                vertices[:,1] *= -1
+            self.ax.fill(vertices[:,0], vertices[:,1], 
+                         color=color, linewidth=width)
+        if draw: plt.draw()
+        
     def drawTree(self, tree, color='k', width=1, draw=True):
         """ For drawing trees created in RRT. Nodes are connected by straight
         lines.
@@ -77,7 +88,7 @@ class RRTPlotter:
         
         :param tree: A list of nodes with parents properly set
         :param steerFun: A function that takes in two nodes and outputs
-            the path between them as a list of (x, y) iterables
+            the path between them as a list of (x, y) values
         """
         for node in tree:
             parent = node.parent

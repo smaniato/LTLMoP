@@ -4,7 +4,7 @@
 pioneerExampleLocomotionCommand.py - Pioneer Locomotion Command Handler
 ================================================================================
 """
-import socket, sys, time
+import socket, sys, time, logging
 
 
 import lib.handlers.handlerTemplates as handlerTemplates
@@ -18,8 +18,32 @@ class IRobotCreateLocomotionCommandHandler(handlerTemplates.LocomotionCommandHan
             exit(-1)
 
     def sendCommand(self, cmd):
-        # Command the robot based on the gait given by the drive handler.
-        direction = (cmd[0],cmd[1])
+        # For avoiding the create's dead band
+        MIN_V = .05
+        MIN_W = .07
+        
+        v, w = cmd[:2]
+        
+        scaledCount = 0         # For when both require scaling
+        vScale, wScale = 1,1
+        if v != 0:
+            if abs(v) < MIN_V:
+                vScale = abs(MIN_V/v) 
+                scaledCount += 1
+        if w != 0:
+            if abs(w) < MIN_W:
+                wScale = abs(MIN_W/w)
+                scaledCount += 1
+                
+        if scaledCount < 2:
+            scale = max(vScale, wScale)
+        else:
+            scale = min(vScale, wScale)
+        
+        v *= scale
+        w *= scale
+            
+        logging.debug("\nVel: {}".format((v, w)))
+        
+        direction = (v, w)
         self.robocomm.sendDirection(direction)
-        #if cmd[0]==0.0:
-        #    time.sleep(0.1)

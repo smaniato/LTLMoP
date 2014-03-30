@@ -56,7 +56,7 @@ class DipolarController:
         :param delT: The time elapsed since posePrev
         :return: linearVelocity, angularVelocity
         """        
-        influenceGain = 50
+        influenceGain = 1
         
         rX = poseCurr[0] - poseDes[0]
         rY = poseCurr[1] - poseDes[1]    

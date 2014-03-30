@@ -46,15 +46,42 @@ from math import pi
 # 
 # Profile.run("test2()")
 
-a = [(1,2), (3,4)]
-b = list(a) 
-b[0] = (7,8)
+# a = [(1,2), (3,4)]
+# b = list(a) 
+# b[0] = (7,8)
+# print a 
+# print b
+# print list(None)
+
+# x = [0, 1, 1, 0]
+# y = [0, 0, 1, 1]
+# x2 = [2*v for v in x]
+# y2 = [2*v for v in y]
+# plt.fill(x, y, 'r')
+# plt.plot(x2, y2, '--r')
+# 
+# 
+# plt.draw()
+# plt.show()
+
+# import cPickle
+# with open("temp.txt", "w"): pass
+# with open("temp.txt", 'w') as f:
+#     cPickle.dump([(1,2), (5, 8)], f)
+#     a = "lol"
+# with open("temp.txt", 'a') as f:
+#     cPickle.dump("World", f)
+# with open("temp.txt", 'r') as f:
+#     print cPickle.load(f)
+#     print cPickle.load(f)
+# 
+# print a 
+
+a = range(20)
 print a 
-print b
-print list(None)
-
-
-
+print a[4:]
+print a[:4]
+print a[0:100]
 
 
 

@@ -9,6 +9,7 @@ polygons that are used in DipolarRRT.
 """
 
 import Polygon
+Polygon.setTolerance(0.01)
 
 import Polygon.Shapes as pShapes
 import numpy as np
@@ -68,13 +69,17 @@ class RRTMapConst:
         self.areGoals = areGoals
 
         # Regions are (polygon, constraint) pairs
-        self.regions = zip(polygons, thetaConstraints)
-        self.goalRegions = [self.regions[i] for i in range(numPoly) if areGoals[i]]
-        
         # Poly sums are cumulative free spaces
-        goalPolygons = (polygons[i] for i in range(numPoly) if areGoals[i])
+        self.regions = zip(polygons, thetaConstraints)
         self.polySum = reduce(lambda x, y: x + y, polygons)
-        self.goalPolySum = reduce(lambda x, y: x + y, goalPolygons)
+        
+        if True in areGoals:
+            self.goalRegions = [self.regions[i] for i in range(numPoly) if areGoals[i]]
+            goalPolygons = (polygons[i] for i in range(numPoly) if areGoals[i])
+            self.goalPolySum = reduce(lambda x, y: x + y, goalPolygons)
+        else:
+            self.goalRegions = []
+            self.goalPolySum = None
         
     def meetsRegionConstraints(self, robot, polySum, regions):
         x, y, thetaR = robot.pose
@@ -153,7 +158,7 @@ class RRTMapConst:
         
         if self.polySum.overlaps(robotP):
             self.polySum += robotP
-        if self.goalPolySum.overlaps(robotP):
+        if self.goalPolySum is not None and self.goalPolySum.overlaps(robotP):
             self.goalPolySum += robotP
             
     def copy(self):

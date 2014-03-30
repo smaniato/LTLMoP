@@ -14,7 +14,12 @@ robot as well as the linear and angular velocities to drive them.
 from __future__ import division
 
 import logging
+import Polygon as PolygonImp
+PolygonImp.setTolerance(0.01)
 from Polygon import Polygon, Shapes as pShapes
+import cPickle as pickle
+from time import clock
+from math import pi
 
 # Import helpers
 import sys, os
@@ -42,7 +47,7 @@ TODO: Close enough parameter can cause problems if path planner stops but
 
 class motionControlHandler:
     def __init__(self, proj, shared_data, robotType, nodeDistInter, linearGain, angularGain,
-                 plotTree, plotPath, plotRegion):
+                 plotTree, plotLTLMoPPath, plotRegion):
         """
         An RRT with dipoles for finding path in regions with theta constraints. 
         
@@ -51,7 +56,7 @@ class motionControlHandler:
         linearGain (float): The k1 gain for the dipolar closed loop controller. (default=0.5)
         angularGain (float): the k2 gain for the dipolar closed loop controller. (default=1.5)
         plotTree (bool): Plot the RRT Live
-        plotPath (bool): Plot paths after calculation 
+        plotLTLMoPPath (bool): Plot paths after calculation 
         plotRegion (bool): Plot the current and next region
         """        
         # Settings
@@ -59,8 +64,10 @@ class motionControlHandler:
         self.DEBUG_PLT = False        # If using a debugger. Matplotlib workaround
         self.PLOT_REG = plotRegion       # Plot the current and next region
         self.PLOT_TREE = plotTree      # Plot the RRT live
-        self.PLOT_PATH = plotPath       # Plot path generated
+        self.PLOT_PATH = plotLTLMoPPath       # Plot path generated
         self.PLOT_TREE_FAIL = True # Plot the RRT if it fails to find a path
+        simulation = True
+        self.logName = "LogTest"              # Then name to log data under
         
         # Get references to handlers we'll need to communicate with
         self.drive_handler = proj.h_instance['drive']
@@ -69,10 +76,9 @@ class motionControlHandler:
         # Plotter
         if plotter_avail:
             # TODO: MAKE PARAMETER?
-            self.plotter = RRTPlotter(invertY=True)
-#             self.plotter = RRTPlotter(invertY=False)
+            self.plotter = RRTPlotter(invertY=simulation)
             self.plotter.ion()    
-            self.plotting = plotTree or plotPath or plotRegion 
+            self.plotting = plotTree or plotLTLMoPPath or plotRegion 
         else: 
             self.plotter = None         
             self.plotting = False   
@@ -81,7 +87,14 @@ class motionControlHandler:
 #         self.showEachRegion(proj)
         
         # Get a list of (polygon, constraint) pairs
-        self.regions = self.getConstrainedRegions(proj) 
+        self.regions = self.getConstrainedRegions(proj)
+        
+        # Log information. Start with map. Clear others.
+        if self.logName is not None:
+            with open(self.logName+"Map", "wb") as f:
+                pickle.dump(self.regions, f) 
+            with open(self.logName+"Pose", "w"): pass
+            with open(self.logName+"Plan", "w"): pass
         
         # Dipolar controller
         self.dipController = DipolarController(k1=linearGain, k2=angularGain)
@@ -93,7 +106,7 @@ class motionControlHandler:
         # TODO: MAP IS NONE. FINISH TODO IN _DipolarRRT
         self.rrt = DipolarRRT(self.robot, None, self.dipController, 
                               plotter=self.plotter, plotTree=plotTree)
-        self.rrt.setCloseEnough(self.robot.radius*2, .5)
+        self.rrt.setCloseEnough(self.robot.radius, .2)
         self.rrt.stepSize = nodeDistInter
         self.rrt.colCheckInter = self.dT
         
@@ -105,6 +118,11 @@ class motionControlHandler:
         self.path = None
         self.nextDipoleIndex = None
         self.storedNextReg = None
+        
+        # TODO CLEAN UP
+        self.closeExecEucl = 1
+        self.closeExecEucl2 = self.closeExecEucl * self.closeExecEucl
+        self.closeExecAng = 2
 
     def gotoRegion(self, current_reg, next_reg, last=False):
         """ Returns ``True`` if we've reached the next region. 
@@ -112,7 +130,16 @@ class motionControlHandler:
         dipole. If the desired region changes or no path
         currently exists, it will create one using the RRT
         """
+#         self.drive_handler.setVelocity(.000, .001)
 #         return False
+
+        # Find our current configuration
+        pose = self.pose_handler.getPose()
+
+        # Log pose
+        if self.logName is not None:
+            with open(self.logName+"Pose", 'ab') as f:
+                pickle.dump((pose, clock()), f)
         
         if current_reg == next_reg and not last:
             # No need to move!
@@ -125,11 +152,8 @@ class motionControlHandler:
             self.findAndSetPath(current_reg, next_reg)
             self.storedNextReg = next_reg
             
-        # Find our current configuration
-        pose = self.pose_handler.getPose()
-            
         # Check if reached dipole
-        while self.rrt.closeEnoughPose(pose, self.path[self.nextDipoleIndex]):
+        while self.closeEnoughPose(pose, self.path[self.nextDipoleIndex]):
             self.nextDipoleIndex += 1
             
             # Check end of path
@@ -189,10 +213,7 @@ class motionControlHandler:
         nodePath = self.rrt.getNodePath(pose, K=2000)
         
         if nodePath is None:
-            logging.info("NO PATH FOUND!")
             raise Exception("Could not find path in given iterations")
-        else:
-            logging.info("FOUND PATH!")
     
         if self.PLOT_PATH:
             trajectory = self.rrt.nodesToTrajectory(nodePath)
@@ -207,6 +228,12 @@ class motionControlHandler:
             trajectory = self.rrt.nodesToTrajectory(shortPath)
             self.plotter.drawPath2D(trajectory, color='r', width=3)
             
+        # Log planned trajectory
+        if self.logName is not None: 
+            trajectory = self.rrt.nodesToTrajectory(shortPath)
+            with open(self.logName+"Plan", "ab") as f:
+                pickle.dump(trajectory, f)  
+                
 #         if self.DEBUG:
 #             pathT = self.rrt.get2DPathRepresent(shortPath)
 #             print "Length of pathT=", len(pathT)
@@ -218,6 +245,8 @@ class motionControlHandler:
         self.storedNextReg = next_reg        
     
     def getConstrainedRegions(self, proj):
+        """ Returns a list of (polygon, theta constraint) pairs 
+        """
         mapFun = proj.coordmap_map2lab
         regions = [self.getRegionPolygon(region, mapFun) 
                    for region in proj.rfi.regions]
@@ -230,11 +259,11 @@ class motionControlHandler:
         # Z Shape map
 #         thetaConstraints = [(0, pi/4), (0, pi), (0, pi), (pi/2, pi/4)]
         # Take footage map
-        thetaConstraints = [(pi/2, pi/4),       # r2 
+        thetaConstraints = [(-pi/2, pi/4),       # r2 
                             (0, pi),            # r1 
                             (0, pi),            # r3
-                            (0, pi/10),         # Upload
-                            (-pi/2, pi/10)      # Charge
+                            (pi, pi/10),      # Upload
+                            (-pi/2, pi)      # Charge
                             ]
         return zip(regions, thetaConstraints)
         
@@ -254,23 +283,6 @@ class motionControlHandler:
 #             regionPoly -= Polygon(pointsT)
             
         return regionPoly        
-    
-    def showEachRegion(self, proj):
-        """ For debugging purposes. Will plot each region one by one in the
-        order in which they apear in the list.
-        """
-        mapFun = proj.coordmap_map2lab
-        regions = [self.getRegionPolygon(region, mapFun) 
-                   for region in proj.rfi.regions]
-        
-        self.plotter.ioff()
-        for r in regions:
-            self.plotter.clearPlot()
-            self.plotter.drawPolygon(r)
-            self.plotter.show()
-            
-        if self.plotting:
-            self.plotter.ion()
         
     def getRobot(self, robotType):
         """ Returns a predefined RRTRobot """
@@ -293,8 +305,39 @@ class motionControlHandler:
             msg = "ERROR: DipolarRRTController - Undefined robot type."
             raise Exception(msg)
         
-        
-        
+    #===========================================================================
+    # Additional/Helper Methods
+    #===========================================================================
     
+    def diffAngles(self, angle1, angle2):
+        """ Returns difference between -pi and pi. Relative to angle2.
+        """
+        return (angle1 - angle2 + pi)%(2*pi) - pi
+        
+    def closeEnoughPose(self, fromPose, toPose):
+        ang = abs(self.diffAngles(fromPose[2], toPose[2]))
+        v = toPose[:2] - fromPose[:2]
+        dist2 = v[0]*v[0] + v[1]*v[1]
+        if (ang < self.closeExecAng and dist2 < self.closeExecEucl2):
+            return True
+        else:
+            return False
+        
+    def showEachRegion(self, proj):
+        """ For debugging purposes. Will plot each region one by one in the
+        order in which they apear in the list.
+        """
+        mapFun = proj.coordmap_map2lab
+        regions = [self.getRegionPolygon(region, mapFun) 
+                   for region in proj.rfi.regions]
+        
+        self.plotter.ioff()
+        for r in regions:
+            self.plotter.clearPlot()
+            self.plotter.drawPolygon(r)
+            self.plotter.show()
+            
+        if self.plotting:
+            self.plotter.ion()
     
     
