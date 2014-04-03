@@ -1261,7 +1261,10 @@ class propMappingDialog(wx.Dialog):
 
         for p in self.proj.all_actuators:
             self.list_box_props.Append(p)
-
+        
+        self.list_box_props.Append("")
+        self.list_box_props.Append("=== Correspondence ===")
+        
         self.mapping = None
         self.tempMethod = None
 
