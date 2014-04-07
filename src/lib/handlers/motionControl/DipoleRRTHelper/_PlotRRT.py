@@ -105,8 +105,8 @@ class RRTPlotter:
     def drawEdge(self, node1, node2, color='k', width=1, draw=True):
         """ Draw the edge that connects two nodes from the RRT
         """
-        n1x, n1y = node1.getPosition()
-        n2x, n2y = node2.getPosition()
+        n1x, n1y, _ = node1.pose
+        n2x, n2y, _ = node2.pose
         
         if self.invertY:
             n1y *= -1

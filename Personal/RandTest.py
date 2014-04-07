@@ -1,19 +1,19 @@
-from Queue import PriorityQueue
-from random import random, randint
-from time import clock
- 
-import cProfile as Profile
- 
-import Polygon
-from numpy.linalg import norm
- 
-from _DipolarCLoopControl import DipolarController
-from _PlotRRT import RRTPlotter
-import Polygon.Shapes as pShapes
-from _RRTMapAndRobot import RRTMap, RRTRobot
-import matplotlib.pyplot as plt
-import numpy as np
-from math import pi
+# from Queue import PriorityQueue
+# from random import random, randint
+# from time import clock
+#  
+# import cProfile as Profile
+#  
+# import Polygon
+# from numpy.linalg import norm
+#  
+# from _DipolarCLoopControl import DipolarController
+# from _PlotRRT import RRTPlotter
+# import Polygon.Shapes as pShapes
+# from _RRTMapAndRobot import RRTMap, RRTRobot
+# import matplotlib.pyplot as plt
+# import numpy as np
+# from math import pi
 
 
 # def sign(x):
@@ -75,19 +75,10 @@ from math import pi
 #     print cPickle.load(f)
 #     print cPickle.load(f)
 # 
-# print a 
+# print a `
 
-a = range(20)
-print a 
-print a[4:]
-print a[:4]
-print a[0:100]
-
-
-
-
-
-
+print [1]*5
+print {1}*5
 
 
 

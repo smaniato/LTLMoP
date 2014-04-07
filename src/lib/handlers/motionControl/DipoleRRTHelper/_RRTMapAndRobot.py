@@ -19,22 +19,99 @@ from random import random, sample
 
 class RRTMap:
     
-    def __init__(self, mapArea, allObstacles=None):
-        ''' An object with the outline of the map, a list of obstacles,
-        and the poses that the robot starts and ends on.
+    def __init__(self, robot, polygons, thetaConstraints=None):
+        """ Creates an object to represent a map. 
         
-        :param mapArea: Polygon representative of the area
-        :param allObstacles: list of polygons
-        '''
-        self.boundary = mapArea
-        if allObstacles == None:
-            self.allObstacles = []
+        :param robot: An RRTRobot object to use for collision checks
+        :param polygons: A list of polygons to represent regions
+        :param thetaConstraints: A list of (angle, maxOffset) for each region
+            (None if no constraints)
+        """
+        numPoly = len(polygons)
+        
+        # Make personal copies of the parameters
+        self.robot = robot.copy()
+        polygons = [Polygon.Polygon(p) for p in polygons]
+        if thetaConstraints is not None:
+            thetaConstraints = list(thetaConstraints)
         else:
-            self.allObstacles = allObstacles
+            thetaConstraints = [(0, pi)]*numPoly
+
+        # Regions are (polygon, constraint) pairs
+        # Poly sums are cumulative free spaces
+        self.regions = zip(polygons, thetaConstraints)
+        self.polySum = reduce(lambda x, y: x + y, polygons)
+        
+    def meetsRegionConstraints(self, robot):
+        """ Checks if the given robot fits within polySum and follows the 
+        orientational constraint of at least one of the regions that its 
+        pose falls into. 
+        """
+        x, y, thetaR = robot.pose
+        if self.polySum.covers(robot.shape):
+            for poly, (theta, off) in self.regions:
+                if (abs(diffAngles(theta, thetaR)) < off and 
+                    poly.isInside(x, y)):
+                    return True
+        return False
+    
+    def isValidPose(self, pose):
+        self.robot.moveTo(pose)
+        return self.meetsRegionConstraints(self.robot)
+    
+    def sample(self):
+        """ Samples a pose inside of regions, but do not perform
+        collision checks. 
+        """
+        x, y = self.polySum.sample(random)
+        
+        # Generate random angles for all regions that x, y is in 
+        randAngles = []
+        for poly, (theta, off) in self.regions:
+                if poly.isInside(x, y):
+                    randAngles.append(random() * 2 * off - off + theta)
+                    
+        # Choose one of the angles
+        if len(randAngles) > 0:
+            randAng = sample(randAngles, 1)[0]
+        else:
+            randAng = 0
+        
+        return (x, y, randAng)
+    
+    def samplePose(self):
+        """ Sample a collision free pose for robot within any region.
+        """
+        MAX_ITER = 1000      # Maximum number of attempts
+        
+        robot = self.robot
+        for _ in range(MAX_ITER):
+            pose = self.sample()
+            robot.moveTo(pose)
+            if self.meetsRegionConstraints(robot):
+                return pose
             
-        self.cFree = Polygon.Polygon(mapArea)
-        for obst in self.allObstacles:
-            self.cFree -= obst
+        raise Exception("Could not sample a pose...")
+    
+    def addRobotBuffer(self, robot):
+        """ Use if robot may start sampling and is not completely
+        within any of the regions. Increases the size of poly sums by
+        a scaled robot shape. 
+        Note: Robot pose must be within part of the map.
+        Note: Polygons are changed. Consider making a copy of the map
+        to restore back to the original.
+        """
+        scale = 1.3
+        xT, yT, _ = robot.pose
+        if self.polySum.isInside(xT, yT):
+            robotP = Polygon.Polygon(robot.shape)
+            robotP.scale(scale, scale, xT, yT)
+            self.polySum += robotP
+            
+    def copy(self):
+        poly, const = zip(*self.regions)
+        return RRTMap(self.robot, poly, const)
+
             
 class RRTMapConst:
     
