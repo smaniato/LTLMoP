@@ -289,6 +289,52 @@ class SpecCompiler(object):
 
             LTLspec_env = spec["EnvInit"] + spec["EnvTrans"] + spec["EnvGoals"]
             LTLspec_sys = spec["SysInit"] + spec["SysTrans"] + spec["SysGoals"]
+            
+        elif self.proj.compile_options["parser"] == "nltk":
+            import parseSpec
+
+            if self.proj.compile_options["decompose"]:
+                # substitute non-projective locative terms with region names
+                for m in re.finditer(r'near (?P<rA>\w+)', text):
+                    text=re.sub(r'near (?P<rA>\w+)', ' or '.join([r for r in self.parser.proj.regionMapping['near$'+m.group('rA')+'$'+str(50)]]), text)
+                for m in re.finditer(r'within (?P<dist>\d+) (from|of) (?P<rA>\w+)', text):
+                    text=re.sub(r'within ' + m.group('dist')+' (from|of) '+ m.group('rA'), ' or '.join([r for r in self.parser.proj.regionMapping['near$'+m.group('rA')+'$'+m.group('dist')]]), text)
+                for m in re.finditer(r'between (?P<rA>\w+) and (?P<rB>\w+)', text):
+                    text=re.sub(r'between ' + m.group('rA')+' and '+ m.group('rB'), ' or '.join([r for r in self.parser.proj.regionMapping['between$'+m.group('rA')+'$and$'+m.group('rB')+"$"]]), text)
+
+                # substitute decomposed region 
+                for r in self.proj.rfi.regions:
+                    if not (r.isObstacle or r.name.lower() == "boundary"):
+                        text = re.sub('\\b' + r.name + '\\b', ' or '.join([x for x in self.parser.proj.regionMapping[r.name]]), text)
+
+                regionList = [x.name for x in self.parser.proj.rfi.regions]
+            else:
+                for r in self.proj.rfi.regions:
+                    if not (r.isObstacle or r.name.lower() == "boundary"):
+                        text = re.sub('\\b' + r.name + '\\b', r.name, text)
+
+                regionList = [x.name for x in self.proj.rfi.regions]
+
+            #logging.debug('\n'+text)
+            #logging.debug('self.parser.proj.rfi.regions: ' + str([x.name for x in self.parser.proj.rfi.regions]))
+            #logging.debug('self.proj.rfi.regions: ' + str([x.name for x in self.proj.rfi.regions]))
+
+            spec, traceback, failed, self.LTL2SpecLineNumber, self.proj.internal_props = parseSpec.writeSpec(text, sensorList, regionList, robotPropList)
+
+            robotPropList.extend(self.proj.internal_props)
+
+            for spec_section in [x+y for x in ["Sys", "Env"] for y in ["Init", "Trans", "Goals"]]:
+                for r in self.parser.proj.rfi.regions + self.proj.rfi.regions:
+                    spec[spec_section] = re.sub(r'\b'+r.name+r'\b', "s."+r.name, spec[spec_section])
+                logging.debug("\n"+spec[spec_section])
+                spec[spec_section] = self.postprocessLTL(spec[spec_section], sensorList, robotPropList)
+
+            # Abort compilation if there were any errors
+            if failed:
+                return None, None, None
+
+            LTLspec_env = spec["EnvInit"] + spec["EnvTrans"] + spec["EnvGoals"]
+            LTLspec_sys = spec["SysInit"] + spec["SysTrans"] + spec["SysGoals"]
 
         else:
             logging.error("Parser type '{0}' not currently supported".format(self.proj.compile_options["parser"]))
@@ -420,8 +466,14 @@ class SpecCompiler(object):
             # substitute decomposed region names
             for r in self.proj.rfi.regions:
                 if not (r.isObstacle or r.name.lower() == "boundary"):
-                    text = re.sub('\\bs\.' + r.name + '\\b', "("+' | '.join(["s."+x for x in self.parser.proj.regionMapping[r.name]])+")", text)
-                    text = re.sub('\\be\.' + r.name + '\\b', "("+' | '.join(["e."+x for x in self.parser.proj.regionMapping[r.name]])+")", text)
+                    text = re.sub('\\b(?:s\.)?' + r.name + '\\b', "("+' | '.join(["s."+x for x in self.parser.proj.regionMapping[r.name]])+")", text, flags=re.I)
+                    text = re.sub('\\b(?:e\.)?' + r.name + '\\b', "("+' | '.join(["e."+x for x in self.parser.proj.regionMapping[r.name]])+")", text, flags=re.I)
+
+        # Ensure that propositions have the proper prefix
+        for s in sensorList:
+            text = re.sub('\\b(?:e\.)?' + s + '\\b', "e.{}".format(s), text, flags=re.I)
+        for a in robotPropList:
+            text = re.sub('\\b(?:s\.)?' + a + '\\b', "s.{}".format(a), text, flags=re.I)
 
         if self.proj.compile_options["decompose"]:
             regionList = [x.name for x in self.parser.proj.rfi.regions]
