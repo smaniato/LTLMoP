@@ -13,6 +13,8 @@ import copy
 import nltk
 from ambiguity import showParseDiffs
 
+import logging
+
 def writeSpec(text, sensorList, regionList, robotPropList):
     ''' This function creates the Spec dictionary that contains the parsed LTL
         subformulas. It takes the text that contains the structured English,
@@ -60,8 +62,8 @@ def writeSpec(text, sensorList, regionList, robotPropList):
     correlations = {}
     
     #Open CFG file
-    #TODO: Make path independent
-    grammarFile = open('lib/structuredEnglish.fcfg','rb')
+    #TODO: Make path independent 
+    grammarFile = open('src/lib/structuredEnglish.fcfg','rb')
     grammarText = grammarFile.read()
     
     #Generate regular expression to match sentences defining groups
