@@ -7,11 +7,17 @@ from LTLParser.LTLFormula import LTLFormula, LTLFormulaType
 from createJTLVinput import createLTLfile
 import specCompiler
 
-class ExecutorResynthesisExtensions:
+import threading
+import logging
+
+class ExecutorResynthesisExtensions(object):
     """ Extensions to Executor to allow for specification rewriting and resynthesis.
         This class is not meant to be instantiated. """
 
-
+    def __init__(self):
+        super(ExecutorResynthesisExtensions, self).__init__()
+        logging.info("Initializing Executor Resynthesis")
+        
     def getCurrentStateAsLTL(self, include_env=False):
         """ Return a boolean formula (as a string) capturing the current discrete state of the system (and, optionally, the environment as well) """
 
