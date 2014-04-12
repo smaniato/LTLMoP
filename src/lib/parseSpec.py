@@ -63,7 +63,7 @@ def writeSpec(text, sensorList, regionList, robotPropList):
     
     #Open CFG file
     #TODO: Make path independent 
-    grammarFile = open('src/lib/structuredEnglish.fcfg','rb')
+    grammarFile = open('lib/structuredEnglish.fcfg','rb')
     grammarText = grammarFile.read()
     
     #Generate regular expression to match sentences defining groups
