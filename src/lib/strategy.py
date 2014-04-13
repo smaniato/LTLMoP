@@ -333,6 +333,7 @@ class State(object):
         # Check that this is a known prop_name
         if (prop_name not in self.context.input_props) and \
            (prop_name not in self.context.output_props) and \
+           (not prop_name.startswith("_")) and \
            (self.context.getDomainOfProposition(prop_name) is None):
             raise ValueError("Unknown proposition/domain {!r}".format(prop_name))
 
