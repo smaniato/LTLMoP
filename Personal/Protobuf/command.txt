@@ -1,0 +1,3 @@
+example:
+
+protoc --python_out=./ addressbook.proto

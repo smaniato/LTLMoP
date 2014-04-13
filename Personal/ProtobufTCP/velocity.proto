@@ -1,0 +1,6 @@
+package velocity;
+
+message VelMsg {
+	required double linear = 1;
+	required double angular = 2;
+}

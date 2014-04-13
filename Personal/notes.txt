@@ -1,0 +1,5 @@
+Rate of communication when sending packets with 1000 bytes of information 
+over tcp was 350 echoes per second (keep in mind that this requires the server
+to wait for the reception, respond, and then the client must wait for reception
+before sending the next one). 
+
