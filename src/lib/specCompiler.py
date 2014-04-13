@@ -592,7 +592,8 @@ class SpecCompiler(object):
         region_domain = strategy.Domain("region", regions, strategy.Domain.B0_IS_MSB)
         strat = strategy.createStrategyFromFile(self.proj.getStrategyFilename(),
                                                 self.proj.enabled_sensors,
-                                                self.proj.enabled_actuators + self.proj.all_customs + [region_domain])
+                                                self.proj.enabled_actuators + self.proj.all_customs + 
+                                                [region_domain] + self.proj.internal_props)
 
         nonTrivial = any([len(strat.findTransitionableStates({}, s)) > 0 for s in strat.iterateOverStates()])
 
