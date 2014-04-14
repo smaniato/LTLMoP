@@ -10,12 +10,14 @@ resynthesize, 1
 CompileOptions:
 convexify: True
 parser: nltk
+symbolic: False
+use_region_bit_encoding: True
+synthesizer: jtlv
 fastslow: True
 decompose: True
-use_region_bit_encoding: True
 
 CurrentConfigName:
-basicsim
+BasicSimulator
 
 Customs: # List of custom propositions
 
