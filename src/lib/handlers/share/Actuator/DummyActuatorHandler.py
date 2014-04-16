@@ -26,6 +26,16 @@ class DummyActuatorHandler(handlerTemplates.ActuatorHandler):
             except IOError:
                 # Probably already closed by user
                 pass
+    
+    def triggerResynthesis(self, actuatorVal, intial):
+        """" Tell the executor to pause, resynthesize, and then resume. """
+        
+        if not initial and int(actuatorVal) ==1:
+            if self.proj.executor.needs_resynthesis:
+                return
+            logging.debug("Resynthesis handle triggered!")
+            self.proj.executor.needs_resynthesis = True
+            
 
     def setActuator(self, name, actuatorVal,initial):
         """
