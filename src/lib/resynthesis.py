@@ -17,21 +17,21 @@ class ExecutorResynthesisExtensions(object):
     def __init__(self):
         super(ExecutorResynthesisExtensions, self).__init__()
         logging.info("Initializing Executor Resynthesis")
+        self.needs_resynthesis = False
         
-    def getCurrentStateAsLTL(self, include_env=False):
-        """ Return a boolean formula (as a string) capturing the current discrete state of the system (and, optionally, the environment as well) """
-
-        if self.aut:
-            # If we have current state in the automaton, use it (since it can capture
-            # state of internal propositions).
-            return fsa.stateToLTL(self.aut.current_state, include_env=include_env)
-        else:
-            # If we have no automaton yet, determine our state manually
-            # TODO: support env
-            # TODO: look at self.hsub.executing_config.initial_truths and pose
-            return ""
-
-
+        original_runIteration = self.runStrategyIteration
+        check_flags = self._checkForNewInternalFlags
+        def runIterWithResynthesisChecks():
+            original_runIteration()
+            check_flags()
+        self.runStrategyIteration = runIterWithResynthesisChecks
+    
+    def _checkForNewInternalFlags(self):
+        if self.needs_resynthesis:
+            logging.info("Time to Resynthsize")
+            self.needs_resynthesis = False
+    
+    
     def _duplicateProject(self, proj, n=itertools.count(1)):
         """ Creates a copy of a proj, and creates an accompanying spec file with an 
             auto-incremented counter in the name.  (Not overwriting is mostly for debugging.)"""

@@ -9,11 +9,12 @@ Does nothing more than print the actuator name and state; for testing purposes.
 
 import subprocess, os, time, socket
 import sys
-
+import logging
 import lib.handlers.handlerTemplates as handlerTemplates
 
 class DummyActuatorHandler(handlerTemplates.ActuatorHandler):
     def __init__(self, executor, shared_data):
+        self.executor = executor
         self.proj = executor.proj
         self.p_gui = None
 
@@ -27,14 +28,14 @@ class DummyActuatorHandler(handlerTemplates.ActuatorHandler):
                 # Probably already closed by user
                 pass
     
-    def triggerResynthesis(self, actuatorVal, intial):
+    def triggerResynthesis(self, actuatorVal, initial):
         """" Tell the executor to pause, resynthesize, and then resume. """
         
         if not initial and int(actuatorVal) ==1:
-            if self.proj.executor.needs_resynthesis:
+            if self.executor.needs_resynthesis:
                 return
             logging.debug("Resynthesis handle triggered!")
-            self.proj.executor.needs_resynthesis = True
+            self.executor.needs_resynthesis = True
             
 
     def setActuator(self, name, actuatorVal,initial):
