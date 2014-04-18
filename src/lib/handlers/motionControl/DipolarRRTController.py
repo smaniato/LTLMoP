@@ -67,7 +67,8 @@ class motionControlHandler:
         self.PLOT_PATH = plotLTLMoPPath       # Plot path generated
         self.PLOT_TREE_FAIL = True # Plot the RRT if it fails to find a path
         simulation = True
-        self.logName = "LogTest"              # Then name to log data under
+        self.logName = "LogTest"            # Then name to log data under
+                                            # Set to None to turn off    
         
         # Get references to handlers we'll need to communicate with
         self.drive_handler = proj.h_instance['drive']
@@ -78,12 +79,12 @@ class motionControlHandler:
             # TODO: MAKE PARAMETER?
             self.plotter = RRTPlotter(invertY=simulation)
             self.plotter.ion()    
-            self.plotting = plotTree or plotLTLMoPPath or plotRegion 
+            self.plotTree = plotTree or plotLTLMoPPath or plotRegion 
         else: 
             self.plotter = None         
-            self.plotting = False   
+            self.plotTree = False   
             
-#         # TODO: REMOVE 
+#         # TODO: REMOVE USED TO GET ORDERING AND HARD CODING THETAS
 #         self.showEachRegion(proj)
         
         # Get a list of (polygon, constraint) pairs
@@ -108,7 +109,7 @@ class motionControlHandler:
                               plotter=self.plotter, plotTree=plotTree)
         self.rrt.setCloseEnough(self.robot.radius, .2)
         self.rrt.stepSize = nodeDistInter
-        self.rrt.colCheckInter = self.dT
+        self.rrt.fwdIntegrTime = self.dT
         
         _DipolarRRT.DEBUG = self.DEBUG
         _DipolarRRT.DEBUG_PLT = self.DEBUG_PLT
@@ -198,11 +199,11 @@ class motionControlHandler:
         # TODO: THIS IS KIND OF GHETTO 
         self.rrt.rrtMap = constMap
         
-        # Start plotting and generating the path if desired
-        if self.plotting:
+        # Start plotTree and generating the path if desired
+        if self.plotTree:
             self.plotter.clearPlot()
         
-        if self.PLOT_REG and self.plotting:
+        if self.PLOT_REG and self.plotTree:
 #             self.plotter.drawMap(constMap)
             self.plotter.drawPolygon(currPoly, color='k', width=3)
             self.plotter.drawPolygon(nextPoly, color='g', width=3)
@@ -222,7 +223,7 @@ class motionControlHandler:
         if self.DEBUG:
             print "Getting shorter path"
             
-        shortPath = self.rrt.getDijkSmooth(nodePath)
+        shortPath = self.rrt.applyDijkSmooth(nodePath)
         
         if self.PLOT_PATH:
             trajectory = self.rrt.nodesToTrajectory(shortPath)
@@ -337,7 +338,7 @@ class motionControlHandler:
             self.plotter.drawPolygon(r)
             self.plotter.show()
             
-        if self.plotting:
+        if self.plotTree:
             self.plotter.ion()
     
     

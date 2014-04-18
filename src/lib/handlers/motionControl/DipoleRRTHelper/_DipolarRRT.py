@@ -1,14 +1,17 @@
 
 from __future__ import division
 
-from random import random, sample
-from numpy.linalg import norm
-from numpy import array
-from time import clock
-from _DipolarCLoopControl import diffAngles
-from math import atan2
 from Queue import PriorityQueue
 import logging
+from math import atan2
+from random import random, sample
+from time import clock
+
+from numpy import array
+from numpy.linalg import norm
+
+from _DipolarCLoopControl import diffAngles
+
 
 DEBUG = False
 DEBUG_PLT = False       # Matplotlib workaround when using debugger
@@ -23,6 +26,8 @@ PLOT_TREE_FAIL = True   # Plot tree if it failed to find a path
 # TODO: UPDATE PLOTTER FOR NEW NODES ETC
 
 class NodeXYT:
+    """ Nodes to be used as the basic elemnts in the tree.
+    """
     def __init__(self, pose, parent=None):
         self.pose = tuple(pose)
         self.parent = parent
@@ -31,15 +36,22 @@ class PoseList:
     """ A wrapper to provide sampling and checks for reaching the poses.
     """
     def __init__(self, poses, closeEnoughFun):
+        """         
+        :param poses: A list of poses
+        :param closeEnoughFun: A function that takes in two poses and 
+            returns True if they are close enough, False otherwise
+        """
         self.poses = [tuple(p) for p in poses]
         self.closeEnoughFun = closeEnoughFun
         
     def samplePose(self):
+        """ Uniformely sample one of the provided poses
+        """
         return sample(self.poses, 1)[0]
     
     def isValidPose(self, pose):
         """ Checks if the given pose is close enough to any of the 
-        stored poses.
+        stored poses
         """
         for p in self.poses:
             if self.closeEnoughFun(pose, p):
@@ -89,9 +101,9 @@ class DipolarRRT:
     def getNodePath(self, fromPose, rrtMap, goal, K=500, addOffset=True):
         """ Returns a path as a list of nodes.
         
-        :param fromPose: A pose with (X, Y, Theta) 
-        :param rrtMap: An RRTMap object
-        :param goal: A list of goal poses or an RRTMap of goal regions.
+        :param fromPose: The initial pose (x, y, theta)
+        :param rrtMap: An RRTMap object in where the robot can move
+        :param goal: A list of goal poses or an RRTMap of goal regions
         :param K: The number of iterations to perform
         :param addOffset: True if robot may not be fully inside of any region
             and this has not been handled anywhere else
@@ -140,7 +152,7 @@ class DipolarRRT:
             print "Showing failed result..."
             self.plotter.show()
         
-        return None        
+        return None   
         
     def applyDijkSmooth(self, path, addOffset=True):
         """ Use the shortcut Dijkstra to return a shorter path as a list 
@@ -172,6 +184,7 @@ class DipolarRRT:
         distances[0] = 0
         path[0].parent = None
         
+        # Main section of Dijk
         shortPath = None
         while not nodeIQueue.empty():
             currNodeI = nodeIQueue.get()[1]
@@ -228,6 +241,9 @@ class DipolarRRT:
     def nodesToTrajectory(self, nodePath, addOffset=True):
         """ Returns a list of tuples containing the poses of the robot as it
         travels the nodePath.  
+        
+        :param addOffset: True if robot may not be fully inside of any region
+            and this has not been handled anywhere else
         """
         # If robot is not completely inside of a region initially
         if addOffset: 
@@ -357,18 +373,20 @@ class DipolarRRT:
         else:
             return False        
               
-    def connectDip(self, fromNodes, toNode):
+    def connectDip(self, tree, toNode):
         """ Uses a version of the connect heuristic to extend the tree towards
         the toNode. 
         """
         NUM_CONSIDERED = 40
         
+        reachedToNode = False
+        
         # Sort the nodes to try to extend from.
-        ordered = self.sortByDistancesE2(fromNodes, toNode)[0][:NUM_CONSIDERED]
+        ordered = self.sortByDistancesE2(tree, toNode)[0][:NUM_CONSIDERED]
         
         # Try to extend from nodes in order. Only try next if no progress.
         toPose = array(toNode.pose)
-        initialNumNodes = len(fromNodes)
+        initialNumNodes = len(tree)
         for node in ordered:
             collided = False
             
@@ -390,19 +408,25 @@ class DipolarRRT:
                     collided = True
                     break
                 
-                fromNodes.append(nextNode)
+                tree.append(nextNode)
                 currNode = nextNode
                 
             # Attempt to connectDip to toNode
             if not collided and not self.hasCollision(currNode, toNode):
                 toNode.parent = currNode
-                fromNodes.append(toNode)
+                tree.append(toNode)
+                reachedToNode = True
                 
             # Check if any progress was made
-            if len(fromNodes) > initialNumNodes:
-                return
+            if len(tree) > initialNumNodes:
+                break
+        
+        return reachedToNode
     
     def getPathThroughParents(self, node):
+        """ Iteratively generate a path from node up to the root
+        by traversing the parents
+        """
         path = []
         while node is not None:
             path.append(node)
