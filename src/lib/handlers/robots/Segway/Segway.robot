@@ -1,4 +1,4 @@
-2DriveHandler: # Robot default drive handler with default argument values
+DriveHandler: # Robot default drive handler with default argument values
 differentialDrive()
 
 InitHandler: # Robot default init handler with default argument values
