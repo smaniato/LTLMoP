@@ -2,6 +2,7 @@ import fsa
 import sys
 import logging,random
 import project
+import logging
 
 class ExecutorStrategyExtensions(object):
     """ Extensions to Executor to allow for the strategy structure.
@@ -21,17 +22,20 @@ class ExecutorStrategyExtensions(object):
         Update the values of current outputs in our execution environment to reflect the output
         proposition values associated with the given state
         """
-
+        self.internalTriggers = []  #Save internal triggers for resynthesis.py
         if state is None:
             state = self.current_state
 
         for key, output_val in state.getOutputs().iteritems():
             # Skip any region
             if 'region' == key: continue
-
+            
+            # The state of this output proposition has changed!
             if key not in self.current_outputs.keys() or output_val != self.current_outputs[key]:
-
-                # The state of this output proposition has changed!
+                if (key.startswith("_")) and (output_val == True):
+                    msg = "Internal trigger: " + key
+                    self.postEvent("INFO", msg)
+                    self.internalTriggers.append(key)
                 self.postEvent("INFO", "Output proposition \"%s\" is now %s!" % (key, str(output_val)))
 
                 # Run any actuator handlers if appropriate

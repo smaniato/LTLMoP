@@ -27,8 +27,14 @@ class ExecutorResynthesisExtensions(object):
         self.runStrategyIteration = runIterWithResynthesisChecks
     
     def _checkForNewInternalFlags(self):
+
+        if self.internalTriggers:
+            # msg = "We have internal flags: "
+            # for flag in self.internalTriggers:
+            #     msg += flag + " "
+            # logging.info(msg)
+            self.internalTriggers = []
         if self.needs_resynthesis:
-            logging.info("Time to Resynthsize")
             self.needs_resynthesis = False
     
     
