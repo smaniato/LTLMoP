@@ -320,7 +320,7 @@ class SpecCompiler(object):
             #logging.debug('self.proj.rfi.regions: ' + str([x.name for x in self.proj.rfi.regions]))
 
             spec, traceback, failed, self.LTL2SpecLineNumber, self.proj.internal_props = parseSpec.writeSpec(text, sensorList, regionList, robotPropList)
-
+            
             robotPropList.extend(self.proj.internal_props)
 
             for spec_section in [x+y for x in ["Sys", "Env"] for y in ["Init", "Trans", "Goals"]]:
@@ -588,12 +588,13 @@ class SpecCompiler(object):
             regions = self.parser.proj.rfi.regions
         else:
             regions = self.proj.rfi.regions
+        
 
         region_domain = strategy.Domain("region", regions, strategy.Domain.B0_IS_MSB)
         strat = strategy.createStrategyFromFile(self.proj.getStrategyFilename(),
                                                 self.proj.enabled_sensors,
                                                 self.proj.enabled_actuators + self.proj.all_customs + 
-                                                [region_domain] + self.proj.internal_props)
+                                                [region_domain])
 
         nonTrivial = any([len(strat.findTransitionableStates({}, s)) > 0 for s in strat.iterateOverStates()])
 
