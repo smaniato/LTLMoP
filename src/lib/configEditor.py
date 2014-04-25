@@ -4,6 +4,7 @@
 
 import wx, wx.richtext, wx.grid, wx.lib.intctrl
 import sys, os, re
+import logging
 
 # Climb the tree to find out where we are
 p = os.path.abspath(__file__)
@@ -27,6 +28,7 @@ from hsubParsingUtils import parseCallString
 import lib.handlers.handlerTemplates as ht
 import lib.globalConfig
 from lib.hsubConfigObjects import ExperimentConfig, RobotConfig
+import parseSpec
 # begin wxGlade: extracode
 # end wxGlade
 
@@ -1263,8 +1265,16 @@ class propMappingDialog(wx.Dialog):
             self.list_box_props.Append(p)
         
         self.list_box_props.Append("")
-        self.list_box_props.Append("=== Correspondence ===")
+        self.list_box_props.Append("=== Prop Generation ===")
+        for k in self.proj.all_customs:
+            if k.startswith("_add_to_"):
+                GroupName = k.replace("_add_to_", "")
+                self.list_box_props.Append("Add to " + GroupName)
+                res = parseSpec._findGroupsInCorrespondenceWithGroup(self.proj, GroupName)
+                for corr in res:
+                    self.list_box_props.Append(GroupName + "->" + corr)
         
+            
         self.mapping = None
         self.tempMethod = None
 

@@ -294,7 +294,7 @@ def writeSpec(text, sensorList, regionList, robotPropList):
     else:
         # remove last &
         spec['SysGoals'] = re.sub('& \n$','\n',spec['SysGoals'])
-        
+    
     return spec,linemap,failed,LTL2LineNo,internal_props
             
 def parseInit(semstring, sensorList, robotPropList):
@@ -447,3 +447,17 @@ def prefix2infix(prefixString):
             return inList[index], index
     
     return opReduce(inList, 0)[0]
+
+
+
+
+def _findGroupsInCorrespondenceWithGroup(proj, group_name):
+    """ Return a list of group names to which the group named `group_name` has a correspondence relation. """
+        
+    # TODO: Move this to parser?
+    CorrespondenceDefinitionRE = re.compile(r"^\s*" + group_name + r"\s+corresponds?\s+to\s+(?P<groupB>\w+)", \
+                                                re.MULTILINE | re.IGNORECASE)
+        
+    corresponding_groups = [m.group("groupB") for m in CorrespondenceDefinitionRE.finditer(proj.specText)]
+        
+    return corresponding_groups
