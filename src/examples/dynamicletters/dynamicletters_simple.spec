@@ -17,9 +17,15 @@ fastslow: True
 decompose: True
 
 CurrentConfigName:
-BasicSimulator
+Basic Simulation
 
 Customs: # List of custom propositions
+_add_to_letters
+
+OpenWorld: # List of OpenWorld propositions/correspondences
+letters
+letters->Offices
+letters->silly
 
 RegionFile: # Relative path of region description file
 slurp_hospital.regions

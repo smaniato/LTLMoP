@@ -86,6 +86,14 @@ class DriveHandler(Handler):
     def __init__(self, *args, **kwds):
         super(DriveHandler, self).__init__(*args, **kwds)
 
+class OpenWorldHandler(Handler):
+    """
+    Methods to generate proposition. 
+    """
+    def __init__(self, *args, **kwds):
+        super(OpenWorldHandler, self).__init__(*args, **kwds)
+        
+        
 class LocomotionCommandHandler(Handler):
     """
     Sends motor commands to robot
@@ -107,7 +115,8 @@ handler_type_mapping = OrderedDict([('Init', InitHandler), \
                         ('Drive', DriveHandler), \
                         ('MotionControl', MotionControlHandler), \
                         ('Sensor', SensorHandler), \
-                        ('Actuator', ActuatorHandler)
+                        ('Actuator', ActuatorHandler), \
+                        ('OpenWorld', OpenWorldHandler)
                        ])
 
 # update the dictionary to include bidirectional mapping

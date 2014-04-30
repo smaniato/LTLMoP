@@ -32,6 +32,8 @@ from hsubConfigObjects import MethodParameterConfig,HandlerMethodConfig,\
 import handlers.handlerTemplates as ht
 from hsubParsingUtils import parseCallString
 
+import logging
+
 # TODO: Get rid of this todo list
 # TODO: Move testing code to doctest
 # TODO: Implement motion handler wrapper
@@ -98,15 +100,15 @@ class HandlerSubsystem:
             logging.warning('No shared handler directory found in {!r}'.format(self.handler_path))
         else:
             handler_folders.extend(self._getSubdirectories(os.path.join(self.handler_path, 'share')))
-
-        for folder in handler_folders:
+            
+        for folder in handler_folders:            
             for handler_file in os.listdir(os.path.join(globalConfig.get_ltlmop_root(), folder)):
                 abs_path = os.path.join(globalConfig.get_ltlmop_root(), folder, handler_file)
-
+                
                 # find all handler files and ignore internal files
                 if not (os.path.isfile(abs_path) and handler_file.endswith('.py') and not handler_file.startswith('_')):
                     continue
-
+                    
                 module_info = re.split(r"[\\/]", folder)
                 robot_type = module_info[2]
 
@@ -154,7 +156,8 @@ class HandlerSubsystem:
         """
         # create a handler config object first
         handler_config = HandlerConfig()
-
+        
+        
         if r_type in ['share']:
             # this is a shared handler, we will require a handler type
             # if the h_type is a handler type class object, translate it into a str
@@ -167,17 +170,20 @@ class HandlerSubsystem:
             # this is a robot handler, no handler type required
             handler_module = '.'.join(['lib', 'handlers', r_type, h_name])
 
+        
         try:
-            if h_type in ("Sensor", "Actuator"):
+            if h_type in ("Sensor", "Actuator", "OpenWorld"):
                 handler_config.loadHandlerMethod(handler_module)
             else:
                 handler_config.loadHandlerMethod(handler_module, onlyLoadInit=True)
 
             handler_config.robot_type = r_type
+            
         except ImportError as import_error:
             # TODO: Log an error here if the handler is necessary
             handler_config = None
-
+            
+        
         return handler_config
 
     def getHandlerConfigDefault(self, r_type, h_type, h_name):
@@ -403,7 +409,7 @@ class HandlerSubsystem:
 
         return pose_handler_instance.getPose(cached)
 
-    def getDefaultPropMapping(self, sensor_prop_list, actuator_prop_list):
+    def getDefaultPropMapping(self, sensor_prop_list, actuator_prop_list, openworld_prop_list):
         """
         Return the default proposition mapping based on the propositions given
         """
@@ -424,6 +430,13 @@ class HandlerSubsystem:
             para = m.getParaByName("name")
             para.setValue(p)
             prop_mapping[p] = self.method2String(m, "share")
+            
+        for p in openworld_prop_list:
+            m = deepcopy(self.handler_configs["share"][ht.OpenWorldHandler][0].getMethodByName("increment"))
+            para = m.getParaByName("root_name")
+            para.setValue(p)
+            prop_mapping[p] = self.method2String(m, "share")
+            
 
         return prop_mapping
 
@@ -631,7 +644,8 @@ class HandlerSubsystem:
         if robot_name == "share":
             # this is a dummy sensor/actuator
             for h in self.handler_configs["share"][ht.SensorHandler] + \
-                     self.handler_configs["share"][ht.ActuatorHandler]:
+                     self.handler_configs["share"][ht.ActuatorHandler] + \
+                     self.handler_configs["share"][ht.OpenWorldHandler]:
                 if h.name == handler_name:
                     handler_config = h
                     break

@@ -33,6 +33,7 @@ class Project:
         self.enabled_sensors = []
         self.all_actuators = []
         self.enabled_actuators = []
+        self.openWorld = []
         self.all_customs = []
         self.internal_props = []
         self.current_config = ""
@@ -162,7 +163,8 @@ class Project:
 
         data['SETTINGS'] = {"Sensors": [p + ", " + str(int(p in self.enabled_sensors)) for p in self.all_sensors],
                             "Actions": [p + ", " + str(int(p in self.enabled_actuators)) for p in self.all_actuators],
-                            "Customs": self.all_customs}
+                            "Customs": self.all_customs,
+                            "OpenWorld": self.openWorld}
 
         if self.current_config is not "":
             data['SETTINGS']['CurrentConfigName'] = self.current_config
@@ -180,6 +182,7 @@ class Project:
                     "Sensors": "List of sensor propositions and their state (enabled = 1, disabled = 0)",
                     "Actions": "List of action propositions and their state (enabled = 1, disabled = 0)",
                     "Customs": "List of custom propositions",
+                    "OpenWorld": "List of OpenWorld propositions/correspondences",
                     "Spec": "Specification in structured English",
                     "RegionMapping": "Mapping between region names and their decomposed counterparts"}
 
@@ -233,6 +236,9 @@ class Project:
 
         # Figure out what the custom propositions are
         self.all_customs = self.spec_data['SETTINGS']['Customs']
+        
+        #Figure out what openworld handlers are needed
+        self.openWorld = self.spec_data['SETTINGS']['OpenWorld']
 
     def getFilenamePrefix(self):
         """ Returns the full path of most project files, minus the extension.

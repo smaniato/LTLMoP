@@ -14,7 +14,6 @@ import wx, wx.richtext, wx.stc
 import threading
 import time
 
-
 # Climb the tree to find out where we are
 p = os.path.abspath(__file__)
 t = ""
@@ -35,7 +34,6 @@ from specCompiler import SpecCompiler
 from asyncProcesses import AsynchronousProcessThread
 
 from copy import deepcopy
-
 import globalConfig
 
 
@@ -1061,7 +1059,10 @@ class SpecEditorFrame(wx.Frame):
 
         spec, self.tracebackTree, self.response = compiler._writeLTLFile()
 
+        compiler._updateOpenWorld() #TODO: Is this ever executed?
+
         self.proj = compiler.proj
+
         self.proj.all_customs = self.proj.all_customs + self.proj.internal_props
         self.proj.writeSpecFile()
 

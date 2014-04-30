@@ -376,7 +376,6 @@ class HandlerConfig(object):
         """
         # load the handler class first
         name, h_type, handler_class = self.loadHandlerClass(handler_module_path)
-
         # update the handler name and type info
         # handler name is the name of the file
         # handler type is the corresponding handler object defined in handlerTemplates.py
@@ -847,6 +846,7 @@ class ExperimentConfig(object):
         # proposition mapping
         sensorMappingList = []
         actuatorMappingList = []
+        openworldMappingList = []
         for prop, fun in self.prop_mapping.iteritems():
             if 'sensor' in fun.lower():
                 sensorMapping = prop + ' = ' + fun
@@ -854,11 +854,15 @@ class ExperimentConfig(object):
             elif 'actuator' in fun.lower():
                 actuatorMapping = prop + ' = ' + fun
                 actuatorMappingList.append(actuatorMapping)
+            elif 'openworld' in fun.lower():
+                openworldMapping = prop + ' = ' + fun
+                openworldMappingList.append(openworldMapping)
             else:
                 logging.warning("Cannot recognize prop mapping: {}".format(prop+" = "+fun))
 
         data['General Config']['Sensor_Proposition_Mapping'] = sensorMappingList
         data['General Config']['Actuator_Proposition_Mapping'] = actuatorMappingList
+        data['General Config']['OpenWorld_Proposition_Mapping'] = openworldMappingList
         data['General Config']['Main_Robot'] = self.main_robot
         data['General Config']['Initial_Truths'] = self.initial_truths
         data['General Config']['Region_Tags'] = json.dumps(self.region_tags)
@@ -896,6 +900,7 @@ class ExperimentConfig(object):
                     "CalibrationMatrix": "3x3 matrix for converting coordinates, stored as lab->map",
                     "Actuator_Proposition_Mapping": 'Mapping between actuator propositions and actuator handler functions',
                     "Sensor_Proposition_Mapping": "Mapping between sensor propositions and sensor handler functions",
+                    "OpenWorld_Proposition_Mapping": "Mapping to generate propositions for openworld cases",
                     "Name": 'Configuration name',
                     "Main_Robot":'The name of the robot used for moving in this config',
                     "Initial_Truths": "Initially true propositions",

@@ -529,6 +529,7 @@ class simSetupDialog(wx.Dialog):
 
         self.proj = project.Project()
         self.proj.loadProject(sys.argv[1])
+            
         self.hsub = handlerSubsystem.HandlerSubsystem(None, self.proj.project_root)
 
         # Set up the list of configs
@@ -880,7 +881,7 @@ class simSetupDialog(wx.Dialog):
             return
 
         # clean up prop_mapping of the current executing config
-        default_prop_mapping = self.hsub.getDefaultPropMapping(self.proj.all_sensors, self.proj.all_actuators)
+        default_prop_mapping = self.hsub.getDefaultPropMapping(self.proj.all_sensors, self.proj.all_actuators, self.proj.openWorld)
         self.hsub.executing_config.normalizePropMapping(default_prop_mapping)
 
         # Save the config files
@@ -1211,7 +1212,7 @@ class propMappingDialog(wx.Dialog):
         self.button_9 = wx.Button(self, wx.ID_ANY, "        ^\nInsert/Apply")
         self.label_7 = wx.StaticText(self, wx.ID_ANY, "Robots:")
         self.list_box_robots = wx.ListBox(self, wx.ID_ANY, choices=[])
-        self.label_8 = wx.StaticText(self, wx.ID_ANY, "Sensors/Actuators:")
+        self.label_8 = wx.StaticText(self, wx.ID_ANY, "Methods:")
         self.list_box_functions = wx.ListBox(self, wx.ID_ANY, choices=[])
         self.label_10 = wx.StaticText(self, wx.ID_ANY, "Parameters:")
         self.panel_method_cfg = wx.ScrolledWindow(self, wx.ID_ANY, style=wx.SUNKEN_BORDER | wx.TAB_TRAVERSAL)
@@ -1265,14 +1266,9 @@ class propMappingDialog(wx.Dialog):
             self.list_box_props.Append(p)
         
         self.list_box_props.Append("")
-        self.list_box_props.Append("=== Prop Generation ===")
-        for k in self.proj.all_customs:
-            if k.startswith("_add_to_"):
-                GroupName = k.replace("_add_to_", "")
-                self.list_box_props.Append("Add to " + GroupName)
-                res = parseSpec._findGroupsInCorrespondenceWithGroup(self.proj, GroupName)
-                for corr in res:
-                    self.list_box_props.Append(GroupName + "->" + corr)
+        self.list_box_props.Append("=== Open-World ===")
+        for p in self.proj.openWorld:
+            self.list_box_props.Append(p)
         
             
         self.mapping = None
@@ -1296,6 +1292,13 @@ class propMappingDialog(wx.Dialog):
             if p not in mapping or self.mapping[p].strip() == "":
                 m = deepcopy(self.hsub.handler_configs["share"][ht.ActuatorHandler][0].getMethodByName("setActuator"))
                 para = m.getParaByName("name")
+                para.setValue(p)
+                self.mapping[p] = self.hsub.method2String(m, "share")
+        
+        for p in self.proj.openWorld:
+            if p not in mapping or self.mapping[p].strip() == "":
+                m = deepcopy(self.hsub.handler_configs["share"][ht.OpenWorldHandler][0].getMethodByName("increment"))
+                para = m.getParaByName("root_name")
                 para.setValue(p)
                 self.mapping[p] = self.hsub.method2String(m, "share")
 
@@ -1412,6 +1415,11 @@ class propMappingDialog(wx.Dialog):
                 methods = self.hsub.handler_configs["share"][ht.ActuatorHandler][0].methods
             else:
                 methods = getattr(r.getHandlerOfRobot(ht.ActuatorHandler), 'methods', [])
+        elif self.list_box_props.GetStringSelection() in self.proj.openWorld:
+            if self.list_box_robots.GetStringSelection() == "(Simulated)":
+                methods = self.hsub.handler_configs["share"][ht.OpenWorldHandler][0].methods
+            else:
+                methods = getattr(r.getHandlerOfRobot(ht.OpenWorldHandler), 'methods', [])
         else:
             print ("WARNING: Selected proposition '%s' that is neither sensor nor actuator. " +
                   "This should be impossible.") % (self.list_box_props.GetStringSelection())
@@ -1485,7 +1493,7 @@ class propMappingDialog(wx.Dialog):
             return
 
         cd_local = None
-
+        
         for cd in cds:
             if any([i > cd.start_pos and i < cd.end_pos for i in check_pts]):
                 cd_local = cd

@@ -20,6 +20,7 @@ from copy import deepcopy
 from cores.coreUtils import *
 import handlerSubsystem
 
+import parseSpec
 from asyncProcesses import AsynchronousProcessThread
 
 import strategy
@@ -888,6 +889,18 @@ class SpecCompiler(object):
             conjuncts.extend(newCs)
 
         return conjuncts
+        
+    def _updateOpenWorld(self):
+        """ After compiling, populate proj.openWorld with Open World actions """
+        logging.info("Updating OpenWorld!")
+        for k in self.proj.internal_props:
+            logging.info("Updating the internal prop: " + k)
+            if k.startswith("_add_to_"):
+                GroupName = k.replace("_add_to_", "")
+                self.proj.openWorld.append(GroupName)
+                res = parseSpec._findGroupsInCorrespondenceWithGroup(self.proj, GroupName)
+                for corr in res:
+                    self.proj.openWorld.append(GroupName + "->" + corr)
 
     def _synthesize(self):
         """ Call the synthesis tool, and block until it completes.
