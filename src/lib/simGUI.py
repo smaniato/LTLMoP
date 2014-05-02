@@ -183,6 +183,8 @@ class SimGUI_Frame(wx.Frame):
             wx.CallAfter(self.loadSpecFile, eventData)
         elif eventType == "REGIONS":
             wx.CallAfter(self.loadRegionFile, eventData)
+        elif eventType == "QUERY_USER":
+            wx.CallAfter(self.queryUser, eventData[0], eventData[1])
         else:
             if isinstance(eventData, basestring):
                 if eventData.startswith("Output proposition"):
@@ -321,7 +323,11 @@ class SimGUI_Frame(wx.Frame):
         
         if event is not None:
             event.Skip()
-
+    
+    def queryUser(self, question, default_response=""):
+        answer = wx.GetTextFromUser(question, "User input needed", default_response)
+        self.executorProxy.processUserQueryResponse(answer)
+        
     def appendLog(self, text, color="BLACK"):
         # for printing everything on the log
             

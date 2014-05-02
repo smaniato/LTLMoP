@@ -762,7 +762,7 @@ class ExperimentConfig(object):
             raise ht.LoadingError("Missing general config information")
 
         # parse the string for sensor and actuator prop mapping
-        for prop_type in ['sensor', 'actuator']:
+        for prop_type in ['sensor', 'actuator', 'openworld']:
             if prop_type.title() + '_Proposition_Mapping' in config_data['General Config']:
                 for mapping in config_data['General Config'][prop_type.title() + '_Proposition_Mapping']:
                     try:
@@ -862,7 +862,7 @@ class ExperimentConfig(object):
 
         data['General Config']['Sensor_Proposition_Mapping'] = sensorMappingList
         data['General Config']['Actuator_Proposition_Mapping'] = actuatorMappingList
-        data['General Config']['OpenWorld_Proposition_Mapping'] = openworldMappingList
+        data['General Config']['Openworld_Proposition_Mapping'] = openworldMappingList
         data['General Config']['Main_Robot'] = self.main_robot
         data['General Config']['Initial_Truths'] = self.initial_truths
         data['General Config']['Region_Tags'] = json.dumps(self.region_tags)
@@ -900,7 +900,7 @@ class ExperimentConfig(object):
                     "CalibrationMatrix": "3x3 matrix for converting coordinates, stored as lab->map",
                     "Actuator_Proposition_Mapping": 'Mapping between actuator propositions and actuator handler functions',
                     "Sensor_Proposition_Mapping": "Mapping between sensor propositions and sensor handler functions",
-                    "OpenWorld_Proposition_Mapping": "Mapping to generate propositions for openworld cases",
+                    "Openworld_Proposition_Mapping": "Mapping to generate propositions for openworld cases",
                     "Name": 'Configuration name',
                     "Main_Robot":'The name of the robot used for moving in this config',
                     "Initial_Truths": "Initially true propositions",

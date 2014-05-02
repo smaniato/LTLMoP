@@ -33,20 +33,19 @@ class ExecutorResynthesisExtensions(object):
             original_runIteration()
             check_flags()
         self.runStrategyIteration = runIterWithResynthesisChecks
+        
+        self.user_query_response = ""
+        self.received_user_query_response = threading.Event()
     
     def _checkForNewInternalFlags(self):
 
         if self.internalTriggers:
-            # msg = "We have internal flags: "
-            # for flag in self.internalTriggers:
-            #     msg += flag + " "
-            # logging.info(msg)
             for p in self.internalTriggers:
                 self._processInternalFlag(p)
             self.internalTriggers = []
         if self.needs_resynthesis:
-            logging.info("Need Resynthesis")
             self.needs_resynthesis = False
+        
         
     def _processInternalFlag(self, flag_name):
         """ Respond appropriately to an "internal flag" proposition having been triggered.
@@ -64,33 +63,23 @@ class ExecutorResynthesisExtensions(object):
         # if it doesn't match
         if m is None:
             return
-        
-        # Create next_proj if we haven't yet
-        # This is what we'll be working on, and then eventually resynthesizing from
-        if self.next_proj is None:
-            d=3
-            #logging.info("Need to duplicate project")
-            #self.next_proj = self._duplicateProject(self.proj)
-
-        # We've been told to add or remove something from a group, but we need to figure
-        # out exactly what that /something/ is (the "referent").
-        response = "new" + flag_name
-        
-        referents = [response]
-        
-        for ref in referents:
-            if m.group('action').lower() == "add_to":
-                logging.info("Added item(s) %s to group %s.", ", ".join(referents), m.group('groupName'))
-                
-                #Rewrite the group definition in the specification text
-                #self._updateSpecGroup(m.group('groupName'), 'add', referents)
-                
-                #Get a list of 
-                # Figure out if there are any corresponding groups which we will also need to update
-                corresponding_groups = parseSpec._findGroupsInCorrespondenceWithGroup(self.proj, m.group('groupName'))
-                logging.info("Need to also update corresponding groups: {}".format(corresponding_groups))
-                
             
+        logging.info("Internal Flag Triggered")
+        
+        newPropName = self.hsub.prop2func[m.group('groupName')]()
+        logging.info('\t Adding to group %s: %s', m.group('groupName'), newPropName)
+        
+        for k, v in self.hsub.prop2func.iteritems():
+            pref = m.group('groupName')+'->'
+            if(k.startswith(pref)):
+                nextGroup = k.replace(pref, "")
+                nextGroup_prop = self.hsub.prop2func[k]()
+                logging.info('\t Adding to group %s: %s', nextGroup, nextGroup_prop)
+        if self.needs_resynthesis:
+            logging.info("\t*Need Resynthesis")
+        logging.info('----')
+    
+  
     
     def _updateSpecGroup(self, group_name, operator, operand):
             """ Rewrite the text of the specification in `self.next_proj` by modifying proposition
@@ -243,7 +232,20 @@ class ExecutorResynthesisExtensions(object):
         return True
         
         # TODO: reload from file less often
+    
+    def processUserQueryResponse(self, answer):
+        """ Callback function to receive a response to a user query. """
 
+        logging.debug("Got user query response {!r}".format(answer))
+
+        # Save the response
+        self.user_query_response = answer
+
+        # Let anyone waiting for the response know that it is ready
+        self.received_user_query_response.set()
+
+        
+    
 
 
 

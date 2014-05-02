@@ -67,7 +67,7 @@ class HandlerSubsystem:
         self.configs = []           # list of config objects
         self.executing_config = None  # current experiment config object that is executing
 
-        self.prop2func = {}         # a mapping from a proporsition to a handler function for execution
+        self.prop2func = {}         # a mapping from a proposition to a handler function for execution
         self.handler_instance = []  # a list of handler instances that are instantiated
         self.method_configs = set() # a set of func references
 
@@ -446,12 +446,14 @@ class HandlerSubsystem:
         initialize all method in self.prop2func mapping with initial=True
         """
 
-        logging.info("Initializing sensor/actuator methods...")
+        logging.info("Initializing sensor/actuator/openworld methods...")
         # initialize all sensor and actuators
         # since we cannot distinguish the method for sensor and actuator
         # we will pass in arguments for both types of methods
         for method_config in self.method_configs:
             if method_config.handler.h_type is ht.SensorHandler:
+                method_config.execute(initial=True)
+            elif method_config.handler.h_type is ht.OpenWorldHandler:
                 method_config.execute(initial=True)
             elif method_config.handler.h_type is ht.ActuatorHandler:
                 method_config.execute(initial=True, actuatorVal=False)
@@ -510,12 +512,13 @@ class HandlerSubsystem:
         """
 
         mapping = self.executing_config.prop_mapping
-
         for prop_name, func_string in mapping.iteritems():
             if prop_name in self.executor.proj.all_sensors:
                 mode = "sensor"
             elif prop_name in self.executor.proj.all_actuators:
                 mode = "actuator"
+            elif prop_name in self.executor.proj.openWorld:
+                mode = "openworld"
             else:
                 raise ValueError("Proposition name {} is not recognized.".format(prop_name))
 
@@ -559,6 +562,7 @@ class HandlerSubsystem:
                 # this is a main robot
                 for handler_type_class in ht.getAllHandlerTypeClass():
                     if handler_type_class in robot.handlers:
+                        
                         h = self.prepareHandler(robot.handlers[handler_type_class])
                     # if this is a init handler, set the shared_data
                     if handler_type_class == ht.InitHandler:
