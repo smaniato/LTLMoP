@@ -43,7 +43,17 @@ class ExecutorResynthesisExtensions(object):
             for p in self.internalTriggers:
                 self._processInternalFlag(p)
             self.internalTriggers = []
+       
+        ### See if the resynthesis actuator handler has let us know we need to resynthesize ###
+
         if self.needs_resynthesis:
+            if self.next_proj is not None:
+                pass
+                #self.resynthesizeFromProject(self.next_proj)
+            else:
+                logging.error("Resynthesis was triggered before any spec rewrites.  Skipping.")
+
+            # Clear the resynthesis flag
             self.needs_resynthesis = False
         
         
@@ -64,10 +74,15 @@ class ExecutorResynthesisExtensions(object):
         if m is None:
             return
             
+        if self.next_proj is None:
+            self.next_proj = self._duplicateProject(self.proj)
+            
         logging.info("Internal Flag Triggered")
         
         newPropName = self.hsub.prop2func[m.group('groupName')]()
         logging.info('\t Adding to group %s: %s', m.group('groupName'), newPropName)
+        self._updateSpecGroup(m.group('groupName'), 'add', [newPropName])
+        
         
         for k, v in self.hsub.prop2func.iteritems():
             pref = m.group('groupName')+'->'
@@ -75,6 +90,7 @@ class ExecutorResynthesisExtensions(object):
                 nextGroup = k.replace(pref, "")
                 nextGroup_prop = self.hsub.prop2func[k]()
                 logging.info('\t Adding to group %s: %s', nextGroup, nextGroup_prop)
+                self._updateSpecGroup(nextGroup, 'add', [nextGroup_prop])
         if self.needs_resynthesis:
             logging.info("\t*Need Resynthesis")
         logging.info('----')
@@ -84,7 +100,7 @@ class ExecutorResynthesisExtensions(object):
     def _updateSpecGroup(self, group_name, operator, operand):
             """ Rewrite the text of the specification in `self.next_proj` by modifying proposition
                 group `group_name` with operator `operator` (e.g. "add"/"remove") and
-                operand `operand` (a list of propositions) """
+                operand `operand` (a list of propositions). Rewrite .spec file of 'self.next_proj' """
 
             # Make a regex for finding the group definition in the spec
             PropositionGroupingRE = re.compile(r"^group\s+%s\s+(is|are)\s+(?P<propositions>.+)\n" % group_name, \
@@ -121,6 +137,8 @@ class ExecutorResynthesisExtensions(object):
 
             self.next_proj.specText = PropositionGroupingRE.sub(lambda m: gen_replacement_text(group_name, operand, m), \
                                                                 self.next_proj.specText)
+            logging.info("Updating next project's specText")
+            self.next_proj.writeSpecFile(self.next_proj.getFilenamePrefix() + ".spec")
                                                                 
                                                                 
     def _duplicateProject(self, proj, n=itertools.count(1)):
@@ -133,12 +151,7 @@ class ExecutorResynthesisExtensions(object):
         new_proj.loadProject(self.proj.getFilenamePrefix() + ".spec")
 
         # copy hsub references manually
-        new_proj.hsub = proj.hsub
-        new_proj.hsub.proj = new_proj # oh my god, guys
         new_proj.h_instance = proj.h_instance
-        
-        new_proj.sensor_handler = proj.sensor_handler
-        new_proj.actuator_handler = proj.actuator_handler
 
         # Choose a name by incrementing the stepX suffix
         # Note: old files from previous executions will be overwritten
