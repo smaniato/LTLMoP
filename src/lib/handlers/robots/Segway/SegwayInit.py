@@ -6,6 +6,7 @@ SegwayInit.py - Segway Initialization Handler
 
 
 """
+from SendAndRecieve import MessageStream
 
 class SegwayInitHandler:
     def __init__(self, proj, ip="10.0.0.91", port=50007):
@@ -17,4 +18,5 @@ class SegwayInitHandler:
         self.port = port
             
     def getSharedData(self):
-        return {"SegwayIP":self.ip, "SegwayPort":self.port}
+        return {"SegwayIP":self.ip, "SegwayPort":self.port,
+                "MessageStreamClass":MessageStream}
