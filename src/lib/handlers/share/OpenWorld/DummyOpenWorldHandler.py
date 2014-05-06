@@ -20,6 +20,9 @@ class DummyOpenWorldHandler(handlerTemplates.OpenWorldHandler):
         self.incrementTrack = {}
         self.executor = executor
                 
+    #Return:
+    #   The name of the new proposition
+    #   A tuple consisting of: (param_to_change, new_param) for sensor affiliated with group       
     def increment(self,root_name,initial=False):
         """
         Return "root_name_num"
@@ -55,9 +58,9 @@ class DummyOpenWorldHandler(handlerTemplates.OpenWorldHandler):
                 self.executor.received_user_query_response.clear()
                 self.executor.postEvent("QUERY_USER", [question, default_response])
                 self.executor.received_user_query_response.wait()
-            
+            prop_name = self.executor.user_query_response
             sensor_info = ("button_name", prop_name)
-            return (self.executor.user_query_response,sensor_info)
+            return (prop_name, sensor_info)
         #        accept_empty (bool): Whether or not to accept empty response
         
 

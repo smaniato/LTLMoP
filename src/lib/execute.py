@@ -200,7 +200,7 @@ class LTLMoPExecutor(ExecutorStrategyExtensions,ExecutorResynthesisExtensions, o
 
         self.externalEventTargetRegistered.set()
 
-    def initialize(self, spec_file, strategy_file, firstRun=True):
+    def initialize(self, spec_file, strategy_file, firstRun=True,resynth=False):
         """
         Prepare for execution, by loading and initializing all the relevant files (specification, map, handlers, strategy)
         If `firstRun` is true, all handlers will be imported; otherwise, only the motion control handler will be reloaded.
@@ -238,9 +238,9 @@ class LTLMoPExecutor(ExecutorStrategyExtensions,ExecutorResynthesisExtensions, o
             logging.info("Instantiate all handlers...")
             self.hsub.instantiateAllHandlers()
 
+        if firstRun or resynth:
             logging.info("Preparing proposition mapping...")
             self.hsub.prepareMapping()
-        else:
             #print "Reloading motion control handler..."
             #self.proj.importHandlers(['motionControl'])
             pass

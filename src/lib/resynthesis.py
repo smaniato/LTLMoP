@@ -48,8 +48,7 @@ class ExecutorResynthesisExtensions(object):
 
         if self.needs_resynthesis:
             if self.next_proj is not None:
-                pass
-                #self.resynthesizeFromNewProject(self.next_proj)
+                self.resynthesizeFromNewProject(self.next_proj)
             else:
                 logging.error("Resynthesis was triggered before any spec rewrites.  Skipping.")
 
@@ -212,9 +211,7 @@ class ExecutorResynthesisExtensions(object):
         self.pause()
 
         self.postEvent("INFO", "Starting resynthesis...")
-        self.logging.info("Starting Resynthesis...")
-        # Overwrite the specification text
-        new_proj.specText = spec_text
+        logging.info("Starting Resynthesis...")
 
         # Save the file
         new_proj.writeSpecFile()
@@ -255,8 +252,9 @@ class ExecutorResynthesisExtensions(object):
 
         spec_file = self.proj.getFilenamePrefix() + ".spec"
         aut_file = self.proj.getFilenamePrefix() + ".aut"
-        self.initialize(spec_file, aut_file, firstRun=False)
-
+        self.initialize(spec_file, aut_file, firstRun=False, resynth=True)
+        
+        self.next_proj = None
         self.resume()
 
         return True
