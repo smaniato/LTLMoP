@@ -382,7 +382,7 @@ class HandlerConfig(object):
         self.name = name
         self.h_type = h_type
 
-        if self.h_type in [ht.SensorHandler, ht.ActuatorHandler]:
+        if self.h_type in [ht.SensorHandler, ht.ActuatorHandler, ht.OpenWorldHandler]:
             onlyLoadInit = False
         else:
             onlyLoadInit = True
