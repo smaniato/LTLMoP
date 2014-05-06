@@ -33,7 +33,9 @@ class DummyOpenWorldHandler(handlerTemplates.OpenWorldHandler):
                 self.incrementTrack[root_name] = self.incrementTrack[root_name] + 1
             else:
                 self.incrementTrack[root_name] = 1
-            return root_name + str(self.incrementTrack[root_name])
+            prop_name = root_name + str(self.incrementTrack[root_name])
+            sensor_info = ("button_name", prop_name)
+            return (prop_name, sensor_info)
     
     
     def queryUser(self, question, initial=False):
@@ -53,8 +55,9 @@ class DummyOpenWorldHandler(handlerTemplates.OpenWorldHandler):
                 self.executor.received_user_query_response.clear()
                 self.executor.postEvent("QUERY_USER", [question, default_response])
                 self.executor.received_user_query_response.wait()
-        
-            return self.executor.user_query_response
+            
+            sensor_info = ("button_name", prop_name)
+            return (self.executor.user_query_response,sensor_info)
         #        accept_empty (bool): Whether or not to accept empty response
         
 

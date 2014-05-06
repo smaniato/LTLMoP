@@ -49,7 +49,7 @@ class ExecutorResynthesisExtensions(object):
         if self.needs_resynthesis:
             if self.next_proj is not None:
                 pass
-                #self.resynthesizeFromProject(self.next_proj)
+                #self.resynthesizeFromNewProject(self.next_proj)
             else:
                 logging.error("Resynthesis was triggered before any spec rewrites.  Skipping.")
 
@@ -79,21 +79,43 @@ class ExecutorResynthesisExtensions(object):
             
         logging.info("Internal Flag Triggered")
         
-        newPropName = self.hsub.prop2func[m.group('groupName')]()
+        (newPropName, sensorInfo) = self.hsub.prop2func[m.group('groupName')]()
+        #newPropName = name of new sensor Proposition
+        #sensorInfo[0] = name of parameter to be changed
+        #sensorInfo[1] = value of parameter
+        
         logging.info('\t Adding to group %s: %s', m.group('groupName'), newPropName)
         self._updateSpecGroup(m.group('groupName'), 'add', [newPropName])
         
+        self.next_proj.enabled_sensors.append(newPropName)
+        self.next_proj.all_sensors.append(newPropName)
+        #Add to prop_mapping in hsub
+        
+        #Assume that the type of sensor propositon being added is based of sensor with name: detect[Group being added to]
+        #i.e. When adding to group Letters, each new sensor is identical to detectLetters
+        for k,v in self.hsub.executing_config.prop_mapping.iteritems():
+            if k.lower() == ("detect" + m.group('groupName').lower()):
+                pattern = '(?<='+ sensorInfo[0]+ '\=\')\w*'
+                m2 = re.search(pattern, v)
+                newMapping = v.replace(m2.group(0), sensorInfo[1])
+                break
+                
+        self.hsub.executing_config.prop_mapping[newPropName]=newMapping
+        self.hsub.executing_config.saveConfig()
         
         for k, v in self.hsub.prop2func.iteritems():
             pref = m.group('groupName')+'->'
             if(k.startswith(pref)):
                 nextGroup = k.replace(pref, "")
-                nextGroup_prop = self.hsub.prop2func[k]()
+                (nextGroup_prop,sensor_info) = self.hsub.prop2func[k]()
                 logging.info('\t Adding to group %s: %s', nextGroup, nextGroup_prop)
                 self._updateSpecGroup(nextGroup, 'add', [nextGroup_prop])
         if self.needs_resynthesis:
             logging.info("\t*Need Resynthesis")
         logging.info('----')
+        
+        logging.info("Updating next project's specText")
+        self.next_proj.writeSpecFile(self.next_proj.getFilenamePrefix() + ".spec")
     
   
     
@@ -137,8 +159,6 @@ class ExecutorResynthesisExtensions(object):
 
             self.next_proj.specText = PropositionGroupingRE.sub(lambda m: gen_replacement_text(group_name, operand, m), \
                                                                 self.next_proj.specText)
-            logging.info("Updating next project's specText")
-            self.next_proj.writeSpecFile(self.next_proj.getFilenamePrefix() + ".spec")
                                                                 
                                                                 
     def _duplicateProject(self, proj, n=itertools.count(1)):
@@ -188,14 +208,11 @@ class ExecutorResynthesisExtensions(object):
         # write the file back
         createLTLfile(ltl_filename, assumptions, gc)
 
-    def resynthesizeFromNewSpecification(self, spec_text):
+    def resynthesizeFromNewProject(self, new_proj):
         self.pause()
 
         self.postEvent("INFO", "Starting resynthesis...")
-
-        # Copy the current project
-        new_proj = self._duplicateProject(self.proj)
-
+        self.logging.info("Starting Resynthesis...")
         # Overwrite the specification text
         new_proj.specText = spec_text
 
@@ -217,7 +234,7 @@ class ExecutorResynthesisExtensions(object):
         c._writeSMVFile()
 
         # Constrain the initial conditions to our current state
-        self._setSpecificationInitialConditionsToCurrent(new_proj)
+        #self._setSpecificationInitialConditionsToCurrent(new_proj)
 
         # Synthesize a strategy
         (realizable, realizableFS, output) = c._synthesize()
