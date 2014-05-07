@@ -24,3 +24,6 @@ nao.NaoSensorHandler()
 
 ActuatorHandler: # Robot default actuator handler with default argument values
 nao.NaoActuatorHandler()
+
+OpenWorldHandler: # Robot default openworld handler with default argument values
+nao.NaoOpenWorldHandler()
