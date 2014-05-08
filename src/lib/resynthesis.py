@@ -80,8 +80,9 @@ class ExecutorResynthesisExtensions(object):
         
         (newPropName, sensorInfo) = self.hsub.prop2func[m.group('groupName')]()
         #newPropName = name of new sensor Proposition
-        #sensorInfo[0] = name of parameter to be changed
-        #sensorInfo[1] = value of parameter
+        #sensorInfo[0] = name of sensor propotion being modeled
+        #sensorInfo[1] = name of parameter to be changed
+        #sensorInfo[2] = value of parameter
         
         logging.info('\t Adding to group %s: %s', m.group('groupName'), newPropName)
         self._updateSpecGroup(m.group('groupName'), 'add', [newPropName])
@@ -93,10 +94,10 @@ class ExecutorResynthesisExtensions(object):
         #Assume that the type of sensor propositon being added is based of sensor with name: detect[Group being added to]
         #i.e. When adding to group Letters, each new sensor is identical to detectLetters
         for k,v in self.hsub.executing_config.prop_mapping.iteritems():
-            if k.lower() == ("detect" + m.group('groupName').lower()):
-                pattern = '(?<='+ sensorInfo[0]+ '\=\')\w*'
+            if k.lower() == sensorInfo[0].lower():
+                pattern = '(?<='+ sensorInfo[1]+ '\=\')\w*'
                 m2 = re.search(pattern, v)
-                newMapping = v.replace(m2.group(0), sensorInfo[1])
+                newMapping = v.replace(m2.group(0), sensorInfo[2])
                 break
                 
         self.hsub.executing_config.prop_mapping[newPropName]=newMapping
