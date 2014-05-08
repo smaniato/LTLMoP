@@ -6,11 +6,12 @@ naoSensors.py - Sensor handler for the Aldebaran Nao
 """
 
 import lib.handlers.handlerTemplates as handlerTemplates
+import logging
 
 class NaoSensorHandler(handlerTemplates.SensorHandler):
     def __init__(self, executor, shared_data):
         self.naoInitHandler = shared_data['NAO_INIT_HANDLER']
-
+        self.shared_data = shared_data
         self.sttProxy = None
         self.sttVocabulary = []
         self.sttVocabCounter = 0
@@ -20,9 +21,56 @@ class NaoSensorHandler(handlerTemplates.SensorHandler):
         self.sttProxy = None
         self.ldmProxy = None
 
+        self.landMarkInitialized = False
+
     ###################################
     ### Available sensor functions: ###
     ###################################
+    def _initLandMark(self):
+        if not self.landMarkInitialized:
+        # initialize landmark detection
+            if self.ldmProxy == None:
+                self.ldmProxy = self.naoInitHandler.createProxy('ALLandMarkDetection')
+            if self.memProxy is None:
+                self.memProxy = self.naoInitHandler.createProxy('ALMemory')
+
+        ### Initialize land Mark tracking
+            subs = [x[0] for x in self.ldmProxy.getSubscribersInfo()]
+
+        # Close any previous subscriptions that might have been hanging open
+            if "ltlmop_sensorhandler" in subs:
+                self.ldmProxy.unsubscribe("ltlmop_sensorhandler")
+            self.ldmProxy.subscribe("ltlmop_sensorhandler", 100, 0.0)
+            self.landMarkInitialized=True
+
+    def _getLandMarkNum(self):
+        foundMarks=[]
+        val = self.memProxy.getData("LandmarkDetected",0)
+        if(val and isinstance(val, list) and len(val)>=2):
+            markInfoArray = val[1]
+            try:
+                #msg = "Number of Markers found: " + str(len(markInfoArray))
+                #msg = "length of foundMarks: "
+                for markInfo in markInfoArray:
+                    markExtraInfo = markInfo[1] #Number of each tag found
+                    foundMarks.append(markExtraInfo[0])
+                    #msg += "-- " + str(len(foundMarks))
+                #logging.info(msg)
+
+                #Filter out crappy readings from the Nao. 
+                filterList = [68,170,130]
+                finalList = []
+                for item in foundMarks:
+                    if (item in filterList):
+                        finalList.append(item)
+                
+                return finalList
+
+            except Exception, e:
+                print "Naomarks detected, but it seems getData is invalid. ALValue ="
+                print val
+                print "Error msg %s" % (str(e))
+
     def seeLandMark(self,landMark_id,initial=False):
         """
         Use Nao's landmark recognition system to detect radial bar code landmark.
@@ -31,51 +79,53 @@ class NaoSensorHandler(handlerTemplates.SensorHandler):
         landMark_id (int): The id number of bar code to detect
         """
         if initial:
-
-            # initialize landmark detection
-            if self.ldmProxy == None:
-                self.ldmProxy = self.naoInitHandler.createProxy('ALLandMarkDetection')
-            if self.memProxy is None:
-                self.memProxy = self.naoInitHandler.createProxy('ALMemory')
-
-            ### Initialize land Mark tracking
-            subs = [x[0] for x in self.ldmProxy.getSubscribersInfo()]
-            # Close any previous subscriptions that might have been hanging open
-            if "ltlmop_sensorhandler" in subs:
-                self.ldmProxy.unsubscribe("ltlmop_sensorhandler")
-            self.ldmProxy.subscribe("ltlmop_sensorhandler", 100, 0.0)
+            self._initLandMark()
             return True
         else:
-            val = self.memProxy.getData("LandmarkDetected",0)
-
-            if(val and isinstance(val, list) and len(val) == 5):
-                # We detected naomarks !
-                # For each mark, we can read its shape info and ID.
-
-                # Second Field = array of Mark_Info's.
-                markInfoArray = val[1]
-
-                try:
-                    # Browse the markInfoArray to get info on each detected mark.
-                    for markInfo in markInfoArray:
-
-                        # First Field = Shape info.
-                        markShapeInfo = markInfo[0]
-
-                        # Second Field = Extra info (ie, mark ID).
-                        markExtraInfo = markInfo[1]
-
-                        #print " width %.3f - height %.3f" % (markShapeInfo[3], markShapeInfo[4])
-
-                        #if float(markShapeInfo[3])>0.05 and float(markShapeInfo[4])>0.05:
-                        if landMark_id in markExtraInfo:
-                            return True
-
-                except Exception, e:
-                    print "Naomarks detected, but it seems getData is invalid. ALValue ="
-                    print val
-                    print "Error msg %s" % (str(e))
+            allFound = self._getLandMarkNum()
+            if (isinstance(allFound, list) and len(allFound)>0):
+                if (landMark_id in allFound):
+                    return True
             return False
+
+    def _resetKnownVals(self):
+        for k,v in self.knownVals.iteritems():
+            self.knownVals[k] = False
+
+    def detectLandMark(self,detectVal,detector=False, initial=False):
+        """
+        Use Nao's landmark recognition system to detect radial bar code landmark.
+        For info about avaible bar code, refer to http://www.aldebaran-robotics.com/documentation/naoqi/vision/allandmarkdetection.html#allandmarkdetection
+        detector (bool): Whether or not the function should act as a detector
+        detectVal (int): The id number of bar code to detect
+        """
+        if initial:
+            self._initLandMark()
+            self.knownVals = {}
+            self.shared_data['detectVal'] = None
+            logging.info("detectLandMark Initialized")
+            return True
+        else:
+            if detector==True:
+                allFound = self._getLandMarkNum()
+                if not (isinstance(allFound, list) and len(allFound)>0):
+                    allFound = []
+
+                self._resetKnownVals()
+                for foundElem in allFound:
+                    if foundElem in self.knownVals:
+                        self.knownVals[foundElem] = True
+                    else:
+                        self.shared_data['detectVal'] = foundElem
+                        return True
+                return False
+            elif detectVal in self.knownVals:
+                return self.knownVals[detectVal]
+            else:
+                self.knownVals[detectVal] = True
+                return True
+            
+
 
 
     def hearWord(self, word, threshold, initial=False):

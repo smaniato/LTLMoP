@@ -16,9 +16,6 @@ synthesizer: jtlv
 fastslow: True
 decompose: True
 
-CurrentConfigName:
-Basic
-
 Customs: # List of custom propositions
 _add_to_letters
 
@@ -31,7 +28,7 @@ slurp_hospital.regions
 
 Sensors: # List of sensor propositions and their state (enabled = 1, disabled = 0)
 detectLetters, 1
-doResynthesis, 1
+doResynthesis, 0
 
 
 ======== SPECIFICATION ========
@@ -74,7 +71,7 @@ If you are sensing any Letters then go to the corresponding Offices
 If you are not sensing any Letters then visit each PatrolRoom
 
 ### Open-world settings ###
-If you are sensing detectLetters then add to group Letters
+If you are sensing detectLetters then add to group Letters and resynthesize
 
-Do resynthesize if and only if you are sensing doResynthesis
+#Do resynthesize if and only if you are sensing doResynthesis
 

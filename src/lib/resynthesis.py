@@ -91,15 +91,18 @@ class ExecutorResynthesisExtensions(object):
         self.next_proj.all_sensors.append(newPropName)
         #Add to prop_mapping in hsub
         
-        #Assume that the type of sensor propositon being added is based of sensor with name: detect[Group being added to]
-        #i.e. When adding to group Letters, each new sensor is identical to detectLetters
         for k,v in self.hsub.executing_config.prop_mapping.iteritems():
             if k.lower() == sensorInfo[0].lower():
-                pattern = '(?<='+ sensorInfo[1]+ '\=\')\w*'
+                pattern = '(?<='+ sensorInfo[1]+ '\=)\w*'
                 m2 = re.search(pattern, v)
                 newMapping = v.replace(m2.group(0), sensorInfo[2])
+
+                pattern = '(?<=detector\=)\w*'
+                m2 = re.search(pattern, v)
+                newMapping = newMapping.replace(m2.group(0), 'False')
                 break
                 
+        logging.info("New mapping for " + newPropName + ": " + newMapping)        
         self.hsub.executing_config.prop_mapping[newPropName]=newMapping
         self.hsub.executing_config.saveConfig()
         
