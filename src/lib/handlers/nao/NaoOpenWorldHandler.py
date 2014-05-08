@@ -20,6 +20,29 @@ class NaoOpenWorldHandler(handlerTemplates.OpenWorldHandler):
         self.incrementTrack = {}
         self.executor = executor
         self.shared_data = shared_data
+        
+        ######## Mapping between Tags and People ################
+        self.tagMapping = {}
+        self.tagMapping[68] = "Jim"
+        self.tagMapping[170] = "Spyros"
+        self.tagMapping[187] = "Hadas"
+        self.tagMapping[130] = "Cameron"
+
+    def recipientFromTag(self,detector=None,detectorParam=None,initial=False):
+        """
+        Obtain recipient name from tag number
+        detector (string): Name of sensor proposition that is being used as the detector
+        detectorParam (string): Name of parameter from detector to be changed for new propositions
+        """
+        if initial:
+            return True
+        else:
+            prop_name = self.tagMapping[self.shared_data['detectVal']]
+            sensor_info = (detector,detectorParam, str(self.shared_data['detectVal']))
+            self.shared_data['detectVal'] = None
+            return (prop_name, sensor_info)
+
+
                 
     def queryUser(self, question,detector=None,detectorParam=None,initial=False):
         """
