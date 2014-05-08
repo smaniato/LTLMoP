@@ -23,11 +23,12 @@ class DummyOpenWorldHandler(handlerTemplates.OpenWorldHandler):
     #Return:
     #   The name of the new proposition
     #   A tuple consisting of: (param_to_change, new_param) for sensor affiliated with group       
-    def increment(self,root_name,detector=None,initial=False):
+    def increment(self,root_name,detector=None,detectorParam=None,initial=False):
         """
         Return "root_name_num"
         root_name (string): Root name of proposition to be returned
         detector (string): Name of sensor proposition that is being used as the detector
+        detectorParam (string): Name of parameter from detector to be changed for new propositions
         """
         if initial:
             return True
@@ -37,15 +38,16 @@ class DummyOpenWorldHandler(handlerTemplates.OpenWorldHandler):
             else:
                 self.incrementTrack[root_name] = 1
             prop_name = root_name + str(self.incrementTrack[root_name])
-            sensor_info = (detector,"button_name", prop_name)
+            sensor_info = (detector,detectorParam, prop_name)
             return (prop_name, sensor_info)
     
     
-    def queryUser(self, question,detector=None,initial=False):
+    def queryUser(self, question,detector=None,detectorParam=None,initial=False):
         """
         Query User for response
         question (string): Question to ask user
         detector (string): Name of sensor proposition that is being used as the detector
+        detectorParam (string): Name of parameter from detector to be changed for new propositions
         """
         if initial:
             return True
@@ -59,7 +61,7 @@ class DummyOpenWorldHandler(handlerTemplates.OpenWorldHandler):
                 self.executor.postEvent("QUERY_USER", [question, default_response])
                 self.executor.received_user_query_response.wait()
             prop_name = self.executor.user_query_response
-            sensor_info = (detector,"button_name", prop_name)
+            sensor_info = (detector,detectorParam, prop_name)
             return (prop_name, sensor_info)
         #        accept_empty (bool): Whether or not to accept empty response
         
