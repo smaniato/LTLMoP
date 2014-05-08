@@ -16,6 +16,9 @@ synthesizer: jtlv
 fastslow: True
 decompose: True
 
+CurrentConfigName:
+Basic
+
 Customs: # List of custom propositions
 _add_to_letters
 

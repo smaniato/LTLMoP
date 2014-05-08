@@ -93,13 +93,14 @@ class ExecutorResynthesisExtensions(object):
         
         for k,v in self.hsub.executing_config.prop_mapping.iteritems():
             if k.lower() == sensorInfo[0].lower():
-                pattern = '(?<='+ sensorInfo[1]+ '\=)\w*'
+                pattern = '(?<='+sensorInfo[1]+'\=)[\']\w*[\']|(?<='+sensorInfo[1]+'\=)\w*'
                 m2 = re.search(pattern, v)
                 newMapping = v.replace(m2.group(0), sensorInfo[2])
 
                 pattern = '(?<=detector\=)\w*'
-                m2 = re.search(pattern, v)
-                newMapping = newMapping.replace(m2.group(0), 'False')
+                m2 = re.search(pattern, newMapping)
+                if m2 is not None:
+                    newMapping = newMapping.replace(m2.group(0), 'False')
                 break
                 
         logging.info("New mapping for " + newPropName + ": " + newMapping)        

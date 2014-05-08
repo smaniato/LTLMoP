@@ -38,7 +38,8 @@ class DummyOpenWorldHandler(handlerTemplates.OpenWorldHandler):
             else:
                 self.incrementTrack[root_name] = 1
             prop_name = root_name + str(self.incrementTrack[root_name])
-            sensor_info = (detector,detectorParam, prop_name)
+            paramVal = "\'"+prop_name+"\'"
+            sensor_info = (detector,detectorParam, paramVal)
             return (prop_name, sensor_info)
     
     
@@ -61,7 +62,8 @@ class DummyOpenWorldHandler(handlerTemplates.OpenWorldHandler):
                 self.executor.postEvent("QUERY_USER", [question, default_response])
                 self.executor.received_user_query_response.wait()
             prop_name = self.executor.user_query_response
-            sensor_info = (detector,detectorParam, prop_name)
+            paramVal = "\'"+prop_name+"\'"
+            sensor_info = (detector,detectorParam, paramVal)
             return (prop_name, sensor_info)
         #        accept_empty (bool): Whether or not to accept empty response
         
