@@ -23,10 +23,10 @@ class NaoOpenWorldHandler(handlerTemplates.OpenWorldHandler):
         
         ######## Mapping between Tags and People ################
         self.tagMapping = {}
-        self.tagMapping[68] = "Jim"
-        self.tagMapping[170] = "Spyros"
-        self.tagMapping[187] = "Hadas"
-        self.tagMapping[130] = "Cameron"
+        self.tagMapping[68] = "Jim,r1"
+        self.tagMapping[170] = "Spyros,r3"
+        self.tagMapping[187] = "Hadas,r6"
+        self.tagMapping[130] = "Cameron,lounge"
 
     def recipientFromTag(self,detector=None,detectorParam=None,initial=False):
         """
@@ -37,9 +37,26 @@ class NaoOpenWorldHandler(handlerTemplates.OpenWorldHandler):
         if initial:
             return True
         else:
-            prop_name = self.tagMapping[self.shared_data['detectVal']]
+            info = self.tagMapping[self.shared_data['detectVal']]
+            prop_name = info.split(",")[0]
             sensor_info = (detector,detectorParam, str(self.shared_data['detectVal']))
-            self.shared_data['detectVal'] = None
+            #self.shared_data['detectVal'] = None
+            return (prop_name, sensor_info)
+
+
+    def officeFromTag(self,detector=None,detectorParam=None,initial=False):
+        """
+        Obtain recipient name from tag number
+        detector (string): Name of sensor proposition that is being used as the detector
+        detectorParam (string): Name of parameter from detector to be changed for new propositions
+        """
+        if initial:
+            return True
+        else:
+            info = self.tagMapping[self.shared_data['detectVal']]
+            prop_name = info.split(",")[1]
+            sensor_info = (detector,detectorParam, str(self.shared_data['detectVal']))
+            #self.shared_data['detectVal'] = None
             return (prop_name, sensor_info)
 
 
