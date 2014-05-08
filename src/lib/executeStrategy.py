@@ -13,6 +13,7 @@ class ExecutorStrategyExtensions(object):
         super(ExecutorStrategyExtensions, self).__init__()
 
         self.last_next_states= []
+        self.internalTriggers = []  #Save internal triggers for resynthesis.py
         self.next_state      = None
         self.current_region  = None
         self.next_region     = None
