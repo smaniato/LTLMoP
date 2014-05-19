@@ -517,7 +517,7 @@ class HandlerSubsystem:
                 mode = "sensor"
             elif prop_name in self.executor.proj.all_actuators:
                 mode = "actuator"
-            elif prop_name in self.executor.proj.openWorld:
+            elif prop_name in self.executor.proj.open_world:
                 mode = "openworld"
             else:
                 raise ValueError("Proposition name {} is not recognized.".format(prop_name))

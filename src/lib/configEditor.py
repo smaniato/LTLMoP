@@ -881,7 +881,7 @@ class simSetupDialog(wx.Dialog):
             return
 
         # clean up prop_mapping of the current executing config
-        default_prop_mapping = self.hsub.getDefaultPropMapping(self.proj.all_sensors, self.proj.all_actuators, self.proj.openWorld)
+        default_prop_mapping = self.hsub.getDefaultPropMapping(self.proj.all_sensors, self.proj.all_actuators, self.proj.open_world)
         self.hsub.executing_config.normalizePropMapping(default_prop_mapping)
 
         # Save the config files
@@ -1267,7 +1267,7 @@ class propMappingDialog(wx.Dialog):
         
         self.list_box_props.Append("")
         self.list_box_props.Append("=== Open-World ===")
-        for p in self.proj.openWorld:
+        for p in self.proj.open_world:
             self.list_box_props.Append(p)
         
             
@@ -1295,7 +1295,7 @@ class propMappingDialog(wx.Dialog):
                 para.setValue(p)
                 self.mapping[p] = self.hsub.method2String(m, "share")
         
-        for p in self.proj.openWorld:
+        for p in self.proj.open_world:
             if p not in mapping or self.mapping[p].strip() == "":
                 m = deepcopy(self.hsub.handler_configs["share"][ht.OpenWorldHandler][0].getMethodByName("increment"))
                 para = m.getParaByName("root_name")
@@ -1415,7 +1415,7 @@ class propMappingDialog(wx.Dialog):
                 methods = self.hsub.handler_configs["share"][ht.ActuatorHandler][0].methods
             else:
                 methods = getattr(r.getHandlerOfRobot(ht.ActuatorHandler), 'methods', [])
-        elif self.list_box_props.GetStringSelection() in self.proj.openWorld:
+        elif self.list_box_props.GetStringSelection() in self.proj.open_world:
             if self.list_box_robots.GetStringSelection() == "(Simulated)":
                 methods = self.hsub.handler_configs["share"][ht.OpenWorldHandler][0].methods
             else:

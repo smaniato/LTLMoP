@@ -33,7 +33,7 @@ class Project:
         self.enabled_sensors = []
         self.all_actuators = []
         self.enabled_actuators = []
-        self.openWorld = []
+        self.open_world = []
         self.all_customs = []
         self.internal_props = []
         self.current_config = ""
@@ -164,7 +164,7 @@ class Project:
         data['SETTINGS'] = {"Sensors": [p + ", " + str(int(p in self.enabled_sensors)) for p in self.all_sensors],
                             "Actions": [p + ", " + str(int(p in self.enabled_actuators)) for p in self.all_actuators],
                             "Customs": self.all_customs,
-                            "OpenWorld": self.openWorld}
+                            "OpenWorld": self.open_world}
 
         if self.current_config is not "":
             data['SETTINGS']['CurrentConfigName'] = self.current_config
@@ -238,7 +238,7 @@ class Project:
         self.all_customs = self.spec_data['SETTINGS']['Customs']
         
         #Figure out what openworld handlers are needed
-        self.openWorld = self.spec_data['SETTINGS']['OpenWorld']
+        self.open_world = self.spec_data['SETTINGS']['OpenWorld']
 
     def getFilenamePrefix(self):
         """ Returns the full path of most project files, minus the extension.

@@ -891,16 +891,16 @@ class SpecCompiler(object):
         return conjuncts
         
     def _updateOpenWorld(self):
-        """ After compiling, populate proj.openWorld with Open World actions """
+        """ After compiling, populate proj.open_world with Open World actions """
         logging.info("Updating OpenWorld!")
         for k in self.proj.internal_props:
             logging.info("Updating the internal prop: " + k)
             if k.startswith("_add_to_"):
                 GroupName = k.replace("_add_to_", "")
-                self.proj.openWorld.append(GroupName)
+                self.proj.open_world.append(GroupName)
                 res = parseSpec._findGroupsInCorrespondenceWithGroup(self.proj, GroupName)
                 for corr in res:
-                    self.proj.openWorld.append(GroupName + "->" + corr)
+                    self.proj.open_world.append(GroupName + "->" + corr)
 
     def _synthesize(self):
         """ Call the synthesis tool, and block until it completes.
