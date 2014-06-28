@@ -237,8 +237,9 @@ class Project:
         # Figure out what the custom propositions are
         self.all_customs = self.spec_data['SETTINGS']['Customs']
         
-        #Figure out what openworld handlers are needed
-        self.open_world = self.spec_data['SETTINGS']['OpenWorld']
+        if 'OpenWorld' in self.spec_data['SETTINGS']:
+            #Figure out what openworld handlers are needed
+            self.open_world = self.spec_data['SETTINGS']['OpenWorld']
 
     def getFilenamePrefix(self):
         """ Returns the full path of most project files, minus the extension.
