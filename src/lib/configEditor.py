@@ -1265,10 +1265,11 @@ class propMappingDialog(wx.Dialog):
         for p in self.proj.all_actuators:
             self.list_box_props.Append(p)
         
-        self.list_box_props.Append("")
-        self.list_box_props.Append("=== Open-World ===")
-        for p in self.proj.open_world:
-            self.list_box_props.Append(p)
+        if self.proj.open_world:
+            self.list_box_props.Append("")
+            self.list_box_props.Append("=== Open-World ===")
+            for p in self.proj.open_world:
+                self.list_box_props.Append(p)
         
             
         self.mapping = None
