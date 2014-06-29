@@ -773,6 +773,18 @@ class ExperimentConfig(object):
                         self.prop_mapping[prop] = func
             else:
                 raise ht.LoadingError("Cannot find {} proposition mapping".format(prop_type))
+        
+        #parse the string for openworld prop mapping (if exists)
+        prop_type = 'openworld'
+        if prop_type.title() + '_Proposition_Mapping' in config_data['General Config']:
+            for mapping in config_data['General Config'][prop_type.title() + '_Proposition_Mapping']:
+                try:
+                    prop, func = [s.strip() for s in mapping.split('=', 1)]
+                except IOError:
+                    raise ht.LoadingError("Wrong {} mapping -- {!r}".format(prop_type, mapping))
+                else:
+                    self.prop_mapping[prop] = func
+
 
         if 'Initial_Truths' in config_data['General Config']:
             # parse the initially true propositions
