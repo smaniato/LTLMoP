@@ -6,6 +6,7 @@
 *.smv
 *.world
 *_decomposed.regions
+*.step[0-9].spec
 *~
 .player
 envBugs.txt
