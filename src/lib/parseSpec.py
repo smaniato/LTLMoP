@@ -71,10 +71,12 @@ def writeSpec(text, sensorList, regionList, robotPropList):
     r_groupDef = re.compile(groupDefPattern, re.I)
     
     #Generate regular expression to match sentences defining correlations
+    #TODO: Replace "correlations" woth "group/proposition correspondence" here and elsewhere.
     correlationDefPattern = r'((?:\w+,? )+)correspond(?:s)? to((?:,? \w+)+)'
     r_correlationDef = re.compile(correlationDefPattern, re.I)
 
     #Generate regular expression to match group operation sentences
+    #TODO: Remove the word "group" after add to. What else would we be adding a proposition to?
     groupOpPattern = r'(?P<operation>add to|remove from)\s+group\s+(?P<groupName>\w+)'
     r_groupOp = re.compile(groupOpPattern, re.I)
     
@@ -148,6 +150,7 @@ def writeSpec(text, sensorList, regionList, robotPropList):
         if m_groupDef: continue
 
         #Find any correlation definitions
+        #TODO: Remove the need to explicitly define correspondence. Let it be optional. If missing, infer from use of corresponding operator.
         m_correlationDef = r_correlationDef.match(line)
         if m_correlationDef:
             keyItems = filter(lambda x: x != '', re.split(' |, |,', m_correlationDef.group(1)))
@@ -403,6 +406,7 @@ def parseCorresponding(semstring, correlations, allGroups):
             print 'Error: cannot resolve correlations in \'' + semstring + '\''
             return ''
         #Build conjunction out of all generated sentences
+        #TODO: Conjunction for "each" quantifier, disjunction for "any" quantifier. The scope should be as definined in the ICRA 2014 paper.
         if len(newSentences) == 0:
             semstring = ''
         elif len(newSentences) == 1:
@@ -447,9 +451,6 @@ def prefix2infix(prefixString):
             return inList[index], index
     
     return opReduce(inList, 0)[0]
-
-
-
 
 def _findGroupsInCorrespondenceWithGroup(proj, group_name):
     """ Return a list of group names to which the group named `group_name` has a correspondence relation. """
