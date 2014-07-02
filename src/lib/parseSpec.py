@@ -11,7 +11,7 @@ import re
 import os
 import copy
 import nltk
-from ambiguity import showParseDiffs
+#from ambiguity import showParseDiffs
 
 import logging
 
@@ -242,8 +242,8 @@ def writeSpec(text, sensorList, regionList, robotPropList):
 
             uniqueParses.append((syntree, semstring))
 
-        if len(uniqueParses) > 1:
-            showParseDiffs(uniqueParses)
+        #if len(uniqueParses) > 1:
+        #    showParseDiffs(uniqueParses)
         
         semstring = uniqueParses[0][1]
         
