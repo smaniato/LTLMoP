@@ -762,7 +762,7 @@ class ExperimentConfig(object):
             raise ht.LoadingError("Missing general config information")
 
         # parse the string for sensor and actuator prop mapping
-        for prop_type in ['sensor', 'actuator', 'openworld']:
+        for prop_type in ['sensor', 'actuator']:
             if prop_type.title() + '_Proposition_Mapping' in config_data['General Config']:
                 for mapping in config_data['General Config'][prop_type.title() + '_Proposition_Mapping']:
                     try:
