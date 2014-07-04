@@ -145,7 +145,8 @@ def writeSpec(text, sensorList, regionList, robotPropList):
             if regionGroup or sensorGroup or actionGroup:
                 allGroups[groupName] = groupItems
             else:
-                print('ERROR: Could not create group out of items ' + groupItems)
+                logging.error('Could not create group out of items: ' + ' '.join(groupItems))
+                print('ERROR: Could not create group out of items: ' + ' '.join(groupItems))
 
         if m_groupDef: continue
 
