@@ -16,9 +16,6 @@ synthesizer: jtlv
 fastslow: True
 decompose: True
 
-CurrentConfigName:
-mailbotSim
-
 Customs: # List of custom propositions
 _add_to_letters
 
@@ -30,7 +27,7 @@ RegionFile: # Relative path of region description file
 mailbot.regions
 
 Sensors: # List of sensor propositions and their state (enabled = 1, disabled = 0)
-detectLetters, 1
+newLetterRecipient, 1
 
 
 ======== SPECIFICATION ========
@@ -73,5 +70,5 @@ If you are sensing any Letter then go to the corresponding Office
 If you are not sensing any Letters then visit each PatrolRoom
 
 ### Open-world settings ###
-If you are sensing detectLetters then add to group Letters and resynthesize
+If you are sensing newLetterRecipient then add to group Letters and resynthesize
 
