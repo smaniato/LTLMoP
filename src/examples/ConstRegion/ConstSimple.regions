@@ -1,0 +1,269 @@
+# This is a region definition file for the LTLMoP toolkit.
+# Format details are described at the beginning of each section below.
+# Note that all values are separated by *tabs*.
+
+Background: # Relative path of background image file
+None
+
+CalibrationPoints: # Vertices to use for map calibration: (vertex_region_name, vertex_index)
+boundary	1
+boundary	11
+boundary	14
+
+Obstacles: # Names of regions to treat as obstacles
+
+Regions: # Stored as JSON string
+[
+    {
+        "name": "boundary", 
+        "color": [
+            255, 
+            128, 
+            0
+        ], 
+        "holeList": [], 
+        "height": 0, 
+        "points": [
+            [
+                1242.0, 
+                221.0
+            ], 
+            [
+                1242.0, 
+                1.0
+            ], 
+            [
+                952.0, 
+                1.0
+            ], 
+            [
+                952.0, 
+                221.0
+            ], 
+            [
+                726.0, 
+                254.0
+            ], 
+            [
+                479.0, 
+                254.0
+            ], 
+            [
+                290.0, 
+                220.0
+            ], 
+            [
+                290.0, 
+                117.0
+            ], 
+            [
+                290.0, 
+                0.0
+            ], 
+            [
+                0.0, 
+                0.0
+            ], 
+            [
+                0.0, 
+                220.0
+            ], 
+            [
+                0.0, 
+                608.0
+            ], 
+            [
+                479.0, 
+                560.0
+            ], 
+            [
+                726.0, 
+                560.0
+            ], 
+            [
+                1233.0, 
+                609.0
+            ]
+        ], 
+        "position": [
+            121.0, 
+            95.0
+        ], 
+        "type": "poly", 
+        "size": [
+            1242.0, 
+            609.0
+        ]
+    }, 
+    {
+        "name": "UnconstrainedR1", 
+        "color": [
+            255, 
+            255, 
+            128
+        ], 
+        "holeList": [], 
+        "height": 0.0, 
+        "points": [
+            [
+                290.0, 
+                0.0
+            ], 
+            [
+                479.0, 
+                34.0
+            ], 
+            [
+                479.0, 
+                340.0
+            ], 
+            [
+                0.0, 
+                388.0
+            ], 
+            [
+                0.0, 
+                0.0
+            ]
+        ], 
+        "position": [
+            121.0, 
+            315.0
+        ], 
+        "type": "poly", 
+        "size": [
+            479.0, 
+            388.0
+        ]
+    }, 
+    {
+        "name": "UnconstrainedR2", 
+        "color": [
+            255, 
+            128, 
+            0
+        ], 
+        "holeList": [], 
+        "height": 0.0, 
+        "points": [
+            [
+                0.0, 
+                33.0
+            ], 
+            [
+                226.0, 
+                0.0
+            ], 
+            [
+                516.0, 
+                0.0
+            ], 
+            [
+                507.0, 
+                388.0
+            ], 
+            [
+                0.0, 
+                339.0
+            ]
+        ], 
+        "position": [
+            847.0, 
+            316.0
+        ], 
+        "type": "poly", 
+        "size": [
+            516.0, 
+            388.0
+        ]
+    }, 
+    {
+        "name": "AreaOfInterest", 
+        "color": [
+            255, 
+            0, 
+            0
+        ], 
+        "height": 0.0, 
+        "position": [
+            600.0, 
+            349.0
+        ], 
+        "type": "rect", 
+        "size": [
+            247.0, 
+            306.0
+        ]
+    }, 
+    {
+        "name": "ChargingStation", 
+        "color": [
+            0, 
+            0, 
+            255
+        ], 
+        "height": 0.0, 
+        "position": [
+            1073.0, 
+            96.0
+        ], 
+        "type": "rect", 
+        "size": [
+            290.0, 
+            220.0
+        ]
+    }, 
+    {
+        "name": "UploadStation", 
+        "color": [
+            0, 
+            0, 
+            255
+        ], 
+        "holeList": [], 
+        "height": 0.0, 
+        "points": [
+            [
+                0.0, 
+                0.0
+            ], 
+            [
+                290.0, 
+                0.0
+            ], 
+            [
+                290.0, 
+                117.0
+            ], 
+            [
+                290.0, 
+                220.0
+            ], 
+            [
+                0.0, 
+                220.0
+            ]
+        ], 
+        "position": [
+            121.0, 
+            95.0
+        ], 
+        "type": "poly", 
+        "size": [
+            290.0, 
+            220.0
+        ]
+    }
+]
+
+Transitions: # Region 1 Name, Region 2 Name, Bidirectional transition faces (face1_x1, face1_y1, face1_x2, face1_y2, face2_x1, ...)
+boundary	UnconstrainedR1	121.0	315.0	121.0	703.0	600.0	655.0	121.0	703.0	600.0	349.0	411.0	315.0
+boundary	UnconstrainedR2	1354.0	704.0	1363.0	316.0	1354.0	704.0	847.0	655.0	847.0	349.0	1073.0	316.0
+boundary	AreaOfInterest	847.0	349.0	600.0	349.0	847.0	655.0	600.0	655.0
+boundary	ChargingStation	1073.0	96.0	1073.0	316.0	1363.0	96.0	1073.0	96.0	1363.0	96.0	1363.0	316.0
+boundary	UploadStation	411.0	95.0	121.0	95.0	121.0	315.0	121.0	95.0	411.0	95.0	411.0	212.0	411.0	212.0	411.0	315.0
+UnconstrainedR1	AreaOfInterest	600.0	349.0	600.0	655.0
+UnconstrainedR1	UploadStation	121.0	315.0	411.0	315.0
+UnconstrainedR2	AreaOfInterest	847.0	349.0	847.0	655.0
+UnconstrainedR2	ChargingStation	1363.0	316.0	1073.0	316.0
+
