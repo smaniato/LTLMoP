@@ -1052,16 +1052,10 @@ class SpecEditorFrame(wx.Frame):
         self.appendLog("Decomposing map into convex regions...\n", "BLUE")
 
         compiler._decompose()
-
+        self.proj = compiler.proj
         self.decomposedRFI = compiler.parser.proj.rfi
 
-        self.appendLog("Creating LTL...\n", "BLUE")
-
-        spec, self.tracebackTree, self.response = compiler._writeLTLFile()
-
-        compiler._updateOpenWorld() #TODO: Is this ever executed?
-
-        self.proj = compiler.proj
+        compiler._updateOpenWorld()
 
         self.proj.all_customs = self.proj.all_customs + self.proj.internal_props
         self.proj.writeSpecFile()
