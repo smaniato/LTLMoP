@@ -1,8 +1,8 @@
-""" 
+"""
     ===================================================
-    parseSpec.py - Structured English to LTL Translator 
+    parseSpec.py - Structured English to LTL Translator
     ===================================================
-    
+
     Module that parses a set of structured English sentences into the
     corresponding LTL subformulas using a context-free grammar
 """
@@ -10,21 +10,29 @@
 import re
 import os
 import copy
-import nltk
-#from ambiguity import showParseDiffs
 
 import logging
+
+try:
+    from nltk.grammar import FeatureGrammar
+    from nltk.sem import interpret_sents
+except ImportError as e:
+    logging.error("Either you do not have NLTK installed " +
+                  "or you are using an old version of NLTK. " +
+                  "Install NLTK 3 to use the updated API.")
+    raise e
+
 
 def writeSpec(text, sensorList, regionList, robotPropList):
     ''' This function creates the Spec dictionary that contains the parsed LTL
         subformulas. It takes the text that contains the structured English,
         the list of sensor propositions, the list containing
-        the region names and the list of robot propositions (other than regions). 
+        the region names and the list of robot propositions (other than regions).
     '''
 
     #Begin optimistically
     failed = False
-    
+
     #Initialize the dictionary
     spec = {}
     spec['EnvInit']= ''
@@ -38,10 +46,10 @@ def writeSpec(text, sensorList, regionList, robotPropList):
     linemap['EnvInit']= []
     linemap['EnvTrans']= []
     linemap['EnvGoals']= []
-    linemap['SysInit']= []    
+    linemap['SysInit']= []
     linemap['SysTrans']= []
     linemap['SysGoals']= []
-    
+
     LTL2LineNo = {}
 
     internal_props = []
@@ -51,25 +59,25 @@ def writeSpec(text, sensorList, regionList, robotPropList):
     robotPropList = [robotProp.lower() for robotProp in robotPropList]
 
     allProps = sensorList + regionList + robotPropList
-    
+
     #Initialize dictionaries mapping group names to lists of groups
     regionGroups = {}
     sensorGroups = {}
     actionGroups = {}
     allGroups = {}
-    
+
     #Initialize dictionary mapping propositions to sets of 'corresponding' propositions
     correlations = {}
-    
+
     #Open CFG file
-    #TODO: Make path independent 
+    #TODO: Make path independent
     grammarFile = open('lib/structuredEnglish.fcfg','rb')
     grammarText = grammarFile.read()
-    
+
     #Generate regular expression to match sentences defining groups
     groupDefPattern = r'\s*group (?P<name>\w+) is (?P<items>(?:\w+)(?:,[ \w]+)*)'
     r_groupDef = re.compile(groupDefPattern, re.I)
-    
+
     #Generate regular expression to match sentences defining correlations
     #TODO: Replace "correlations" woth "group/proposition correspondence" here and elsewhere.
     correlationDefPattern = r'((?:\w+,? )+)correspond(?:s)? to((?:,? \w+)+)'
@@ -79,7 +87,7 @@ def writeSpec(text, sensorList, regionList, robotPropList):
     #TODO: Remove the word "group" after add to. What else would we be adding a proposition to?
     groupOpPattern = r'(?P<operation>add to|remove from)\s+group\s+(?P<groupName>\w+)'
     r_groupOp = re.compile(groupOpPattern, re.I)
-    
+
     #Begin parsing input text
     textLines = text.split('\n')
     linesToParse = []
@@ -90,7 +98,7 @@ def writeSpec(text, sensorList, regionList, robotPropList):
         #If it is an empty line, ignore it
         if re.search(r'^(\s*)$',textLines[lineInd]):
             continue
-        
+
         #If the sentence is a comment, ignore it
         if re.search(r'^\s*#',textLines[lineInd]):
             continue
@@ -104,9 +112,9 @@ def writeSpec(text, sensorList, regionList, robotPropList):
         #If there is a newline at the end, remove it
         if re.search('\n$',line):
             line = re.sub('\n$',' ',line)
-        
+
         #print line
-        
+
         #Find any group definitons
         m_groupDef = r_groupDef.match(line)
         if m_groupDef:
@@ -134,7 +142,7 @@ def writeSpec(text, sensorList, regionList, robotPropList):
                 regionGroups[groupName] = groupItems
                 #print '\tRegion groups updated: ' + str(regionGroups)
             if sensorGroup:
-                grammarText += '\nSENSORGROUP[SEM=<' + groupName + '>] -> \'' + groupName + '\' | \''+groupName+'s\' | \''+re.sub(r'(\w+)s',r'\1',groupName)+'\''     
+                grammarText += '\nSENSORGROUP[SEM=<' + groupName + '>] -> \'' + groupName + '\' | \''+groupName+'s\' | \''+re.sub(r'(\w+)s',r'\1',groupName)+'\''
                 sensorGroups[groupName] = groupItems
                 #print '\tSensor groups updated: ' + str(sensorGroups)
             if actionGroup:
@@ -200,31 +208,30 @@ def writeSpec(text, sensorList, regionList, robotPropList):
     #Add production rules for region names to our grammar string
     for region in regionList:
         grammarText += '\nREGION[SEM=<$'+region+'>] -> \''+region+'\''
-    
+
     #Add production rules for action names to our grammar string
     for action in robotPropList:
         grammarText += '\nACTION[SEM=<$'+action+'>] -> \''+action+'\''
-    
+
     #Add production rules for sensor names to our grammar string
     for sensor in sensorList:
         grammarText += '\nSENSOR[SEM=<$'+sensor+'>] -> \''+sensor+'\''
 
-    #print(grammarText)
-    #Generate NLTK feature grammar object from grammar string
-    grammar = nltk.grammar.parse_fcfg(grammarText.encode('ASCII','ignore'))
+    #Generate NLTK feature grammar object from grammar string (NLTK 3 API)
+    grammar = FeatureGrammar.fromstring(grammarText)
 
     #Iterate over the lines in the file
     for lineNo in linesToParse:
-        
+
         line = textLines[lineNo].lower()
         #Put exactly one space before and after parentheses
-        line = re.sub(r'\s*?(\(|\))\s*?',r' \1 ',line)  
+        line = re.sub(r'\s*?(\(|\))\s*?',r' \1 ',line)
         #print line
-        
-        #Parse input line using grammar; the result here is a collection
+
+        # Parse input line using grammar; the result here is a collection
         # of pairs of syntax trees and semantic representations in a
-        # prefix first-order-logic syntax
-        parses = nltk.sem.batch_interpret([line], grammar, 'SEM')[0]
+        # prefix first-order-logic syntax (using NLTK 3 API)
+        parses = interpret_sents([line], grammar, 'SEM')[0]
 
         if len(parses) == 0:
             print('Error: No valid parse found for: ' + line)
@@ -234,9 +241,9 @@ def writeSpec(text, sensorList, regionList, robotPropList):
 
         #Iterate over all parse trees found
         for (syntree, semrep) in parses:
-            
+
             semstring = str(semrep)
-            
+
             #We are not interested multiple parse trees that
             # produce the same LTL formula, so skip them
             if semstring in uniqueParses: continue
@@ -245,42 +252,45 @@ def writeSpec(text, sensorList, regionList, robotPropList):
 
         #if len(uniqueParses) > 1:
         #    showParseDiffs(uniqueParses)
-        
+
         semstring = uniqueParses[0][1]
-        
+
         #Expand initial conditions
         semstring = parseInit(semstring, sensorList, robotPropList)
-        
+
         #Expand 'corresponding' phrases
         semstring = parseCorresponding(semstring, correlations, allGroups)
-        
+
         #Expand 'stay' phrases
         semstring = parseStay(semstring, regionList)
-        
+
         #Expand groups, 'each', 'any', and 'all'
         semstring = parseGroupEach(semstring, allGroups)
         semstring = parseGroupAny(semstring, allGroups)
         semstring = parseGroupAll(semstring, allGroups)
-        
+
         #Trim any extra $'s attached to proposition names
         semstring = semstring.replace('$','')
-        
+
+        syntree_node_spec = syntree.label()['SPEC']
+
         #Liveness sentences should not contain 'next'
-        if syntree.node['SPEC'] == 'SysGoals' or syntree.node['SPEC'] == 'EnvGoals':
+        if syntree_node_spec == 'SysGoals' or syntree_node_spec == 'EnvGoals':
             semstring = semstring.replace('Next','')
 
-        #TODO: In environment safeties, all robot propositions must be PAST TENSE
+        #TODO: In environment safeties, all robot props must be PAST TENSE
 
         #Convert formula from prefix FOL to infix LTL and add it to
         # the appropriate section of the specification
         stringLTL = prefix2infix(semstring)
-        
+
         if stringLTL != '':
-            spec[syntree.node['SPEC']] += stringLTL + ' & \n'
-        linemap[syntree.node['SPEC']].append(lineNo)
+            spec[syntree_node_spec] += stringLTL + ' & \n'
+        linemap[syntree_node_spec].append(lineNo)
         LTL2LineNo[stringLTL] = lineNo
 
-    #Set all empty subformulas to TRUE, and removing last & in 'EnvGoals' and 'SysGoals'
+    # Set all empty subformulas to TRUE,
+    # and remove last & in 'EnvGoals' and 'SysGoals'
     if spec['EnvInit'] == '':
         spec['EnvInit'] = 'TRUE & \n'
     if spec['EnvTrans'] == '':
@@ -298,9 +308,9 @@ def writeSpec(text, sensorList, regionList, robotPropList):
     else:
         # remove last &
         spec['SysGoals'] = re.sub('& \n$','\n',spec['SysGoals'])
-    
+
     return spec,linemap,failed,LTL2LineNo,internal_props
-            
+
 def parseInit(semstring, sensorList, robotPropList):
     if semstring.find('$EnvStart') != -1:
         prefix = '!' if semstring.find('$EnvStart(FALSE)') != -1 else ''
@@ -318,7 +328,7 @@ def parseStay(semstring, regions):
             return 'Iff(Next('+regions[ind]+'),'+regions[ind]+')'
         else:
             return 'And(Iff(Next('+regions[ind]+'),'+regions[ind]+'),'+appendStayClause(ind+1)+')'
-    if semstring.find('$Stay') != -1:       
+    if semstring.find('$Stay') != -1:
         stay = appendStayClause(0)
         #return semstring.replace('$Stay',stay)
         # Just insert the "STAY_THERE" macro to be dealt with by specCompiler
@@ -340,7 +350,7 @@ def parseGroupAll(semstring, allGroups):
         else:
             print('Error: Could not resolve group '+groupName)
     return semstring
-    
+
 def parseGroupAny(semstring, allGroups):
     while semstring.find('$Any') != -1:
         groupName = re.search(r'\$Any\((\w+)\)',semstring).groups()[0]
@@ -353,7 +363,7 @@ def parseGroupAny(semstring, allGroups):
         else:
             print('Error: Could not resolve group '+groupName)
     return semstring
-    
+
 def parseGroupEach(semstring, allGroups):
     while semstring.find('$Each') != -1:
         groupName = re.search(r'\$Each\((\w+)\)',semstring).group(1)
@@ -367,7 +377,7 @@ def parseGroupEach(semstring, allGroups):
         else:
             print('Error: Could not resolve group '+groupName)
     return semstring
-    
+
 def parseCorresponding(semstring, correlations, allGroups):
     if semstring.find('$Corr') != -1:
         m_Any = re.search(r'\$Any\((\w+)\)',semstring)
@@ -387,7 +397,7 @@ def parseCorresponding(semstring, correlations, allGroups):
             failed = True
             return ''
         indexGroup = allGroups[indexGroupName]
-        #Iterate over items in indexGroup, replacing each 'corresponding' with the 
+        #Iterate over items in indexGroup, replacing each 'corresponding' with the
         # intersection of items correlated with indexItem and items in the relevant group
         newSentences = []
         for indexItem in indexGroup:
@@ -414,7 +424,7 @@ def parseCorresponding(semstring, correlations, allGroups):
             semstring = newSentences[0]
         else:
             semstring = 'And(' + ',And('.join(newSentences[0:-1]) + ',' + newSentences[-1] + ')'*(len(newSentences)-1)
-        
+
     return semstring
 
 def prefix2infix(prefixString):
@@ -450,16 +460,16 @@ def prefix2infix(prefixString):
             return '[]<>(' + arg + ')', lastIndex
         else:
             return inList[index], index
-    
+
     return opReduce(inList, 0)[0]
 
 def _findGroupsInCorrespondenceWithGroup(proj, group_name):
     """ Return a list of group names to which the group named `group_name` has a correspondence relation. """
-        
+
     # TODO: Move this to parser?
     CorrespondenceDefinitionRE = re.compile(r"^\s*" + group_name + r"\s+corresponds?\s+to\s+(?P<groupB>\w+)", \
                                                 re.MULTILINE | re.IGNORECASE)
-        
+
     corresponding_groups = [m.group("groupB") for m in CorrespondenceDefinitionRE.finditer(proj.specText)]
-        
+
     return corresponding_groups
