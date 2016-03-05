@@ -278,6 +278,30 @@ def writeSpec(text, sensorList, regionList, robotPropList):
         if syntree_node_spec == 'SysGoals' or syntree_node_spec == 'EnvGoals':
             semstring = semstring.replace('Next','')
 
+	offset = 0
+	to_replace = dict()
+	position = semstring.find('NextMem', offset)
+	while position > 0:
+		opened = 0
+		closed = 0
+		endposition = -1
+		for i in range( len( semstring[position:] ) ):
+			if semstring[position+i]  == '(':
+				opened += 1
+			elif semstring[position+i]  == ')':
+				closed += 1
+			if opened > 0 and opened ==  closed:
+				endposition = position+i+1
+				break
+
+		assert endposition > 0, semstring
+		memsubstring = semstring[ position : endposition ]
+		print '###', memsubstring
+	
+		offset = endposition
+		position = semstring.find('NextMem', offset)
+	semstring = semstring.replace('NextMem', 'Next')
+
         #TODO: In environment safeties, all robot props must be PAST TENSE
 
         #Convert formula from prefix FOL to infix LTL and add it to
