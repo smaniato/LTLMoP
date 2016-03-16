@@ -13,10 +13,12 @@ say_spill, 1
 
 CompileOptions:
 convexify: True
-parser: structured
+parser: nltk
+symbolic: False
+use_region_bit_encoding: True
+synthesizer: jtlv
 fastslow: False
 decompose: True
-use_region_bit_encoding: True
 
 CurrentConfigName:
 basicSim
@@ -24,6 +26,8 @@ basicSim
 Customs: # List of custom propositions
 spill_top
 spill_bottom
+
+OpenWorld: # List of OpenWorld propositions/correspondences
 
 RegionFile: # Relative path of region description file
 grocery.regions
@@ -38,13 +42,13 @@ head_tapped, 1
 
 RegionMapping: # Mapping between region names and their decomposed counterparts
 r4 = p9
-office = p13
-between$r3$and$r4$ = p14
-r3 = p10
-between$r1$and$r2$ = p15
-r2 = p11
-others = p1, p2, p3, p4, p5
 r1 = p12
+r2 = p11
+r3 = p10
+between$r3$and$r4$ = p14
+office = p13
+between$r1$and$r2$ = p15
+others = p1, p2, p3, p4, p5
 
 Spec: # Specification in structured English
 group Corners is r1, r2, r3, r4
@@ -71,7 +75,7 @@ if start of spill_bottom then stay there
 if start of spill_top then stay there
 
 # Patrol the store
-if you are not activating call_manager and you are not activating spill_top and spill_bottom then visit all Corners
+if you are not activating call_manager and you are not activating spill_top and spill_bottom then visit each Corner
 #if you are not activating spill_top and spill_bottom then visit all Corners
 do look_leftright if and only if you are not activating call_manager and you were in (between r1 and r2 or between r3 and r4)
 

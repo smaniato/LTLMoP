@@ -278,29 +278,7 @@ def writeSpec(text, sensorList, regionList, robotPropList):
         if syntree_node_spec == 'SysGoals' or syntree_node_spec == 'EnvGoals':
             semstring = semstring.replace('Next','')
 
-	offset = 0
-	to_replace = dict()
-	position = semstring.find('NextMem', offset)
-	while position > 0:
-		opened = 0
-		closed = 0
-		endposition = -1
-		for i in range( len( semstring[position:] ) ):
-			if semstring[position+i]  == '(':
-				opened += 1
-			elif semstring[position+i]  == ')':
-				closed += 1
-			if opened > 0 and opened ==  closed:
-				endposition = position+i+1
-				break
-
-		assert endposition > 0, semstring
-		memsubstring = semstring[ position : endposition ]
-		print '###', memsubstring
-	
-		offset = endposition
-		position = semstring.find('NextMem', offset)
-	semstring = semstring.replace('NextMem', 'Next')
+	semstring = handleMemorySensors( semstring, sensorList )
 
         #TODO: In environment safeties, all robot props must be PAST TENSE
 
@@ -334,6 +312,44 @@ def writeSpec(text, sensorList, regionList, robotPropList):
         spec['SysGoals'] = re.sub('& \n$','\n',spec['SysGoals'])
 
     return spec,linemap,failed,LTL2LineNo,internal_props
+
+def handleMemorySensors( semstring, sensorList ):
+	offset = 0
+	to_replace = dict()
+	position = semstring.find('NextMem', offset)
+	while position > 0:
+		opened = 0
+		closed = 0
+		endposition = -1
+		for i in range( len( semstring[position:] ) ):
+			if semstring[position+i]  == '(':
+				opened += 1
+			elif semstring[position+i]  == ')':
+				closed += 1
+			if opened > 0 and opened ==  closed:
+				endposition = position+i+1
+				break
+
+		assert endposition > 0, semstring
+		memsubstring = semstring[ position : endposition ]
+
+		new_memsubstring = memsubstring
+		replace = False
+		for sensor_prop in sensorList:
+			if sensor_prop in memsubstring:
+				replace = True
+				new_memsubstring = new_memsubstring.replace( sensor_prop, 
+							'Next('+sensor_prop+')' )
+		if replace:
+			to_replace[ memsubstring ] = new_memsubstring
+	
+		offset = endposition
+		position = semstring.find('NextMem', offset)
+
+	for key, val in to_replace.iteritems():
+		semstring = semstring.replace( key, val ) 
+	semstring = semstring.replace('NextMem', '')
+	return semstring
 
 def parseInit(semstring, sensorList, robotPropList):
     if semstring.find('$EnvStart') != -1:
