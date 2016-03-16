@@ -75,7 +75,7 @@ if start of spill_bottom then stay there
 if start of spill_top then stay there
 
 # Patrol the store
-if you are not activating call_manager and you are not activating spill_top and spill_bottom then visit each Corner
+if you are not activating call_manager and you are not activating spill_top and spill_bottom then visit all Corners
 #if you are not activating spill_top and spill_bottom then visit all Corners
 do look_leftright if and only if you are not activating call_manager and you were in (between r1 and r2 or between r3 and r4)
 

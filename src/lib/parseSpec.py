@@ -315,7 +315,6 @@ def writeSpec(text, sensorList, regionList, robotPropList):
 
 def handleMemorySensors( semstring, sensorList ):
 	offset = 0
-	to_replace = dict()
 	position = semstring.find('NextMem', offset)
 	while position > 0:
 		opened = 0
@@ -334,21 +333,14 @@ def handleMemorySensors( semstring, sensorList ):
 		memsubstring = semstring[ position : endposition ]
 
 		new_memsubstring = memsubstring
-		replace = False
 		for sensor_prop in sensorList:
 			if sensor_prop in memsubstring:
-				replace = True
 				new_memsubstring = new_memsubstring.replace( sensor_prop, 
 							'Next('+sensor_prop+')' )
-		if replace:
-			to_replace[ memsubstring ] = new_memsubstring
-	
-		offset = endposition
+		new_memsubstring = new_memsubstring.replace('NextMem', '')
+		semstring = semstring[:position] + new_memsubstring + semstring[endposition:]
+		
 		position = semstring.find('NextMem', offset)
-
-	for key, val in to_replace.iteritems():
-		semstring = semstring.replace( key, val ) 
-	semstring = semstring.replace('NextMem', '')
 	return semstring
 
 def parseInit(semstring, sensorList, robotPropList):
