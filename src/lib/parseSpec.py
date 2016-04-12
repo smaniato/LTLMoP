@@ -344,7 +344,7 @@ def cleanNestedNext( semstring ):
                 closed += 1
             if opened > 0 and opened ==  closed:
                 endposition = position+i+1
-		assert endposition > 0,result 
+                assert endposition > 0,result 
                 break
 
         if endposition < 0:
@@ -359,6 +359,13 @@ def cleanNestedNext( semstring ):
     return result
 
 def handleMemorySensors( semstring, sensorList ):
+    """
+    >>> sensorlist = ['s1','s2']
+    >>> semstring = "NextMem( s1 and s2 and s1_blabla and blabla_s2)"
+    >>> handleMemorySensors( semstring, sensorlist )
+    'Next(s1) and Next(s2) and s1_blabla and blabla_s2'
+    
+    """
     result = copy.copy(semstring)
     position = result.find('NextMem')
     while position >= 0:
@@ -372,20 +379,31 @@ def handleMemorySensors( semstring, sensorList ):
                 closed += 1
             if opened > 0 and opened ==  closed:
                 endposition = position+i+1
-		assert endposition > 0,result 
+                assert endposition > 0,result 
                 break
 
         memsubstring = result[ position : endposition ]
 
         new_memsubstring = memsubstring
         for sensor_prop in sensorList:
-            if sensor_prop in memsubstring:
-                new_memsubstring = new_memsubstring.replace( sensor_prop, 
-                        'Next('+sensor_prop+')' )
+            found_sensor_prop = new_memsubstring.find( sensor_prop )
+            while found_sensor_prop >= 0:
+
+                # if this string is part of another variable name, don't replace it
+                if found_sensor_prop > 0 and (new_memsubstring[found_sensor_prop-1].isalnum() or new_memsubstring[found_sensor_prop-1]=='_'):
+                    found_sensor_prop = memsubstring.find( sensor_prop, found_sensor_prop+1 )
+                    continue
+                if found_sensor_prop < len(new_memsubstring)+len(sensor_prop) and (new_memsubstring[found_sensor_prop+len(sensor_prop)].isalnum() or new_memsubstring[found_sensor_prop+len(sensor_prop)]=='_'):
+                    found_sensor_prop = memsubstring.find( sensor_prop, found_sensor_prop+1 )
+                    continue
+
+                new_memsubstring2 = new_memsubstring[:found_sensor_prop] + 'Next('+sensor_prop+')' + new_memsubstring[found_sensor_prop+len(sensor_prop):]
+                new_memsubstring = new_memsubstring2
+                found_sensor_prop = memsubstring.find( sensor_prop, found_sensor_prop+1 )
 
         new_memsubstring = new_memsubstring.replace('NextMem', '')[1:-1] # remove extra parentheses too
         result2 = result[:position] + new_memsubstring + result[endposition:]
-        result = result2
+        result = result2.strip()
         
         position = result.find('NextMem')
 
