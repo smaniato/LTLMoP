@@ -274,11 +274,15 @@ def writeSpec(text, sensorList, regionList, robotPropList):
 
         syntree_node_spec = syntree.label()['SPEC']
 
+
         #Liveness sentences should not contain 'next'
         if syntree_node_spec == 'SysGoals' or syntree_node_spec == 'EnvGoals':
             semstring = semstring.replace('Next','')
 
-	semstring = handleMemorySensors( semstring, sensorList )
+        if 'NextMem' in semstring:
+                semstring = handleMemorySensors( semstring, sensorList )
+
+        semstring = cleanNestedNext( semstring )
 
         #TODO: In environment safeties, all robot props must be PAST TENSE
 
@@ -313,35 +317,90 @@ def writeSpec(text, sensorList, regionList, robotPropList):
 
     return spec,linemap,failed,LTL2LineNo,internal_props
 
+def cleanNestedNext( semstring ):
+    """
+    >>> teststring = "Next abcdf abcfd Next"
+    >>> cleanNestedNext( teststring )
+    'Next abcdf abcfd Next'
+
+    >>> teststring = "Next(Next(Next(x)))"
+    >>> cleanNestedNext( teststring )
+    '((Next(x)))'
+
+    >>> teststring = "blablabla Next(bla) Next(Next(Next(x)))"
+    >>> cleanNestedNext( teststring )
+    'blablabla Next(bla) ((Next(x)))'
+    """
+    result = copy.copy(semstring)
+    position = result.find('Next')
+    while position >= 0:
+        opened = 0
+        closed = 0
+        endposition = -1
+        for i in range( len( result[position:] ) ):
+            if result[position+i]  == '(':
+                opened += 1
+            elif result[position+i]  == ')':
+                closed += 1
+            if opened > 0 and opened ==  closed:
+                endposition = position+i+1
+		assert endposition > 0,result 
+                break
+
+        if endposition < 0:
+            position = result.find('Next',position+1)
+        # what the Next is applied to
+        substring = result[ position+4 : endposition ]
+        if 'Next' in substring:
+            new_substring = substring
+            result2 = result[:position] + new_substring + result[endposition:]
+            result = result2
+        position = result.find('Next',position+1)
+    return result
+
 def handleMemorySensors( semstring, sensorList ):
-	offset = 0
-	position = semstring.find('NextMem', offset)
-	while position > 0:
-		opened = 0
-		closed = 0
-		endposition = -1
-		for i in range( len( semstring[position:] ) ):
-			if semstring[position+i]  == '(':
-				opened += 1
-			elif semstring[position+i]  == ')':
-				closed += 1
-			if opened > 0 and opened ==  closed:
-				endposition = position+i+1
-				break
+    result = copy.copy(semstring)
+    position = result.find('NextMem')
+    while position >= 0:
+        opened = 0
+        closed = 0
+        endposition = -1
+        for i in range( len( result[position:] ) ):
+            if result[position+i]  == '(':
+                opened += 1
+            elif result[position+i]  == ')':
+                closed += 1
+            if opened > 0 and opened ==  closed:
+                endposition = position+i+1
+		assert endposition > 0,result 
+                break
 
-		assert endposition > 0, semstring
-		memsubstring = semstring[ position : endposition ]
+        memsubstring = result[ position : endposition ]
 
-		new_memsubstring = memsubstring
-		for sensor_prop in sensorList:
-			if sensor_prop in memsubstring:
-				new_memsubstring = new_memsubstring.replace( sensor_prop, 
-							'Next('+sensor_prop+')' )
-		new_memsubstring = new_memsubstring.replace('NextMem', '')
-		semstring = semstring[:position] + new_memsubstring + semstring[endposition:]
-		
-		position = semstring.find('NextMem', offset)
-	return semstring
+        new_memsubstring = memsubstring
+        for sensor_prop in sensorList:
+            if sensor_prop in memsubstring:
+                new_memsubstring = new_memsubstring.replace( sensor_prop, 
+                        'Next('+sensor_prop+')' )
+
+        new_memsubstring = new_memsubstring.replace('NextMem', '')[1:-1] # remove extra parentheses too
+        result2 = result[:position] + new_memsubstring + result[endposition:]
+        result = result2
+        
+        position = result.find('NextMem')
+
+    #sanity check for number of parentheses
+    opened = 0
+    closed = 0
+    endposition = -1
+    for i in range( len( result ) ):
+        if result[i]  == '(':
+            opened += 1
+        elif result[i]  == ')':
+            closed += 1
+    assert opened==closed,result
+
+    return result 
 
 def parseInit(semstring, sensorList, robotPropList):
     if semstring.find('$EnvStart') != -1:
@@ -505,3 +564,7 @@ def _findGroupsInCorrespondenceWithGroup(proj, group_name):
     corresponding_groups = [m.group("groupB") for m in CorrespondenceDefinitionRE.finditer(proj.specText)]
 
     return corresponding_groups
+
+if __name__=="__main__":
+    import doctest
+    doctest.testmod( )
